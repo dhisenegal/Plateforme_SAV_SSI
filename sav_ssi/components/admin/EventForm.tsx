@@ -5,19 +5,28 @@ type EventData = {
   start: Date;
   end: Date;
   id: string;
+  techniciens?: string[];
 };
 
 type EventFormProps = {
   event: EventData | null;
+  techniciens: string[];
   onSave: (event: EventData) => void;
   onDelete: (id: string) => void;
   onClose: () => void;
 };
 
-const EventForm: React.FC<EventFormProps> = ({ event, onSave, onDelete, onClose }) => {
+const EventForm: React.FC<EventFormProps> = ({
+  event,
+  techniciens,
+  onSave,
+  onDelete,
+  onClose,
+}) => {
   const [title, setTitle] = useState(event?.title || "");
   const [start, setStart] = useState(event?.start.toISOString().slice(0, 16) || "");
   const [end, setEnd] = useState(event?.end.toISOString().slice(0, 16) || "");
+  const [selectedTechniciens, setSelectedTechniciens] = useState<string[]>(event?.techniciens || []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,9 +37,18 @@ const EventForm: React.FC<EventFormProps> = ({ event, onSave, onDelete, onClose 
       title,
       start: new Date(start),
       end: new Date(end),
+      techniciens: selectedTechniciens,
     };
 
     onSave(newEvent);
+  };
+
+  const toggleTechnicien = (technicien: string) => {
+    if (selectedTechniciens.includes(technicien)) {
+      setSelectedTechniciens(selectedTechniciens.filter((t) => t !== technicien));
+    } else {
+      setSelectedTechniciens([...selectedTechniciens, technicien]);
+    }
   };
 
   return (
@@ -61,6 +79,20 @@ const EventForm: React.FC<EventFormProps> = ({ event, onSave, onDelete, onClose 
         onChange={(e) => setEnd(e.target.value)}
         required
       />
+
+      <div>
+        <h3 className="font-semibold mb-2">Assigner aux techniciens :</h3>
+        {techniciens.map((technicien) => (
+          <label key={technicien} className="flex items-center space-x-2 mb-1">
+            <input
+              type="checkbox"
+              checked={selectedTechniciens.includes(technicien)}
+              onChange={() => toggleTechnicien(technicien)}
+            />
+            <span>{technicien}</span>
+          </label>
+        ))}
+      </div>
 
       <div className="flex justify-between">
         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">Annuler</button>
