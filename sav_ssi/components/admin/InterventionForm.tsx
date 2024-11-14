@@ -37,7 +37,7 @@ const InterventionForm = () => {
   };
 
   return (
-    <div className='flex flex-col gap-4 items-center justify-center w-[70%] p-6 bg-white rounded-lg'>
+    <div className='flex flex-col gap-4 items-center justify-center w-[70%] p-6 bg-white rounded-lg '>
       {/* Header du formulaire */}
       <div className='flex justify-between items-center w-full mb-4'>
         <h1 className='text-2xl font-bold'>Créer une intervention</h1>
@@ -54,7 +54,7 @@ const InterventionForm = () => {
             value={nature}
             onChange={(e) => setNature(e.target.value)}
             className='w-full p-2 border rounded'>
-            <option value="" disabled>Choisissez une option</option>
+            <option value="" disabled>Choisissez une option</option> 
             <option value="curative">Curative</option>
             <option value="preventive">Préventive</option>
           </select>

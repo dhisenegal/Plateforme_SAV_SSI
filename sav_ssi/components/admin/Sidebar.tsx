@@ -4,10 +4,15 @@ import React, { useState } from "react";
 import { FaBars, FaTimes, FaUserAlt } from "react-icons/fa";
 import Link from "next/link";
 import Image from "next/image";
-import { FaHouse, FaPersonChalkboard } from "react-icons/fa6";
+import {
+  FaTasks,
+  FaCalendarCheck,
+  FaWarehouse,
+} from "react-icons/fa";
+import {FaHouse,
+  FaPersonChalkboard,} from "react-icons/fa6";
 import { TbReportSearch } from "react-icons/tb";
 import { AiFillTool } from "react-icons/ai";
-import { FaTasks, FaCalendarCheck, FaWarehouse } from "react-icons/fa";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -21,19 +26,29 @@ const Sidebar = () => {
     <>
       {/* Bouton Hamburger pour les petits écrans */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
-        <button onClick={toggleMenu} className="text-white">
-          {isOpen ? <FaTimes size={30} /> : <FaBars size={30} />}
+        <button
+          onClick={toggleMenu}
+          className="text-gray-800 bg-white p-2 rounded-full shadow-lg"
+        >
+          {isOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
         </button>
       </div>
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-gray-800 text-white p-6 z-40 transition-transform duration-300 ease-in-out
-          ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+        className={`fixed top-0 left-0 h-full w-64 bg-gray-900 text-white p-6 z-40 shadow-lg transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0 lg:shadow-none`}
       >
         {/* Logo */}
         <div className="flex justify-center mb-6">
-          <Image src="/logo.svg" alt="Logo" width={80} height={80} className="rounded-full" />
+          <Image
+            src="/logo.svg"
+            alt="Logo"
+            width={80}
+            height={80}
+            className="rounded-full"
+          />
         </div>
 
         {/* Navigation Scrollable */}
