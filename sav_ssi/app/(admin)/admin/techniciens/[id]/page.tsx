@@ -8,6 +8,7 @@ import React, { useState } from 'react';
 import { IoIosArrowBack } from "react-icons/io";
 import { MdOutlineKeyboardArrowDown } from "react-icons/md";
 import { TbReportSearch } from "react-icons/tb";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,25 +18,20 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
-const TechnicienPage = () => {
+const PageTechnicien = () => {
   const params = useParams();
   const id = params?.id;
 
   // Simuler une base de données pour récupérer les données
   const techniciens = [
-    { id: '1', prenom: "Mamadou", nom: "Sy", statut: "actif", telephone: "+221773815479" },
-    { id: '2', prenom: "Awa", nom: "Diop", statut: "inactif", telephone: "+221781234567" },
+    { id: '1', prenom: "Aboubakrine", nom: "Fall", statut: "actif", phone: "+221773815479" },
+    { id: '2', prenom: "Awa", nom: "Diop", statut: "inactif", phone: "diop@example.com" },
   ];
 
   // Récupérer le technicien en fonction de l'ID
   const technicien = techniciens.find((tech) => tech.id === id);
-
-  // State pour gérer l'onglet sélectionné et le modal d'envoi de notification
-  const [selectedTab, setSelectedTab] = useState<'interventions' | 'rapports'>('interventions');
-  const [showNotificationModal, setShowNotificationModal] = useState(false);
-  const [message, setMessage] = useState("");
-  const [phone, setPhone] = useState("");
 
   // Données factices pour les interventions et rapports
   const interventions = [
@@ -48,51 +44,46 @@ const TechnicienPage = () => {
     { id: '2', titre: "Rapport de Maintenance", date: "2024-11-12", details: "Détails du rapport de maintenance" },
   ];
 
+  // State pour l'onglet sélectionné
+  const [selectedTab, setSelectedTab] = useState<'interventions' | 'rapports'>('interventions');
+  const [message, setMessage] = useState('ceci est un message');
+
+
   // Vérifier si le technicien existe
   if (!technicien) {
     return <div>Technicien introuvable</div>;
   }
 
-  // Fonction pour gérer l'envoi de la notification
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);  
-  const [success, setSuccess] = useState(false);
-
-  const sendMessage = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setError(false);
-    setSuccess(false);
-  
-    const phoneNumber = technicien.telephone;
-    console.log(phoneNumber);
-  
-    if (!phoneNumber || !message) {
-      setError(true);
-      setLoading(false);
+  //Envoi de notification
+  const handleSendNotification = async () => {
+    if (message.trim() === '' ) {
+      alert('Veuillez entrer un message.');
       return;
     }
   
-    const res = await fetch('/api/sendMessage', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ to: phoneNumber, message: message }), // Passer `to` ici
-    });
+    try {
+      const response = await fetch('/api/sendMessage', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          phone: technicien.phone,
+          message: message,
+        }),
+      });
   
-    const apiResponse = await res.json();
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'envoi de la notification');
+      }
   
-    if (apiResponse.success) {
-      setSuccess(true);
-    } else {
-      setError(true);
+      alert('Notification envoyée avec succès');
+      setMessage(''); // Réinitialise le champ de message
+    } catch (error) {
+      console.error(error);
+      alert('Échec de l\'envoi de la notification');
     }
-  
-    setLoading(false);
   };
-  
-  
   
 
   return (
@@ -114,7 +105,7 @@ const TechnicienPage = () => {
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => setShowNotificationModal(true)}>
+            <DropdownMenuItem>
               <div className="flex items-center justify-center gap-3">
                 <IoIosNotifications />
                 <span>Envoyer une notification</span>
@@ -140,42 +131,88 @@ const TechnicienPage = () => {
         {technicien.prenom} {technicien.nom}
       </h2>
 
-      {showNotificationModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center">
-          <div className="bg-white p-4 rounded shadow-lg w-96">
-            <h3 className="text-lg font-semibold mb-4">Envoyer une notification</h3>
-            <textarea
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Entrez votre message"
-              className="w-full p-2 border rounded mb-4"
-              rows={4}
-            ></textarea>
-            <button
-              onClick={sendMessage}
-              className="bg-indigo-500 text-white py-2 px-4 rounded mr-2"
-            >
-              Envoyer
-            </button>
-            <button
-              onClick={() => setShowNotificationModal(false)}
-              className="bg-gray-500 text-white py-2 px-4 rounded"
-            >
-              Annuler
-            </button>
-            {success && (
-          <p className="text-green">Message sent successfully.</p>
-        )}
-        {error && (
-          <p className="text-red">
-            Something went wrong. Please check the number.
-          </p>
-        )}
+      <div className="flex items-center justify-center gap-2">
+        <div className="flex items-center justify-center gap-2 border border-indigo-400 w-64 py-2 rounded-md">
+          <TbReportSearch size={30} color="indigo" />
+          <div className="flex flex-col items-center">
+            <span>Interventions en cours</span>
+            <span>2</span>
           </div>
         </div>
+        <div className="flex items-center justify-center gap-2 border border-indigo-400 w-64 py-2 rounded-md">
+          <TbReportSearch size={30} color="indigo" />
+          <div className="flex flex-col items-center">
+            <span>Total interventions</span>
+            <span>2</span>
+          </div>
+        </div>
+        <div className="flex items-center justify-center gap-2 border border-indigo-400 w-64 py-2 rounded-md">
+          <TbReportSearch size={30} color="indigo" />
+          <div className="flex flex-col items-center">
+            <span>Rapports générés</span>
+            <span>2</span>
+          </div>
+        </div>
+      </div>
+
+      <Separator orientation="horizontal" className="w-full mt-3" />
+
+      <div className="flex gap-4 mb-4">
+        <button
+          onClick={() => setSelectedTab('interventions')}
+          className={`py-2 px-4 rounded ${selectedTab === 'interventions' ? 'bg-indigo-500 text-white' : 'bg-gray-200'}`}
+        >
+          Interventions
+        </button>
+        <button
+          onClick={() => setSelectedTab('rapports')}
+          className={`py-2 px-4 rounded ${selectedTab === 'rapports' ? 'bg-indigo-500 text-white' : 'bg-gray-200'}`}
+        >
+          Rapports
+        </button>
+      </div>
+
+      {selectedTab === 'interventions' ? (
+        <table className="w-full text-left">
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Date</th>
+              <th>Statut</th>
+            </tr>
+          </thead>
+          <tbody>
+            {interventions.map((intervention) => (
+              <tr key={intervention.id}>
+                <td>{intervention.titre}</td>
+                <td>{intervention.date}</td>
+                <td>{intervention.statut}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <table className="w-full text-left">
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Date</th>
+              <th>Détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rapports.map((rapport) => (
+              <tr key={rapport.id}>
+                <td>{rapport.titre}</td>
+                <td>{rapport.date}</td>
+                <td>{rapport.details}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       )}
     </div>
   );
 };
 
-export default TechnicienPage;
+export default PageTechnicien;

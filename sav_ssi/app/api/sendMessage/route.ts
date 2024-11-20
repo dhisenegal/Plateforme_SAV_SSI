@@ -13,22 +13,17 @@ export const POST = async (req, res) => {
     console.log(phone, message);
     client.messages
     .create({
-      body: message,
       from: twilioPhoneNumber,
       to: phone,
     })
+   
     return new Response(JSON.stringify({ success: true }), {
       status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
   } catch (error) {
+    console.log(error);
     return new Response(JSON.stringify({ success: false }), {
       status: 500,
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
   }
   

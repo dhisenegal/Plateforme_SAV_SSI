@@ -30,7 +30,7 @@ type Equipment = {
 
 const EquipmentManagementPage = () => {
   const [equipments, setEquipments] = useState<Equipment[]>([]);
-  const [categories, setCategories] = useState<string[]>(["Électronique", "Sport", "Cuisine"]);
+  const [categories, setCategories] = useState<string[]>(["SDI", "Extincteurs"]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentEquipment, setCurrentEquipment] = useState<Equipment | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("");
