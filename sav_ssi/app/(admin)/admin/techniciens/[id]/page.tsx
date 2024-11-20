@@ -65,6 +65,7 @@ const TechnicienPage = () => {
     setSuccess(false);
   
     const phoneNumber = technicien.telephone;
+    console.log(phoneNumber);
   
     if (!phoneNumber || !message) {
       setError(true);
