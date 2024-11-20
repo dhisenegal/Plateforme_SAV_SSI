@@ -24,8 +24,16 @@ const EventForm: React.FC<EventFormProps> = ({
   onClose,
 }) => {
   const [title, setTitle] = useState(event?.title || "");
-  const [start, setStart] = useState(event?.start.toISOString().slice(0, 16) || "");
-  const [end, setEnd] = useState(event?.end.toISOString().slice(0, 16) || "");
+  const formatDateTimeInput = (date: Date | undefined): string => {
+    if (!date) return "";
+    const tzOffset = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return tzOffset.toISOString().slice(0, 16);
+  };
+  
+  // Dans EventForm
+  const [start, setStart] = useState<string>(formatDateTimeInput(event?.start));
+  const [end, setEnd] = useState<string>(formatDateTimeInput(event?.end));
+  
   const [selectedTechniciens, setSelectedTechniciens] = useState<string[]>(event?.techniciens || []);
 
   const handleSubmit = (e: React.FormEvent) => {

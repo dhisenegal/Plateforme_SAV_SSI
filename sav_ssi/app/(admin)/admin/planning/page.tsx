@@ -41,11 +41,11 @@ const PlanningPage = () => {
   const handleSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
     setSelectedEvent({
       title: "",
-      start,
-      end,
+      start: new Date(start),
+      end: new Date(end),
       id: `${new Date().getTime()}`,
       techniciens: [],
-    });
+    });    
     setModalOpen(true);
   };
 
@@ -95,7 +95,7 @@ const PlanningPage = () => {
       />
 
       <Modal
-        isOpen={modalOpen}
+         isOpen={modalOpen && !!selectedEvent}
         onRequestClose={() => setModalOpen(false)}
         ariaHideApp={false}
         className="bg-white rounded-lg p-6 max-w-lg mx-auto"
