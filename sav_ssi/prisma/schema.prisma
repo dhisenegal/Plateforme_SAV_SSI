@@ -1,0 +1,240 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Utilisateur {
+  id         Int      @id @default(autoincrement())
+  login      String   @unique
+  password   String
+  nom        String
+  prenom     String
+  numero     String
+  email      String   @unique
+  idRole     Int
+  Role       Role     @relation(fields: [idRole], references: [id])
+  Contacts   Contact[]
+  Interventions Intervention[] @relation("TechnicienIntervention")
+  Maintenances Maintenance[]   @relation("TechnicienMaintenance")
+  Sessions   Session[]
+  Accounts   Account[]
+}
+
+model Role {
+  id            Int          @id @default(autoincrement())
+  nom           String
+  Utilisateurs  Utilisateur[]
+}
+
+model Account {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  provider      String
+  providerAccountId String
+  type          String
+  user          Utilisateur @relation(fields: [userId], references: [id])
+}
+
+model Session {
+  id            Int      @id @default(autoincrement())
+  userId        Int
+  token         String
+  expires       DateTime
+  Utilisateur   Utilisateur @relation(fields: [userId], references: [id])
+}
+
+model VerificationToken {
+  id            Int      @id @default(autoincrement())
+  email         String
+  token         String
+  expires       DateTime
+  createdAt     DateTime @default(now())
+}
+
+
+model Client {
+  id        Int      @id @default(autoincrement())
+  nom       String
+  secteurDactivite String
+  Sites     Site[]
+  Contacts  Contact[]
+  Installations Installation[]
+  DemandesIntervention DemandeIntervention[]
+}
+
+model Site {
+  id        Int      @id @default(autoincrement())
+  nom       String
+  idClient  Int
+  Client    Client    @relation(fields: [idClient], references: [id])
+  Contacts  ContactSite[]
+  Installations Installation[]
+  DemandesIntervention DemandeIntervention[]
+}
+
+model Contact {
+  id           Int         @id @default(autoincrement())
+  nomResponsable String
+  idClient     Int
+  idUtilisateur Int
+  Client       Client      @relation(fields: [idClient], references: [id])
+  Utilisateur  Utilisateur @relation(fields: [idUtilisateur], references: [id])
+  ContactSites ContactSite[]
+  DemandesIntervention DemandeIntervention[]
+  Interventions Intervention[]
+}
+
+model ContactSite {
+  id        Int      @id @default(autoincrement())
+  estManager Boolean
+  idSite    Int
+  idContact Int
+  Site      Site      @relation(fields: [idSite], references: [id])
+  Contact   Contact   @relation(fields: [idContact], references: [id])
+}
+
+model Systeme {
+  id           Int      @id @default(autoincrement())
+  nom          String
+  Equipements  Equipement[]
+  Actions      ActionMaintenance[]
+  Installations Installation[]
+}
+
+model Equipement {
+  id           Int      @id @default(autoincrement())
+  nom          String
+  idMarqueSsi  Int
+  idModeleSsi  Int
+  idSysteme    Int
+  MarqueSsi    MarqueSsi @relation(fields: [idMarqueSsi], references: [id])
+  ModeleSsi    ModeleSsi @relation(fields: [idModeleSsi], references: [id])
+  Systeme      Systeme   @relation(fields: [idSysteme], references: [id])
+  InstallationsEquipement InstallationEquipement[]
+}
+
+model MarqueSsi {
+  id         Int         @id @default(autoincrement())
+  nom        String
+  Equipements Equipement[]
+}
+
+model ModeleSsi {
+  id         Int         @id @default(autoincrement())
+  nom        String
+  Equipements Equipement[]
+}
+
+model Installation {
+  id        Int      @id @default(autoincrement())
+  dateInstallation DateTime
+  dateMaintenance  DateTime?
+  observations     String
+  idClient         Int
+  idSysteme        Int
+  idSite           Int?
+  Client           Client     @relation(fields: [idClient], references: [id])
+  Systeme          Systeme    @relation(fields: [idSysteme], references: [id])
+  Site             Site?      @relation(fields: [idSite], references: [id])
+  EquipementsInstallation InstallationEquipement[]
+  Maintenances Maintenance[]
+  DemandesIntervention DemandeIntervention[]
+}
+
+model InstallationEquipement {
+  id              Int      @id @default(autoincrement())
+  dateInstallation DateTime
+  dateMaintenance  DateTime?
+  statut           String
+  idEquipement     Int
+  idInstallation   Int
+  Equipement       Equipement   @relation(fields: [idEquipement], references: [id])
+  Installation     Installation @relation(fields: [idInstallation], references: [id])
+  Contrats         Contrat[]
+  Garanties        Garantie[]
+}
+
+model Contrat {
+  id                Int      @id @default(autoincrement())
+  dateDebutContrat  DateTime
+  dateFinContrat    DateTime
+  idInstallationEq  Int
+  InstallationEquipement InstallationEquipement @relation(fields: [idInstallationEq], references: [id])
+}
+
+model Garantie {
+  id                Int      @id @default(autoincrement())
+  dateDebutGarantie DateTime
+  dateFinGarantie   DateTime
+  idInstallationEq  Int
+  InstallationEquipement InstallationEquipement @relation(fields: [idInstallationEq], references: [id])
+}
+
+model Maintenance {
+  id               Int      @id @default(autoincrement())
+  numero           String
+  dateMaintenance  DateTime
+  description      String
+  statut           String
+  typeMaintenance  String
+  idInstallation   Int
+  idTechnicien     Int
+  Installation     Installation @relation(fields: [idInstallation], references: [id])
+  Technicien       Utilisateur  @relation("TechnicienMaintenance", fields: [idTechnicien], references: [id])
+  Actions          MaintenanceAction[]
+}
+
+model ActionMaintenance {
+  id           Int      @id @default(autoincrement())
+  libeleAction String
+  idSysteme    Int
+  Systeme      Systeme   @relation(fields: [idSysteme], references: [id])
+  MaintenanceActions MaintenanceAction[]
+}
+
+model MaintenanceAction {
+  id             Int      @id @default(autoincrement())
+  statut         Boolean
+  observation    String
+  idMaintenance  Int
+  idAction       Int
+  Maintenance    Maintenance       @relation(fields: [idMaintenance], references: [id])
+  Action         ActionMaintenance @relation(fields: [idAction], references: [id])
+}
+
+model DemandeIntervention {
+  id               Int      @id @default(autoincrement())
+  statut           String
+  typePanneDeclare String
+  dateDeclaration  DateTime
+  idInstallation   Int
+  idClient         Int
+  idSite           Int
+  idContact        Int
+  Installation     Installation @relation(fields: [idInstallation], references: [id])
+  Client           Client       @relation(fields: [idClient], references: [id])
+  Site             Site         @relation(fields: [idSite], references: [id])
+  Contact          Contact      @relation(fields: [idContact], references: [id])
+  Interventions    Intervention[]
+}
+
+model Intervention {
+  id                  Int      @id @default(autoincrement())
+  diagnostics         String
+  travauxRealises     String
+  pieceFournies       String
+  dateIntervention    DateTime
+  dureeHeure          Int
+  numero              Int
+  ficheInt            String
+  idTechnicien        Int
+  idContact           Int
+  idDemandeIntervention Int
+  Technicien          Utilisateur @relation("TechnicienIntervention", fields: [idTechnicien], references: [id])
+  Contact             Contact     @relation(fields: [idContact], references: [id])
+  DemandeIntervention DemandeIntervention @relation(fields: [idDemandeIntervention], references: [id])
+}
