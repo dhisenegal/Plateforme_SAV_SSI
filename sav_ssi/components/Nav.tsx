@@ -73,7 +73,6 @@ const Nav = () => {
         </button>
      </div>
       
-
       {/* Icône Hamburger pour Mobile */}
       <div className="md:hidden flex items-center">
         <button onClick={toggleMenu} className="text-gray-700 focus:outline-none">

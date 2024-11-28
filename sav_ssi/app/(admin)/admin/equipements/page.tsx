@@ -7,7 +7,6 @@ import { Label } from "@/components/ui/label";
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -24,30 +23,44 @@ type Equipment = {
   id: number;
   name: string;
   description: string;
-  category: string;
-  stock: number;
+  system: string;
+  brand: string;
+  model: string;
 };
 
 const EquipmentManagementPage = () => {
   const [equipments, setEquipments] = useState<Equipment[]>([]);
-  const [categories, setCategories] = useState<string[]>(["SDI", "Extincteurs"]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentEquipment, setCurrentEquipment] = useState<Equipment | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [systems, setSystems] = useState<string[]>(["SDI", "Extincteurs automatiques"]);
+  const [brands, setBrands] = useState<string[]>(["Brand A", "Brand B"]);
+  const [models, setModels] = useState<string[]>(["Model X", "Model Y"]);
 
-  // Ouvrir la modal
-  const openModal = (equipment?: Equipment) => {
-    setCurrentEquipment(equipment || { id: 0, name: "", description: "", category: "", stock: 0 });
-    setIsModalOpen(true);
+  const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
+  const [currentEquipment, setCurrentEquipment] = useState<Equipment | null>(null);
+
+  const [entityManager, setEntityManager] = useState<{
+    type: "system" | "brand" | "model";
+    isOpen: boolean;
+  }>({ type: "system", isOpen: false });
+
+  const openEquipmentModal = (equipment?: Equipment) => {
+    setCurrentEquipment(
+      equipment || {
+        id: 0,
+        name: "",
+        description: "",
+        system: systems[0] || "",
+        brand: brands[0] || "",
+        model: models[0] || "",
+      }
+    );
+    setIsEquipmentModalOpen(true);
   };
 
-  // Fermer la modal
-  const closeModal = () => {
-    setIsModalOpen(false);
+  const closeEquipmentModal = () => {
+    setIsEquipmentModalOpen(false);
     setCurrentEquipment(null);
   };
 
-  // Ajouter ou modifier un équipement
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (currentEquipment) {
@@ -61,160 +74,185 @@ const EquipmentManagementPage = () => {
         );
       }
     }
-    closeModal();
+    closeEquipmentModal();
   };
 
-  // Supprimer un équipement
   const handleDelete = (id: number) => {
     setEquipments(equipments.filter((equip) => equip.id !== id));
   };
 
+  const handleEntityChange = (type: "system" | "brand" | "model", newValue: string) => {
+    switch (type) {
+      case "system":
+        setSystems((prev) => [...prev, newValue]);
+        break;
+      case "brand":
+        setBrands((prev) => [...prev, newValue]);
+        break;
+      case "model":
+        setModels((prev) => [...prev, newValue]);
+        break;
+    }
+  };
+
+  const handleEntityDelete = (type: "system" | "brand" | "model", value: string) => {
+    switch (type) {
+      case "system":
+        setSystems((prev) => prev.filter((item) => item !== value));
+        break;
+      case "brand":
+        setBrands((prev) => prev.filter((item) => item !== value));
+        break;
+      case "model":
+        setModels((prev) => prev.filter((item) => item !== value));
+        break;
+    }
+  };
+
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen">
-      {/* Sidebar des Catégories */}
-      <aside className="w-full lg:w-1/4 p-4 bg-gray-100 border-r border-gray-200">
-        <h2 className="text-xl font-bold mb-4">Catégories</h2>
-        <ul className="space-y-2">
-          {categories.map((category) => (
-            <li
-              key={category}
-              className={`cursor-pointer p-2 rounded-md hover:bg-blue-100 ${
-                selectedCategory === category ? "bg-blue-200" : ""
-              }`}
-              onClick={() => setSelectedCategory(category)}
-            >
-              {category}
-            </li>
-          ))}
-        </ul>
-        <Button
-          className="w-full mt-4"
-          onClick={() => {
-            const newCategory = prompt("Ajouter une nouvelle catégorie");
-            if (newCategory && !categories.includes(newCategory)) {
-              setCategories([...categories, newCategory]);
-            }
-          }}
-        >
-          Ajouter une catégorie
+    <div className="flex flex-col min-h-screen p-4">
+      <h1 className="text-2xl font-bold mb-4">Gestion des Équipements</h1>
+
+      {/* Boutons pour gérer les entités dynamiques */}
+      <div className="flex gap-4 mb-4">
+        <Button onClick={() => setEntityManager({ type: "system", isOpen: true })}>
+          Gérer les Systèmes
         </Button>
-      </aside>
-
-      {/* Contenu Principal */}
-      <main className="w-full lg:w-3/4 p-4">
-        <h1 className="text-2xl font-bold mb-4">Gestion des Équipements</h1>
-
-        <Button onClick={() => openModal()} className="mb-4">
+        <Button onClick={() => setEntityManager({ type: "brand", isOpen: true })}>
+          Gérer les Marques
+        </Button>
+        <Button onClick={() => setEntityManager({ type: "model", isOpen: true })}>
+          Gérer les Modèles
+        </Button>
+        <Button onClick={() => openEquipmentModal()} className="ml-auto">
           Ajouter un Équipement
         </Button>
+      </div>
 
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white border border-gray-200 rounded-md shadow-md">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-2 md:px-6 py-2 text-left text-sm md:text-base">Nom</th>
-                <th className="px-2 md:px-6 py-2 text-left text-sm md:text-base">Description</th>
-                <th className="px-2 md:px-6 py-2 text-left text-sm md:text-base">Catégorie</th>
-                <th className="px-2 md:px-6 py-2 text-left text-sm md:text-base">Stock</th>
-                <th className="px-2 md:px-6 py-2 text-left text-sm md:text-base">Actions</th>
+      {/* Liste des équipements */}
+      <div className="overflow-x-auto">
+        <table className="min-w-full bg-white border border-gray-200 rounded-md shadow-md">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-2 text-left">Nom</th>
+              <th className="px-6 py-2 text-left">Description</th>
+              <th className="px-6 py-2 text-left">Système</th>
+              <th className="px-6 py-2 text-left">Marque</th>
+              <th className="px-6 py-2 text-left">Modèle</th>
+              <th className="px-6 py-2 text-left">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {equipments.map((equip) => (
+              <tr key={equip.id} className="border-b">
+                <td className="px-6 py-3">{equip.name}</td>
+                <td className="px-6 py-3">{equip.description}</td>
+                <td className="px-6 py-3">{equip.system}</td>
+                <td className="px-6 py-3">{equip.brand}</td>
+                <td className="px-6 py-3">{equip.model}</td>
+                <td className="px-6 py-3">
+                  <Button variant="outline" onClick={() => openEquipmentModal(equip)} className="mr-2">
+                    Modifier
+                  </Button>
+                  <Button variant="outline" onClick={() => handleDelete(equip.id)}>
+                    Supprimer
+                  </Button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {equipments
-                .filter((equip) => !selectedCategory || equip.category === selectedCategory)
-                .map((equip) => (
-                  <tr key={equip.id} className="border-b text-sm md:text-base">
-                    <td className="px-2 md:px-6 py-3">{equip.name}</td>
-                    <td className="px-2 md:px-6 py-3">{equip.description}</td>
-                    <td className="px-2 md:px-6 py-3">{equip.category}</td>
-                    <td className="px-2 md:px-6 py-3">{equip.stock}</td>
-                    <td className="px-2 md:px-6 py-3">
-                      <Button variant="outline" onClick={() => openModal(equip)} className="mr-2">
-                        Modifier
-                      </Button>
-                      <Button variant="outline" onClick={() => handleDelete(equip.id)}>
-                        Supprimer
-                      </Button>
-                    </td>
-                  </tr>
-                ))}
-            </tbody>
-          </table>
-        </div>
-      </main>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      {/* Modal Dialog */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+      {/* Modale pour ajouter/modifier un équipement */}
+      <Dialog open={isEquipmentModalOpen} onOpenChange={closeEquipmentModal}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>
-              {currentEquipment?.id === 0 ? "Ajouter" : "Modifier"} un Équipement
-            </DialogTitle>
-            <DialogDescription>
-              Complétez le formulaire et cliquez sur Enregistrer.
-            </DialogDescription>
+            <DialogTitle>{currentEquipment?.id ? "Modifier" : "Ajouter"} un Équipement</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleFormSubmit}>
-            <div className="space-y-4 py-4">
-              <div>
-                <Label htmlFor="name">Nom</Label>
-                <Input
-                  id="name"
-                  type="text"
-                  value={currentEquipment?.name || ""}
-                  onChange={(e) =>
-                    setCurrentEquipment((prev) => (prev ? { ...prev, name: e.target.value } : prev))
-                  }
-                />
-              </div>
-              <div>
-                <Label htmlFor="description">Description</Label>
-                <Input
-                  id="description"
-                  type="text"
-                  value={currentEquipment?.description || ""}
-                  onChange={(e) =>
-                    setCurrentEquipment((prev) =>
-                      prev ? { ...prev, description: e.target.value } : prev
-                    )
-                  }
-                />
-              </div>
-              <div>
-                <Label>Catégorie</Label>
-                <Select
-                  onValueChange={(value) =>
-                    setCurrentEquipment((prev) => (prev ? { ...prev, category: value } : prev))
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Choisir une catégorie" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category} value={category}>
-                        {category}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="stock">Stock</Label>
-                <Input
-                  id="stock"
-                  type="number"
-                  value={currentEquipment?.stock || ""}
-                  onChange={(e) =>
-                    setCurrentEquipment((prev) =>
-                      prev ? { ...prev, stock: parseInt(e.target.value) || 0 } : prev
-                    )
-                  }
-                />
-              </div>
+          <form onSubmit={handleFormSubmit} className="space-y-4">
+            <div>
+              <Label htmlFor="name">Nom</Label>
+              <Input
+                id="name"
+                value={currentEquipment?.name || ""}
+                onChange={(e) =>
+                  setCurrentEquipment({ ...currentEquipment!, name: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="description">Description</Label>
+              <Input
+                id="description"
+                value={currentEquipment?.description || ""}
+                onChange={(e) =>
+                  setCurrentEquipment({ ...currentEquipment!, description: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label>Système</Label>
+              <Select
+                onValueChange={(value) =>
+                  setCurrentEquipment({ ...currentEquipment!, system: value })
+                }
+                defaultValue={currentEquipment?.system || systems[0]}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisir un système" />
+                </SelectTrigger>
+                <SelectContent>
+                  {systems.map((system, index) => (
+                    <SelectItem key={index} value={system}>
+                      {system}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Marque</Label>
+              <Select
+                onValueChange={(value) =>
+                  setCurrentEquipment({ ...currentEquipment!, brand: value })
+                }
+                defaultValue={currentEquipment?.brand || brands[0]}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisir une marque" />
+                </SelectTrigger>
+                <SelectContent>
+                  {brands.map((brand, index) => (
+                    <SelectItem key={index} value={brand}>
+                      {brand}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Modèle</Label>
+              <Select
+                onValueChange={(value) =>
+                  setCurrentEquipment({ ...currentEquipment!, model: value })
+                }
+                defaultValue={currentEquipment?.model || models[0]}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Choisir un modèle" />
+                </SelectTrigger>
+                <SelectContent>
+                  {models.map((model, index) => (
+                    <SelectItem key={index} value={model}>
+                      {model}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <DialogFooter>
-              <Button type="submit">Enregistrer</Button>
+              <Button type="submit">{currentEquipment?.id ? "Modifier" : "Ajouter"}</Button>
             </DialogFooter>
           </form>
         </DialogContent>
