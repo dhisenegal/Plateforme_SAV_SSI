@@ -1,6 +1,8 @@
 "use client";
 
 import React from "react";
+import { useSession, signOut } from "next-auth/react";
+import Link from "next/link";
 import {
   Bar,
   BarChart,
@@ -45,6 +47,11 @@ const statutData = [
 const COLORS = ["#1D4ED8", "#F59E0B", "#10B981", "#EF4444"];
 
 const AdminPage = () => {
+  const { data: session } = useSession(); 
+
+  const handleLogout = () => {
+    signOut(); // Déconnexion via next-auth
+  };
   const barChartData = [
     { month: "Janvier", requests: 120 },
     { month: "Février", requests: 200 },
@@ -65,6 +72,14 @@ const AdminPage = () => {
       <h1 className="text-2xl md:text-3xl font-bold text-blue-700 mb-6 text-center">
         Tableau de bord Administrateur
       </h1>
+
+      {/* Section déconnexion */}
+      {session && (
+        <Link href="/" onClick={handleLogout} 
+        className="ml-4 hover:text-blue-400 cursor-pointer">
+          Déconnexion
+        </Link>
+      )}
 
       {/* Statistiques */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
