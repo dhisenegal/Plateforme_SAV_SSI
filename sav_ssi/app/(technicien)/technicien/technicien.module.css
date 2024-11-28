@@ -1,0 +1,123 @@
+/* styles/TechnicianHome.module.css */
+
+/* Styles de base */
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column; /* Organiser les éléments en colonne */
+  min-height: 100vh; /* S'assurer que le body occupe toute la hauteur de la fenêtre */
+}
+
+.container {
+  flex: 1; /* Permet au contenu de prendre tout l'espace disponible */
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box; /* Inclure le padding dans le calcul de la largeur totale */
+}
+
+/* Header */
+.header {
+  display: flex; /* Utiliser flexbox pour aligner les éléments horizontalement */
+  align-items: center; /* Centrer verticalement les éléments */
+  justify-content: space-between; /* Espace entre le texte et l'image */
+  background-color: #1a73e8;
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+  margin: 0; /* Retirer la marge par défaut */
+}
+
+.header p {
+  font-size: 1.2rem;
+  margin-top: 10px;
+}
+
+/* Section Image d'accueil */
+.heroSection {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.heroImage {
+  width: 150px; /* Ajuster la taille de l'image */
+  height: 200px;
+  border-radius: 50%; /* Rendre l'image ronde */
+}
+
+/* Section principale */
+.mainContent {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.card {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card h2 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.card p {
+  font-size: 1rem;
+}
+
+.button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+
+/* Footer */
+.footer {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #777;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #ddd; /* Bordure en haut pour plus de clarté */
+  background-color: #f4f4f4;
+  width: 100%;
+}
+
+/* Media Queries pour mobile */
+@media (max-width: 768px) {
+  .mainContent {
+    grid-template-columns: 1fr; /* Passe à une seule colonne sur mobile */
+  }
+
+  /* Image de l'en-tête pour les petits écrans */
+  .heroImage {
+    width: 50px;
+    height: 50px;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+  }
+}
