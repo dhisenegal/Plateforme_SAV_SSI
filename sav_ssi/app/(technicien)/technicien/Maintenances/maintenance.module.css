@@ -1,0 +1,100 @@
+/* styles/maintenance.module.css */
+
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.header {
+  background-color: #1a73e8;
+  color: white;
+  padding: 20px;
+  text-align: center;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.header h1 {
+  font-size: 2.5rem;
+}
+
+.header p {
+  font-size: 1.2rem;
+  margin-top: 10px;
+}
+
+.mainContent {
+  padding: 20px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+}
+
+.table th,
+.table td {
+  padding: 12px;
+  border: 1px solid #ddd;
+  text-align: left;
+}
+
+.table th {
+  background-color: #1a73e8;
+  color: white;
+}
+
+.button {
+  background-color: #007bff;
+  color: white;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+.button:hover {
+  background-color: #0056b3;
+}
+
+/* Styles pour l'état */
+.etat {
+  display: inline-block;
+  padding: 5px 10px;
+  font-weight: bold;
+  border-radius: 5px;
+}
+
+.etat.Programmé {
+  background-color: #ffa500; /* Orange pour Programmé */
+  color: white;
+}
+
+.etat.EnCours {
+  background-color: #f1c40f; /* Jaune pour En cours */
+  color: white;
+}
+
+.etat.Terminé {
+  background-color: #2ecc71; /* Vert pour Terminé */
+  color: white;
+}
+
+.footer {
+  text-align: center;
+  font-size: 0.9rem;
+  color: #777;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #ddd;
+  background-color: #f4f4f4;
+}

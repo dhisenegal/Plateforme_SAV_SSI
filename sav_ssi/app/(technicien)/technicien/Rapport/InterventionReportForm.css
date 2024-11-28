@@ -1,0 +1,194 @@
+/* Appliquer box-sizing globalement pour tout le document */
+*,
+*::before,
+*::after {
+  box-sizing: border-box; /* Inclut bordures et paddings dans la largeur totale */
+}
+
+/* Empêcher le débordement horizontal du body */
+body {
+  overflow-x: hidden; /* Empêche la barre de défilement horizontale */
+  margin: 0; /* Assurer qu'il n'y ait pas de marge par défaut */
+  padding: 0; /* Enlever le padding par défaut */
+}
+
+/* Container principal du formulaire */
+.form-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr; /* Deux colonnes égales pour la partie gauche et droite */
+  gap: 20px; /* Espacement entre les colonnes */
+  align-items: center; /* Aligner les éléments au centre */
+  width: 100%; /* S'assurer que le formulaire prend toute la largeur disponible */
+  padding: 0 10px; /* Ajouter un peu de padding pour éviter que le formulaire touche les bords */
+  box-sizing: border-box; /* S'assurer que la largeur prend en compte les paddings */
+  overflow: hidden; /* Empêche tout débordement */
+}
+
+/* Partie gauche : informations client */
+.client-info {
+  display: grid;
+  gap: 15px;
+}
+
+/* Partie droite : informations d'intervention */
+.intervention-info {
+  display: grid;
+  gap: 15px;
+}
+
+/* Style des champs (inputs et textarea) pour s'assurer qu'ils occupent toute la largeur disponible */
+input,
+textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box; /* Assure que la largeur prend en compte les paddings */
+}
+
+/* Style du titre */
+h1.form-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #1a73e8;
+  text-align: center;
+  margin: 30px 0;
+  font-family: "Helvetica Neue", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+}
+
+/* Style des étiquettes (labels) */
+label {
+  font-weight: bold; /* Les étiquettes sont en gras */
+}
+
+/* Style du bouton "Envoyer le rapport" */
+button[type="submit"] {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Changer la couleur au survol */
+button[type="submit"]:hover {
+  background-color: #0056b3;
+}
+
+/* Ajustement pour la section "Technicien" et "Non Client" */
+.tech-client-info {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+.tech-info,
+.non-client-info {
+  width: 48%; /* Chaque champ prend 48% de la largeur */
+}
+
+.rapport-form {
+  max-width: 800px; /* Restaure la taille de la fiche initiale */
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  width: 100%; /* Assure que la fiche prend toute la largeur */
+  box-sizing: border-box; /* Prévenir tout débordement */
+}
+
+button {
+  margin-top: 20px;
+  background-color: blue;
+  color: white;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.rapport-form div {
+  margin-bottom: 16px;
+}
+
+/* Media Queries pour les petits écrans (tablettes et smartphones) */
+@media (max-width: 768px) {
+  /* Passer à une seule colonne pour les petits écrans */
+  .form-container {
+    grid-template-columns: 1fr; /* Une colonne au lieu de deux */
+    padding: 0 10px; /* Ajouter un padding à gauche et à droite pour éviter les débordements */
+  }
+
+  /* Ajuster la taille du titre */
+  h1.form-title {
+    font-size: 2rem;
+    margin: 20px 0;
+  }
+
+  /* Les champs prennent toute la largeur */
+  input,
+  textarea {
+    font-size: 1rem;
+  }
+
+  .tech-client-info {
+    flex-direction: column; /* Les champs seront l'un sous l'autre */
+    margin-top: 10px;
+  }
+
+  .tech-info,
+  .non-client-info {
+    width: 100%; /* Champs prennent toute la largeur */
+    margin-bottom: 10px;
+  }
+
+  .rapport-form {
+    padding: 10px;
+    margin: 0 10px;
+    width: 100%;
+  }
+
+  button[type="submit"] {
+    font-size: 0.9rem;
+    padding: 8px 16px;
+  }
+}
+
+/* Pour les très petits écrans (smartphones en portrait) */
+@media (max-width: 480px) {
+  h1.form-title {
+    font-size: 1.5rem;
+    margin: 15px 0;
+  }
+
+  input,
+  textarea {
+    font-size: 0.9rem;
+    padding: 6px;
+  }
+
+  label {
+    font-size: 0.9rem;
+  }
+
+  button[type="submit"] {
+    width: 100%; /* Le bouton prend toute la largeur */
+    font-size: 1rem;
+  }
+
+  /* La fiche prend toute la largeur de l'écran */
+  .rapport-form {
+    width: 100%;
+    margin: 0 10px; /* Ajout d'un peu de marge pour les petits écrans */
+  }
+}
