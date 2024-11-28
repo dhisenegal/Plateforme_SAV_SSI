@@ -1,264 +1,266 @@
-"use client";
+"use client"
 
-import React, { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import React, { useState, useEffect } from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+  addSysteme,
+  addMarque,
+  addModele,
+  addEquipement,
+  getAllEquipements,
+  getAllSystemes,
+  getAllMarques,
+  getAllModeles,
+  updateEquipement,
+  deleteEquipement,
+} from "@/actions/equipement";
 
-type Equipment = {
+// Définir les types des entités
+interface Systeme {
   id: number;
-  name: string;
-  description: string;
-  system: string;
-  brand: string;
-  model: string;
-};
+  nom: string;
+}
 
-const EquipmentManagementPage = () => {
-  const [equipments, setEquipments] = useState<Equipment[]>([]);
-  const [systems, setSystems] = useState<string[]>(["SDI", "Extincteurs automatiques"]);
-  const [brands, setBrands] = useState<string[]>(["Brand A", "Brand B"]);
-  const [models, setModels] = useState<string[]>(["Model X", "Model Y"]);
+interface Marque {
+  id: number;
+  nom: string;
+}
 
-  const [isEquipmentModalOpen, setIsEquipmentModalOpen] = useState(false);
-  const [currentEquipment, setCurrentEquipment] = useState<Equipment | null>(null);
+interface Modele {
+  id: number;
+  nom: string;
+}
 
-  const [entityManager, setEntityManager] = useState<{
-    type: "system" | "brand" | "model";
-    isOpen: boolean;
-  }>({ type: "system", isOpen: false });
+interface Equipement {
+  id: number;
+  nom: string;
+  systeme?: Systeme;
+  marqueSsi?: Marque;
+  modeleSsi?: Modele;
+}
 
-  const openEquipmentModal = (equipment?: Equipment) => {
-    setCurrentEquipment(
-      equipment || {
-        id: 0,
-        name: "",
-        description: "",
-        system: systems[0] || "",
-        brand: brands[0] || "",
-        model: models[0] || "",
-      }
-    );
-    setIsEquipmentModalOpen(true);
-  };
+const GestionEquipements = () => {
+  const [systemName, setSystemName] = useState<string>("");
+  const [brandName, setBrandName] = useState<string>("");
+  const [modelName, setModelName] = useState<string>("");
+  const [equipmentData, setEquipmentData] = useState<{
+    nom: string;
+    idSysteme: number;
+    idMarqueSsi: number;
+    idModeleSsi: number;
+  }>({
+    nom: "",
+    idSysteme: 0,
+    idMarqueSsi: 0,
+    idModeleSsi: 0,
+  });
+  const [equipements, setEquipements] = useState<Equipement[]>([]);
+  const [systemes, setSystemes] = useState<Systeme[]>([]);
+  const [marques, setMarques] = useState<Marque[]>([]);
+  const [modeles, setModeles] = useState<Modele[]>([]);
 
-  const closeEquipmentModal = () => {
-    setIsEquipmentModalOpen(false);
-    setCurrentEquipment(null);
-  };
+  // Pour gérer l'état de la fenêtre modale
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (currentEquipment) {
-      if (currentEquipment.id === 0) {
-        setEquipments([...equipments, { ...currentEquipment, id: equipments.length + 1 }]);
-      } else {
-        setEquipments(
-          equipments.map((equip) =>
-            equip.id === currentEquipment.id ? currentEquipment : equip
-          )
-        );
-      }
-    }
-    closeEquipmentModal();
-  };
+  // Charger les données initiales
+  useEffect(() => {
+    fetchData();
+  }, []);
 
-  const handleDelete = (id: number) => {
-    setEquipments(equipments.filter((equip) => equip.id !== id));
-  };
-
-  const handleEntityChange = (type: "system" | "brand" | "model", newValue: string) => {
-    switch (type) {
-      case "system":
-        setSystems((prev) => [...prev, newValue]);
-        break;
-      case "brand":
-        setBrands((prev) => [...prev, newValue]);
-        break;
-      case "model":
-        setModels((prev) => [...prev, newValue]);
-        break;
+  const fetchData = async () => {
+    try {
+      setSystemes(await getAllSystemes());
+      setMarques(await getAllMarques());
+      setModeles(await getAllModeles());
+      setEquipements(await getAllEquipements());
+    } catch (error) {
+      console.error("Erreur lors du chargement des données :", error);
     }
   };
 
-  const handleEntityDelete = (type: "system" | "brand" | "model", value: string) => {
-    switch (type) {
-      case "system":
-        setSystems((prev) => prev.filter((item) => item !== value));
-        break;
-      case "brand":
-        setBrands((prev) => prev.filter((item) => item !== value));
-        break;
-      case "model":
-        setModels((prev) => prev.filter((item) => item !== value));
-        break;
-    }
+  const handleAddSystem = async () => {
+    await addSysteme(systemName);
+    setSystemName("");
+    fetchData();
+    alert("Système ajouté !");
+  };
+
+  const handleAddBrand = async () => {
+    await addMarque(brandName);
+    setBrandName("");
+    fetchData();
+    alert("Marque ajoutée !");
+  };
+
+  const handleAddModel = async () => {
+    await addModele(modelName);
+    setModelName("");
+    fetchData();
+    alert("Modèle ajouté !");
+  };
+
+  const handleAddEquipment = async () => {
+    await addEquipement(equipmentData);
+    setEquipmentData({ nom: "", idSysteme: 0, idMarqueSsi: 0, idModeleSsi: 0 });
+    fetchData();
+    setIsModalOpen(false); // Fermer la modale après ajout
+    alert("Équipement ajouté !");
+  };
+
+  const handleUpdateEquipment = async (id: number, updatedData: Equipement) => {
+    await updateEquipement(id, updatedData);
+    fetchData();
+    alert("Équipement modifié !");
+  };
+
+  const handleDeleteEquipment = async (id: number) => {
+    await deleteEquipement(id);
+    fetchData();
+    alert("Équipement supprimé !");
   };
 
   return (
-    <div className="flex flex-col min-h-screen p-4">
+    <div className="container mx-auto p-5">
       <h1 className="text-2xl font-bold mb-4">Gestion des Équipements</h1>
 
-      {/* Boutons pour gérer les entités dynamiques */}
-      <div className="flex gap-4 mb-4">
-        <Button onClick={() => setEntityManager({ type: "system", isOpen: true })}>
-          Gérer les Systèmes
-        </Button>
-        <Button onClick={() => setEntityManager({ type: "brand", isOpen: true })}>
-          Gérer les Marques
-        </Button>
-        <Button onClick={() => setEntityManager({ type: "model", isOpen: true })}>
-          Gérer les Modèles
-        </Button>
-        <Button onClick={() => openEquipmentModal()} className="ml-auto">
-          Ajouter un Équipement
-        </Button>
+      {/* Ajouter un système */}
+      <div>
+        <input
+          type="text"
+          value={systemName}
+          onChange={(e) => setSystemName(e.target.value)}
+          placeholder="Nom du système"
+          className="border p-2 mb-2"
+        />
+        <button onClick={handleAddSystem} className="bg-blue-500 text-white p-2 ml-2">
+          Ajouter Système
+        </button>
       </div>
+
+      {/* Ajouter une marque */}
+      <div>
+        <input
+          type="text"
+          value={brandName}
+          onChange={(e) => setBrandName(e.target.value)}
+          placeholder="Nom de la marque"
+          className="border p-2 mb-2"
+        />
+        <button onClick={handleAddBrand} className="bg-blue-500 text-white p-2 ml-2">
+          Ajouter Marque
+        </button>
+      </div>
+
+      {/* Ajouter un modèle */}
+      <div>
+        <input
+          type="text"
+          value={modelName}
+          onChange={(e) => setModelName(e.target.value)}
+          placeholder="Nom du modèle"
+          className="border p-2 mb-2"
+        />
+        <button onClick={handleAddModel} className="bg-blue-500 text-white p-2 ml-2">
+          Ajouter Modèle
+        </button>
+      </div>
+
+      {/* Ajouter un équipement */}
+      <button onClick={() => setIsModalOpen(true)} className="bg-green-500 text-white p-2 mt-4">
+        Ajouter Équipement
+      </button>
+
+      {/* Fenêtre Modale pour ajouter un équipement */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-500 bg-opacity-75 flex justify-center items-center z-50">
+          <div className="bg-white p-5 rounded-lg w-96">
+            <h3 className="text-xl font-bold mb-4">Ajouter un Équipement</h3>
+            <input
+              type="text"
+              value={equipmentData.nom}
+              onChange={(e) => setEquipmentData({ ...equipmentData, nom: e.target.value })}
+              placeholder="Nom de l'équipement"
+              className="border p-2 mb-2 w-full"
+            />
+            <select
+              value={equipmentData.idSysteme}
+              onChange={(e) =>
+                setEquipmentData({ ...equipmentData, idSysteme: parseInt(e.target.value) })
+              }
+              className="border p-2 mb-2 w-full"
+            >
+              <option value="">Sélectionner un système</option>
+              {systemes.map((systeme) => (
+                <option key={systeme.id} value={systeme.id}>
+                  {systeme.nom}
+                </option>
+              ))}
+            </select>
+            <select
+              value={equipmentData.idMarqueSsi}
+              onChange={(e) =>
+                setEquipmentData({ ...equipmentData, idMarqueSsi: parseInt(e.target.value) })
+              }
+              className="border p-2 mb-2 w-full"
+            >
+              <option value="">Sélectionner une marque</option>
+              {marques.map((marque) => (
+                <option key={marque.id} value={marque.id}>
+                  {marque.nom}
+                </option>
+              ))}
+            </select>
+            <select
+              value={equipmentData.idModeleSsi}
+              onChange={(e) =>
+                setEquipmentData({ ...equipmentData, idModeleSsi: parseInt(e.target.value) })
+              }
+              className="border p-2 mb-2 w-full"
+            >
+              <option value="">Sélectionner un modèle</option>
+              {modeles.map((modele) => (
+                <option key={modele.id} value={modele.id}>
+                  {modele.nom}
+                </option>
+              ))}
+            </select>
+            <div className="mt-4 flex justify-between">
+              <button
+                onClick={handleAddEquipment}
+                className="bg-green-500 text-white p-2"
+              >
+                Ajouter
+              </button>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="bg-red-500 text-white p-2"
+              >
+                Annuler
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Liste des équipements */}
-      <div className="overflow-x-auto">
-        <table className="min-w-full bg-white border border-gray-200 rounded-md shadow-md">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-2 text-left">Nom</th>
-              <th className="px-6 py-2 text-left">Description</th>
-              <th className="px-6 py-2 text-left">Système</th>
-              <th className="px-6 py-2 text-left">Marque</th>
-              <th className="px-6 py-2 text-left">Modèle</th>
-              <th className="px-6 py-2 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {equipments.map((equip) => (
-              <tr key={equip.id} className="border-b">
-                <td className="px-6 py-3">{equip.name}</td>
-                <td className="px-6 py-3">{equip.description}</td>
-                <td className="px-6 py-3">{equip.system}</td>
-                <td className="px-6 py-3">{equip.brand}</td>
-                <td className="px-6 py-3">{equip.model}</td>
-                <td className="px-6 py-3">
-                  <Button variant="outline" onClick={() => openEquipmentModal(equip)} className="mr-2">
-                    Modifier
-                  </Button>
-                  <Button variant="outline" onClick={() => handleDelete(equip.id)}>
-                    Supprimer
-                  </Button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="mt-6">
+        <h3 className="text-xl font-bold">Liste des Équipements</h3>
+        {equipements.map((equipement) => (
+          <div key={equipement.id} className="border p-4 mb-2">
+            <p>Nom: {equipement.nom}</p>
+            <p>Système: {equipement.systeme?.nom}</p>
+            <p>Marque: {equipement.marqueSsi?.nom}</p>
+            <p>Modèle: {equipement.modeleSsi?.nom}</p>
+            <button
+              onClick={() => handleDeleteEquipment(equipement.id)}
+              className="bg-red-500 text-white p-2 mt-2"
+            >
+              Supprimer
+            </button>
+          </div>
+        ))}
       </div>
-
-      {/* Modale pour ajouter/modifier un équipement */}
-      <Dialog open={isEquipmentModalOpen} onOpenChange={closeEquipmentModal}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{currentEquipment?.id ? "Modifier" : "Ajouter"} un Équipement</DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleFormSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="name">Nom</Label>
-              <Input
-                id="name"
-                value={currentEquipment?.name || ""}
-                onChange={(e) =>
-                  setCurrentEquipment({ ...currentEquipment!, name: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <Label htmlFor="description">Description</Label>
-              <Input
-                id="description"
-                value={currentEquipment?.description || ""}
-                onChange={(e) =>
-                  setCurrentEquipment({ ...currentEquipment!, description: e.target.value })
-                }
-              />
-            </div>
-            <div>
-              <Label>Système</Label>
-              <Select
-                onValueChange={(value) =>
-                  setCurrentEquipment({ ...currentEquipment!, system: value })
-                }
-                defaultValue={currentEquipment?.system || systems[0]}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choisir un système" />
-                </SelectTrigger>
-                <SelectContent>
-                  {systems.map((system, index) => (
-                    <SelectItem key={index} value={system}>
-                      {system}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Marque</Label>
-              <Select
-                onValueChange={(value) =>
-                  setCurrentEquipment({ ...currentEquipment!, brand: value })
-                }
-                defaultValue={currentEquipment?.brand || brands[0]}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choisir une marque" />
-                </SelectTrigger>
-                <SelectContent>
-                  {brands.map((brand, index) => (
-                    <SelectItem key={index} value={brand}>
-                      {brand}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Modèle</Label>
-              <Select
-                onValueChange={(value) =>
-                  setCurrentEquipment({ ...currentEquipment!, model: value })
-                }
-                defaultValue={currentEquipment?.model || models[0]}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Choisir un modèle" />
-                </SelectTrigger>
-                <SelectContent>
-                  {models.map((model, index) => (
-                    <SelectItem key={index} value={model}>
-                      {model}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter>
-              <Button type="submit">{currentEquipment?.id ? "Modifier" : "Ajouter"}</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };
 
-export default EquipmentManagementPage;
+export default GestionEquipements;
