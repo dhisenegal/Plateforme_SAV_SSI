@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { useParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
 
 const PageTechnicien = () => {
   const params = useParams();
@@ -46,44 +45,11 @@ const PageTechnicien = () => {
 
   // State pour l'onglet sélectionné
   const [selectedTab, setSelectedTab] = useState<'interventions' | 'rapports'>('interventions');
-  const [message, setMessage] = useState('ceci est un message');
-
 
   // Vérifier si le technicien existe
   if (!technicien) {
     return <div>Technicien introuvable</div>;
   }
-
-  //Envoi de notification
-  const handleSendNotification = async () => {
-    if (message.trim() === '' ) {
-      alert('Veuillez entrer un message.');
-      return;
-    }
-  
-    try {
-      const response = await fetch('/api/sendMessage', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          phone: technicien.phone,
-          message: message,
-        }),
-      });
-  
-      if (!response.ok) {
-        throw new Error('Erreur lors de l\'envoi de la notification');
-      }
-  
-      alert('Notification envoyée avec succès');
-      setMessage(''); // Réinitialise le champ de message
-    } catch (error) {
-      console.error(error);
-      alert('Échec de l\'envoi de la notification');
-    }
-  };
   
 
   return (

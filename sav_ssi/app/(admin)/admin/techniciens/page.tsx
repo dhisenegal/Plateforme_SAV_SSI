@@ -11,7 +11,7 @@ import Link from "next/link";
 const TechniniciensPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [techniciens, setTechniciens] = useState([
-    { id: 1, prenom: "Aboubakrine", nom: "Fall", statut: "inactif" },
+    { id: 1, prenom: "Aboubakrine", nom: "Fall", statut: "inactif", telephone: "+221773815479" },
   ]);
 
   // États pour le formulaire
