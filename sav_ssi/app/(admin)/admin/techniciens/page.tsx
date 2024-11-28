@@ -11,7 +11,11 @@ import Link from "next/link";
 const TechniniciensPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [techniciens, setTechniciens] = useState([
+<<<<<<< HEAD
     { id: 1, prenom: "Aboubakrine", nom: "Fall", statut: "inactif" },
+=======
+    { id: 1, prenom: "Aboubakrine", nom: "Fall", statut: "inactif", telephone: "+221773815479" },
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
   ]);
 
   // États pour le formulaire
@@ -108,7 +112,11 @@ const TechniniciensPage = () => {
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
+<<<<<<< HEAD
                     <Label htmlFor="login" className="text-right">Identifiant</Label>
+=======
+                    <Label htmlFor="login" className="text-right">Identifiant de connexion</Label>
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
                     <Input
                       id="login"
                       value={login}
@@ -119,7 +127,11 @@ const TechniniciensPage = () => {
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
+<<<<<<< HEAD
                     <Label htmlFor="password" className="text-right">Mot de passe</Label>
+=======
+                    <Label htmlFor="password" className="text-right">Mot de passe provisoire</Label>
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
                     <Input
                       id="password"
                       type="password"

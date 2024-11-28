@@ -22,6 +22,7 @@
       "@/*": ["./*"]
     }
   },
+<<<<<<< HEAD
   "include": [
     "next-env.d.ts",
     "**/*.ts",
@@ -30,5 +31,8 @@
     "app/(technicien)/technicien/DetailMaintenance/[id].js",
     "app/(technicien)/technicien/DetailMaintenance/[id].js"
 , "app/(technicien)/technicien/DetailMaintenance/test.js"  ],
+=======
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
   "exclude": ["node_modules"]
 }

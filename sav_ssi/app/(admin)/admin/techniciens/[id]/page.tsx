@@ -8,6 +8,10 @@ import React, { useState } from 'react';
 import { IoIosArrowBack } from "react-icons/io";
 import { MdOutlineKeyboardArrowDown } from "react-icons/md";
 import { TbReportSearch } from "react-icons/tb";
+<<<<<<< HEAD
+=======
+
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,8 +28,13 @@ const PageTechnicien = () => {
 
   // Simuler une base de données pour récupérer les données
   const techniciens = [
+<<<<<<< HEAD
     { id: '1', prenom: "Aboubakrine", nom: "Fall", statut: "actif", email: "fall@example.com" },
     { id: '2', prenom: "Awa", nom: "Diop", statut: "inactif", email: "diop@example.com" },
+=======
+    { id: '1', prenom: "Aboubakrine", nom: "Fall", statut: "actif", phone: "+221773815479" },
+    { id: '2', prenom: "Awa", nom: "Diop", statut: "inactif", phone: "diop@example.com" },
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
   ];
 
   // Récupérer le technicien en fonction de l'ID
@@ -49,6 +58,10 @@ const PageTechnicien = () => {
   if (!technicien) {
     return <div>Technicien introuvable</div>;
   }
+<<<<<<< HEAD
+=======
+  
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
 
   return (
     <div>
