@@ -64,6 +64,8 @@ model Client {
   Contacts  Contact[]
   Installations Installation[]
   DemandesIntervention DemandeIntervention[]
+
+  @@map("client")
 }
 
 model Site {
@@ -237,4 +239,6 @@ model Intervention {
   Technicien          Utilisateur @relation("TechnicienIntervention", fields: [idTechnicien], references: [id])
   Contact             Contact     @relation(fields: [idContact], references: [id])
   DemandeIntervention DemandeIntervention @relation(fields: [idDemandeIntervention], references: [id])
+
+  @@map("intervention")
 }

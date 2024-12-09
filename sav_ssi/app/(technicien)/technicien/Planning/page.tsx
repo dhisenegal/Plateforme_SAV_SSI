@@ -1,145 +1,76 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
-import Head from "next/head";
+import React from "react";
 import Link from "next/link";
+import { FaEye } from "react-icons/fa"; // Ajout d'une icône
+import { getPlanning, formatDate, getClientName, getDescription, getType } from "@/lib/fonction";
 
-const Planning = () => {
-  const [interventions, setInterventions] = useState([]);
+const PlanningPage = async () => {
+  try {
+    const uniquePlanning = await getPlanning();
 
-  useEffect(() => {
-    const fetchInterventions = async () => {
-      const data = [
-        {
-          id: 1,
-          date: "2024-12-16",
-          client: "AIR FRANCE",
-          description: "Réparation d'un réseau",
-          etat: "Programmé",
-          type: "Intervention",
-        },
-        {
-          id: 2,
-          date: "2024-12-14",
-          client: "Sonatel",
-          description: "Maintenance d'Extincteur",
-          etat: "Programmé",
-          type: "Maintenance",
-        },
-        {
-          id: 3,
-          date: "2024-12-05",
-          client: "DER",
-          description: "Maintenance d'Extincteur",
-          etat: "Programmé",
-          type: "Maintenance",
-        },
-        {
-          id: 5,
-          date: "2024-12-01",
-          client: "Poste Sénégal",
-          description: "Maintenance d'Extincteur",
-          etat: "Programmé",
-          type: "Maintenance",
-        },
-        {
-          id: 4,
-          date: "2024-11-22",
-          client: "SENELEC",
-          description: "Intervention serveur",
-          etat: "En cours",
-          type: "Intervention",
-        },
-      ];
-      setInterventions(data);
-    };
+    if (uniquePlanning.length === 0) {
+      return <div className="text-center text-gray-500">Aucune intervention ou maintenance prévue.</div>;
+    }
 
-    fetchInterventions();
-  }, []);
+    return (
+      <div className="max-w-6xl mx-auto p-6 bg-gray-50 shadow-xl rounded-lg border border-gray-300">
+        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 rounded-lg text-white text-center shadow-lg">
+          <h1 className="text-4xl font-extrabold tracking-wide uppercase">Planning</h1>
+        </div>
+        <table className="w-full border-collapse bg-white shadow-md rounded-lg overflow-hidden mt-6">
+          <thead>
+            <tr className="bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 text-gray-700">
+              <th className="px-6 py-3 text-left font-bold text-sm uppercase tracking-wider">Date</th>
+              <th className="px-6 py-3 text-left font-bold text-sm uppercase tracking-wider">Client</th>
+              <th className="px-6 py-3 text-left font-bold text-sm uppercase tracking-wider">Description</th>
+              <th className="px-6 py-3 text-left font-bold text-sm uppercase tracking-wider">Type</th>
+              <th className="px-6 py-3 text-left font-bold text-sm uppercase tracking-wider">Statut</th>
+              <th className="px-6 py-3 text-center font-bold text-sm uppercase tracking-wider">Voir détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            {uniquePlanning.map((item, index) => {
+              const rowClass = getType(item) === "Intervention" ? "bg-orange-50 hover:bg-orange-100" : "bg-green-50 hover:bg-green-100";
+              const typeParam = getType(item).toLowerCase();
 
-  return (
-    <>
-      <Head>
-        <title>Planning - Technicien</title>
-      </Head>
-
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        {/* Header */}
-        <header className="bg-blue-600 text-white py-8 px-6 shadow-lg">
-          <div className="max-w-7xl mx-auto text-center">
-            <h1 className="text-3xl font-bold">Planning</h1>
-            <p className="text-lg mt-2">Consultez votre planning</p>
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="flex-grow container mx-auto px-6 py-8">
-          <div className="overflow-x-auto bg-white shadow-lg rounded-lg">
-            <table className="min-w-full table-auto">
-              <thead className="bg-blue-100 text-gray-700">
-                <tr>
-                  <th className="px-4 py-2 text-left">Date</th>
-                  <th className="px-4 py-2 text-left">Client</th>
-                  <th className="px-4 py-2 text-left">Description</th>
-                  <th className="px-4 py-2 text-left">Type</th>
-                  <th className="px-4 py-2 text-left">État</th>
-                  <th className="px-4 py-2 text-left">Actions</th>
+              return (
+                <tr
+                  key={`${item.id}-${item.dateIntervention || item.dateMaintenance}`}
+                  className={`${rowClass} ${index % 2 === 0 ? "bg-gray-100" : "bg-white"} hover:bg-blue-50 transition duration-300`}
+                >
+                  <td className="px-6 py-4 border-t text-gray-800 text-sm">
+                    {formatDate(item.dateIntervention || item.dateMaintenance)}
+                  </td>
+                  <td className="px-6 py-4 border-t text-gray-800 text-sm">
+                    {getClientName(item)}
+                  </td>
+                  <td className="px-6 py-4 border-t text-gray-800 text-sm">
+                    {getDescription(item)}
+                  </td>
+                  <td className="px-6 py-4 border-t text-gray-800 text-sm">
+                    {getType(item)}
+                  </td>
+                  <td className="px-6 py-4 border-t text-gray-800 text-sm">
+                    {item.DemandeIntervention ? item.DemandeIntervention.statut : item.statut}
+                  </td>
+                  <td className="px-6 py-4 border-t text-center">
+                    <Link
+                      href={`/technicien/${item.id}?type=${typeParam}`}
+                      className="text-blue-500 hover:text-blue-700 font-medium flex items-center justify-center gap-2 transition duration-200"
+                    >
+                      <FaEye /> Voir détails
+                    </Link>
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {interventions.map((intervention) => (
-                  <tr
-                    key={intervention.id}
-                    className="border-b hover:bg-gray-100"
-                  >
-                    <td className="px-4 py-2 text-black">{intervention.date}</td>
-                    <td className="px-4 py-2 text-black">{intervention.client}</td>
-                    <td className="px-4 py-2 text-black">{intervention.description}</td>
-                    <td className="px-4 py-2 text-black">
-                      <span
-                        className={`px-2 py-1 rounded-full text-sm ${
-                          intervention.type === "Maintenance"
-                            ? "bg-green-100 text-green-800"
-                            : "bg-blue-100 text-blue-800"
-                        }`}
-                      >
-                        {intervention.type}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-black">
-                      <span
-                        className={`px-2 py-1 rounded-full text-sm ${
-                          intervention.etat === "Programmé"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : intervention.etat === "En cours"
-                            ? "bg-yellow-300 text-yellow-800"
-                            : "bg-green-100 text-green-800"
-                        }`}
-                      >
-                        {intervention.etat}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2">
-                      <Link href={"technicien/Maintenances"}>
-                        <button className="bg-blue-600 text-white py-1 px-4 rounded-md hover:bg-blue-700 transition-colors">
-                          Voir Détails
-                        </button>
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </main>
-
-        {/* Footer */}
-        <footer className="bg-gray-800 text-white text-center py-4">
-          <p>© 2024 Système d'intervention - Tous droits réservés</p>
-        </footer>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
-    </>
-  );
+    );
+  } catch (error) {
+    console.error("Erreur lors de la récupération des interventions et des maintenances :", error);
+    return <div className="text-center text-red-600">Erreur lors de la récupération des interventions et des maintenances.</div>;
+  }
 };
 
-export default Planning;
+export default PlanningPage;

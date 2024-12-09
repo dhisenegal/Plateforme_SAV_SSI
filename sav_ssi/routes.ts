@@ -3,9 +3,14 @@
  * ces routes ne nécessitent pas du tout de s'authentifier
  * @type {string[]}
  */
-export const publicRoutes = [
-  "/",
-];
+export const publicRoutes = (() =>{
+  const routes = ["/"];
+
+  routes.push("/technicien/*");
+
+  return routes;
+})();
+  
 
 /**
  * un tableau de routes non accessibles au public

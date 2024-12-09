@@ -5,20 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { FaBars, FaTimes } from "react-icons/fa";
 import { ModeToggle } from "./mode-toggle";
-<<<<<<< HEAD
-=======
 import {useSession, signOut} from "next-auth/react";
 import { useRouter } from "next/navigation";
->>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
 
 const Nav = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-<<<<<<< HEAD
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
-=======
   const { data: session } = useSession(); 
   const router = useRouter(); 
 
@@ -32,7 +24,6 @@ const Nav = () => {
   const handleLogout = () => {
     signOut(); // Déconnexion via next-auth
   };
->>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
 
   return (
     <nav className="flex justify-between items-center py-4 px-8 shadow-lg fixed w-full bg-white z-50">
@@ -68,13 +59,6 @@ const Nav = () => {
      <div className="flex items-center space-x-4">
       <ModeToggle />
         <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hidden md:block">
-<<<<<<< HEAD
-          Connexion
-        </button>
-     </div>
-      
-
-=======
         {session ? (
             <Link href="/" onClick={handleLogout} 
             className="ml-4 hover:text-blue-400 cursor-pointer">
@@ -89,7 +73,6 @@ const Nav = () => {
         </button>
      </div>
       
->>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
       {/* Icône Hamburger pour Mobile */}
       <div className="md:hidden flex items-center">
         <button onClick={toggleMenu} className="text-gray-700 focus:outline-none">
@@ -123,9 +106,6 @@ const Nav = () => {
             </li>
             <li>
               <button onClick={toggleMenu} className="bg-blue-600 text-white px-4 py-2 rounded-lg">
-<<<<<<< HEAD
-                Connexion
-=======
               {session ? (
             <Link href="/" onClick={handleLogout} 
             className="ml-4 hover:text-blue-400 cursor-pointer">
@@ -137,7 +117,6 @@ const Nav = () => {
               Connexion
             </Link>
           )}
->>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
               </button>
             </li>
           </ul>

@@ -1,164 +1,78 @@
-"use client";
-
 import React from "react";
-import Head from "next/head";
-import Image from "next/image";
+import { getNextIntervention, getNextMaintenance, getTechnicienById } from "@/lib/fonction";
 import Link from "next/link";
 
-// Données fictives des interventions et maintenances
-const interventions = [
-  {
-    id: "1",
-    client: "AIR FRANCE",
-    date: "22/11/2024",
-    description: "Maintenance de l'équipement de communication.",
-    status: "En cours",
-  },
-  {
-    id: "2",
-    client: "SENELEC",
-    date: "16/12/2024",
-    description: "Inspection et calibration des générateurs électriques.",
-    status: "Terminé",
-  },
-];
+const Technicien = async () => {
+  try {
+    // Exemple d'ID du technicien (à récupérer dynamiquement ou via un contexte/authentification)
+    const technicienId = 1;
+    const technicienNom = await getTechnicienById(technicienId);
 
-const maintenances = [
-  {
-    id: "1",
-    client: "SENELEC",
-    date: "14/12/2024",
-    description: "Réparation de transformateurs électriques.",
-    status: "Programmé",
-  },
-  {
-    id: "2",
-    client: "AIR FRANCE",
-    date: "18/11/2024",
-    description: "Maintenance du système de communication.",
-    status: "Terminé",
-  },
-];
+    const prochaineIntervention = await getNextIntervention();
+    const prochaineMaintenance = await getNextMaintenance();
 
-// Trier par date
-const sortedInterventions = interventions.sort(
-  (a, b) => new Date(a.date) - new Date(b.date)
-);
-const sortedMaintenances = maintenances.sort(
-  (a, b) => new Date(a.date) - new Date(b.date)
-);
-
-// Prochaine intervention et maintenance
-const prochaineIntervention = sortedInterventions[0];
-const prochaineMaintenance = sortedMaintenances[0];
-
-const Technicien = () => {
-  return (
-    <>
-      <Head>
-        <title>Accueil - Technicien</title>
-      </Head>
-
+    return (
       <div className="min-h-screen bg-gradient-to-r from-blue-50 to-green-50 flex flex-col">
         {/* Header */}
-        <header className="bg-blue-600 text-white py-4 px-6 shadow-lg">
-          <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between">
+        <header className="bg-blue-600 text-white py-4 px-6 shadow-lg flex items-center">
+          <div className="flex items-center gap-4">
+            <img
+              src="/images/technicien.png"
+              alt="Photo du technicien"
+              className="w-16 h-16 rounded-full border-2 border-white"
+            />
             <div>
               <h1 className="text-2xl font-bold tracking-tight">
-                Bienvenue, Abdoulaye
+                Bienvenue, {technicienNom}
               </h1>
-              <p className="text-sm text-gray-200">
-                Voici votre tableau de bord
-              </p>
-            </div>
-            <div className="mt-4 md:mt-0">
-              <Image
-                src="/images/technicien.png"
-                alt="Technicien au travail"
-                width={80}
-                height={80}
-                className="rounded-full border-4 border-white"
-              />
+              <p className="text-sm">Voici votre tableau de bord</p>
             </div>
           </div>
         </header>
 
         {/* Main Content */}
         <main className="flex-grow container mx-auto px-6 py-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-          {/* Prochaine Maintenance */}
-          {prochaineMaintenance && (
-            <div
-              key={`maintenance-${prochaineMaintenance.id}`}
-              className="bg-white shadow-lg rounded-lg p-4 flex flex-col justify-between text-center transition-transform hover:scale-105 hover:shadow-xl h-[220px]"
-            >
-              <h3 className="text-lg font-semibold text-black mb-2">
-                Prochaine Maintenance
-              </h3>
-              <p className="mb-1 text-gray-800">
-                Client: {prochaineMaintenance.client}
-              </p>
-              <p className="mb-1 text-gray-800">
-                Date: {prochaineMaintenance.date}
-              </p>
-              <span
-                className={`px-2 py-1 rounded-full text-xs ${
-                  prochaineMaintenance.status === "En cours"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-green-100 text-green-800"
-                }`}
-              >
-                {prochaineMaintenance.status}
-              </span>
-              <Link
-                href={`/technicien/${prochaineMaintenance.id}?type=maintenance`}
-              >
-                <button className="mt-2 bg-blue-600 text-white py-1 px-3 rounded-md hover:bg-blue-700 transition-colors">
-                  Voir Détails
-                </button>
-              </Link>
-            </div>
-          )}
-
           {/* Prochaine Intervention */}
-          {prochaineIntervention && (
-            <div
-              key={`intervention-${prochaineIntervention.id}`}
-              className="bg-white shadow-lg rounded-lg p-4 flex flex-col justify-between text-center transition-transform hover:scale-105 hover:shadow-xl h-[220px]"
-            >
-              <h3 className="text-lg font-semibold text-black mb-2">
-                Prochaine Intervention
-              </h3>
-              <p className="mb-1 text-gray-800">
-                Client: {prochaineIntervention.client}
-              </p>
-              <p className="mb-1 text-gray-800">
-                Date: {prochaineIntervention.date}
-              </p>
-              <span
-                className={`px-2 py-1 rounded-full text-xs ${
-                  prochaineIntervention.status === "En cours"
-                    ? "bg-yellow-100 text-yellow-800"
-                    : "bg-green-100 text-green-800"
-                }`}
-              >
-                {prochaineIntervention.status}
-              </span>
-              <Link
-                href={`/technicien/${prochaineIntervention.id}?type=intervention`}
-              >
-                <button className="mt-2 bg-blue-600 text-white py-1 px-3 rounded-md hover:bg-blue-700 transition-colors">
+          {prochaineIntervention ? (
+            <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col text-center h-[200px]">
+              <h3 className="text-lg font-semibold mb-2">Prochaine Intervention</h3>
+              <p>Client: {prochaineIntervention.DemandeIntervention.Client.nom}</p>
+              <p>Date: {new Date(prochaineIntervention.dateIntervention).toLocaleDateString()}</p>
+              <p>Statut: {prochaineIntervention.DemandeIntervention.statut}</p>
+              <Link href={`/technicien/${prochaineIntervention.id}?type=intervention`}>
+                <button className="mt-2 bg-blue-600 text-white py-1 px-3 rounded-md hover:bg-blue-700">
                   Voir Détails
                 </button>
               </Link>
             </div>
+          ) : (
+            <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col text-center h-[200px]">
+              <p>Aucune intervention prévue.</p>
+            </div>
           )}
 
-          {/* Autres sections */}
-          <section className="bg-white shadow-lg rounded-lg p-4 text-center flex flex-col justify-between transition-transform hover:scale-105 hover:shadow-xl h-[220px]">
+          {/* Prochaine Maintenance */}
+          {prochaineMaintenance ? (
+            <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col text-center h-[200px]">
+              <h3 className="text-lg font-semibold mb-2">Prochaine Maintenance</h3>
+              <p>Client: {prochaineMaintenance.Installation.Client.nom}</p>
+              <p>Date: {new Date(prochaineMaintenance.dateMaintenance).toLocaleDateString()}</p>
+              <Link href={`/technicien/${prochaineMaintenance.id}?type=maintenance`}>
+                <button className="mt-2 bg-blue-600 text-white py-1 px-3 rounded-md hover:bg-blue-700">
+                  Voir Détails
+                </button>
+              </Link>
+            </div>
+          ) : (
+            <div className="bg-white shadow-lg rounded-lg p-4 flex flex-col text-center h-[200px]">
+              <p>Aucune maintenance prévue.</p>
+            </div>
+          )}
+
+          {/* Section Planning */}
+          <section className="bg-white shadow-lg rounded-lg p-4 text-center flex flex-col justify-between h-[200px] transition-transform hover:scale-105 hover:shadow-xl">
             <h2 className="text-lg font-semibold mb-2">Planning</h2>
-            <p className="text-gray-600 mb-2">
-              Consultez votre planning d'interventions.
-            </p>
+            <p className="text-gray-600 mb-2">Consultez votre planning d'interventions.</p>
             <Link href="/technicien/Planning">
               <button className="bg-green-600 text-white py-1 px-3 rounded-md hover:bg-green-700 transition-colors">
                 Voir Planning
@@ -166,11 +80,10 @@ const Technicien = () => {
             </Link>
           </section>
 
-          <section className="bg-white shadow-lg rounded-lg p-4 text-center flex flex-col justify-between transition-transform hover:scale-105 hover:shadow-xl h-[220px]">
+          {/* Section Maintenances */}
+          <section className="bg-white shadow-lg rounded-lg p-4 text-center flex flex-col justify-between h-[200px] transition-transform hover:scale-105 hover:shadow-xl">
             <h2 className="text-lg font-semibold mb-2">Maintenances</h2>
-            <p className="text-gray-600 mb-2">
-              Consultez les tâches de maintenance.
-            </p>
+            <p className="text-gray-600 mb-2">Consultez les tâches de maintenance.</p>
             <Link href="/technicien/Maintenances">
               <button className="bg-green-600 text-white py-1 px-3 rounded-md hover:bg-green-700 transition-colors">
                 Voir Maintenance
@@ -184,8 +97,11 @@ const Technicien = () => {
           <p>© 2024 Système d'intervention - Tous droits réservés</p>
         </footer>
       </div>
-    </>
-  );
+    );
+  } catch (error) {
+    console.error('Erreur :', error);
+    return <div className="text-center text-red-600">Erreur lors du chargement des données.</div>;
+  }
 };
 
 export default Technicien;

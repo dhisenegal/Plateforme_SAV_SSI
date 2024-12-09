@@ -1,126 +1,78 @@
-"use client";
+import React from "react";
+import Link from "next/link";
+import { getPlanning, formatDate, getClientName, getDescription, getType } from "@/lib/fonction"; // Importer les fonctions nécessaires
 
-import React, { useState, useEffect } from "react";
-import Head from "next/head";
+const InterventionPage = async () => {
+  try {
+    // Récupérer les données de planning, triées par date
+    const planning = await getPlanning();
 
-const MaintenanceList = () => {
-  const [maintenances, setMaintenances] = useState([]);
+    // Filtrer les interventions
+    const interventions = planning.filter(item => getType(item) === "Intervention");
 
-  useEffect(() => {
-    // Exemple de données statiques pour les maintenances
-    const data = [
-      {
-        id: 1,
-        date: "2024-12-16",
-        type: "Inspection",
-        etat: "Programmé",
-        systemeSecurite: "SYSTEME ALARME INCENDIE",
-        client: "AIR FRANCE",
-      },
-      {
-        id: 2,
-        date: "2024-11-22",
-        type: "Réparation",
-        etat: "En cours",
-        systemeSecurite: "SYSTEME DE VIDEOSURVEILLANCE",
-        client: "SENELEC",
-      },
-      {
-        id: 3,
-        date: "2024-11-20",
-        type: "Changement",
-        etat: "Terminé",
-        systemeSecurite: "SYSTEME D EXTINCTION AUTOMATIQUE",
-        client: "DER",
-      },
-    ];
+    if (interventions.length === 0) {
+      return (
+        <div className="flex items-center justify-center h-full text-gray-500 text-lg font-medium">
+          Aucune intervention prévue.
+        </div>
+      );
+    }
 
-    setMaintenances(data);
-  }, []);
-
-  return (
-    <>
-      <Head>
-        <title>Liste des Interventions</title>
-      </Head>
-
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        {/* Header */}
-        <header className="bg-blue-600 text-white py-8 px-6 shadow-lg">
-          <div className="max-w-7xl mx-auto text-center">
-            <h1 className="text-3xl font-bold">Liste des Interventions</h1>
-            <p className="text-lg mt-2">
-              Consultez les détails des interventions
-            </p>
-          </div>
-        </header>
-
-        {/* Main Content */}
-        <main className="flex-grow container mx-auto px-6 py-8">
-          <div className="overflow-x-auto bg-white shadow-lg rounded-lg">
-            <table className="min-w-full table-auto">
-              <thead className="bg-blue-100 text-gray-700">
-                <tr>
-                  <th className="px-4 py-2 text-left">Date</th>
-                  <th className="px-4 py-2 text-left">Client</th>
-                  <th className="px-4 py-2 text-left">Type</th>
-                  <th className="px-4 py-2 text-left">État</th>
-                  <th className="px-4 py-2 text-left">
-                    Système de Sécurité Concerné
-                  </th>
-                  <th className="px-4 py-2 text-left">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {maintenances.map((maintenance) => (
-                  <tr
-                    key={maintenance.id}
-                    className="border-b hover:bg-gray-100"
+    return (
+      <div className="max-w-7xl mx-auto p-6 bg-gradient-to-r from-blue-50 to-blue-100 shadow-md rounded-xl">
+        <h1 className="text-4xl font-extrabold mb-8 text-blue-700 text-center tracking-wide">
+          INTERVENTIONS
+        </h1>
+        <table className="w-full table-auto bg-white rounded-lg shadow overflow-hidden">
+          <thead>
+            <tr className="bg-blue-600 text-white text-left">
+              <th className="px-6 py-3 text-sm font-semibold uppercase">Date</th>
+              <th className="px-6 py-3 text-sm font-semibold uppercase">Client</th>
+              <th className="px-6 py-3 text-sm font-semibold uppercase">Description</th>
+              <th className="px-6 py-3 text-sm font-semibold uppercase">Statut</th>
+              <th className="px-6 py-3 text-sm font-semibold uppercase">Voir détails</th>
+            </tr>
+          </thead>
+          <tbody>
+            {interventions.map((item, index) => (
+              <tr
+                key={item.id}
+                className={`${index % 2 === 0 ? "bg-blue-50" : "bg-white"} hover:bg-blue-100 transition-all duration-200`}
+              >
+                <td className="px-6 py-4 text-gray-700">
+                  {formatDate(item.dateIntervention)}
+                </td>
+                <td className="px-6 py-4 text-gray-700">
+                  {getClientName(item)}
+                </td>
+                <td className="px-6 py-4 text-gray-700">
+                  {getDescription(item)}
+                </td>
+                <td className={`px-6 py-4 font-bold ${item.DemandeIntervention.statut === "Terminé" ? "text-green-600" : "text-yellow-600"}`}>
+                  {item.DemandeIntervention.statut}
+                </td>
+                <td className="px-6 py-4">
+                  <Link
+                    href={`/technicien/${item.id}?type=intervention`}
+                    className="text-blue-700 hover:underline hover:text-blue-900 font-semibold transition-all duration-200"
                   >
-                    <td className="px-4 py-2 text-black">{maintenance.date}</td>
-                    <td className="px-4 py-2 text-black">{maintenance.client}</td>
-                    <td className="px-4 py-2 text-black">{maintenance.type}</td>
-                    <td className="px-4 py-2">
-                      <span
-                        className={`px-2 py-1 rounded-full text-sm ${
-                          maintenance.etat === "Programmé"
-                            ? "bg-yellow-100 text-yellow-800"
-                            : maintenance.etat === "En cours"
-                            ? "bg-yellow-300 text-yellow-800"
-                            : "bg-green-100 text-green-800"
-                        }`}
-                      >
-                        {maintenance.etat}
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-black">{maintenance.systemeSecurite}</td>
-                    <td className="px-4 py-2">
-                      <button
-                        className="bg-blue-600 text-white py-1 px-4 rounded-md hover:bg-blue-700 transition-colors"
-                        onClick={() => {
-                          // Simulation de la redirection vers les détails
-                          alert(
-                            `Voir les détails de la maintenance ${maintenance.id}`
-                          );
-                        }}
-                      >
-                        Voir Détails
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </main>
-
-        {/* Footer */}
-        <footer className="bg-gray-800 text-white text-center py-4">
-          <p>© 2024 Système de Maintenance - Tous droits réservés</p>
-        </footer>
+                    Voir détails
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-    </>
-  );
+    );
+  } catch (error) {
+    console.error("Erreur lors de la récupération des interventions :", error);
+    return (
+      <div className="flex items-center justify-center h-full text-red-600 text-lg font-medium">
+        Erreur lors de la récupération des interventions.
+      </div>
+    );
+  }
 };
 
-export default MaintenanceList;
+export default InterventionPage;
