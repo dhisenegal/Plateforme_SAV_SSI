@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,41 +8,106 @@ import { FaPlus, FaEdit, FaTrash, FaSyncAlt, FaPause } from "react-icons/fa";
 import { Label } from "@/components/ui/label";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { getAllContrats, createContrat, updateContrat, deleteContrat, getAllClients, getSitesByClientId } from "@/actions/sav/contrat";
 
-const initialContracts = [
-  { id: "1", name: "Contrat 1", client: "Client 1", site: "Site 1", system: "Système 1", startDate: "2023-01-01", endDate: "2023-12-31", periodicity: "Annuelle", contractType: "Tacite 1 an", contractTerm: "Curative" },
-  { id: "2", name: "Contrat 2", client: "Client 2", site: "Site 2", system: "Système 2", startDate: "2023-06-01", endDate: "2023-12-31", periodicity: "Semestrielle", contractType: "Renouvelable 2 ans", contractTerm: "Préventive" },
-];
-
-const clients = ["Client 1", "Client 2", "Client 3"];
-const sites = ["Site 1", "Site 2", "Site 3"];
-const systems = ["Système 1", "Système 2", "Système 3"];
-const contractTypes = ["Tacite","1 an renouvelable","2 ans renouvelable", "3 ans renouvelable"];
+const contractTypes = ["Tacite", "1 an renouvelable", "2 ans renouvelable", "3 ans renouvelable"];
 const contractTerms = ["Curative", "Préventive"];
 
 const ContratTabContent = () => {
-  const [contracts, setContracts] = useState(initialContracts);
-  const [newContract, setNewContract] = useState({ name: "", client: "", site: "", system: "", startDate: "", endDate: "", periodicity: "", contractType: "", contractTerm: "" });
+  const [contracts, setContracts] = useState([]);
+  const [clients, setClients] = useState([]);
+  const [sites, setSites] = useState([]);
+  const [newContract, setNewContract] = useState({ nom: "", client: "", site: "", startDate: "", endDate: "", periodicite: "", typeContrat: "", termeContrat: "" });
   const [selectedContract, setSelectedContract] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState(null);
 
-  const handleAddContract = () => {
-    const newId = (contracts.length + 1).toString();
-    setContracts([...contracts, { id: newId, ...newContract }]);
-    setNewContract({ name: "", client: "", site: "", system: "", startDate: "", endDate: "", periodicity: "", contractType: "", contractTerm: "" });
-    toast.success("Contrat ajouté avec succès");
+  useEffect(() => {
+    const fetchContracts = async () => {
+      const data = await getAllContrats();
+      setContracts(data);
+    };
+    fetchContracts();
+  }, []);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+      const data = await getAllClients();
+      setClients(data);
+    };
+    fetchClients();
+  }, []);
+
+  const handleClientChange = async (clientId) => {
+    setNewContract({ ...newContract, client: clientId });
+    const data = await getSitesByClientId(clientId);
+    setSites(data);
+  };
+
+  const calculateEndDate = (startDate, typeContrat) => {
+    const date = new Date(startDate);
+    switch (typeContrat) {
+      case "1 an renouvelable":
+        date.setFullYear(date.getFullYear() + 1);
+        break;
+      case "2 ans renouvelable":
+        date.setFullYear(date.getFullYear() + 2);
+        break;
+      case "3 ans renouvelable":
+        date.setFullYear(date.getFullYear() + 3);
+        break;
+      default:
+        return null;
+    }
+    return date.toISOString().split('T')[0];
+  };
+
+  const handleAddContract = async () => {
+    try {
+      const endDate = calculateEndDate(newContract.startDate, newContract.typeContrat);
+      const newContractData = {
+        nom: newContract.nom,
+        dateDebut: new Date(newContract.startDate),
+        dateFin: endDate ? new Date(endDate) : null,
+        periodicite: newContract.periodicite,
+        typeContrat: newContract.typeContrat,
+        termeContrat: newContract.termeContrat,
+        idSite: parseInt(newContract.site),
+      };
+      const createdContract = await createContrat(newContractData);
+      setContracts([...contracts, createdContract]);
+      setNewContract({ nom: "", client: "", site: "", startDate: "", endDate: "", periodicite: "", typeContrat: "", termeContrat: "" });
+      toast.success("Contrat ajouté avec succès");
+    } catch (error) {
+      toast.error("Erreur lors de l'ajout du contrat");
+    }
   };
 
   const handleEditContract = (id) => {
     const contract = contracts.find(c => c.id === id);
     setSelectedContract(contract);
+    handleClientChange(contract.clientId);
   };
 
-  const handleUpdateContract = () => {
-    setContracts(contracts.map(c => c.id === selectedContract.id ? selectedContract : c));
-    setSelectedContract(null);
-    toast.success("Contrat modifié avec succès");
+  const handleUpdateContract = async () => {
+    try {
+      const endDate = calculateEndDate(selectedContract.startDate, selectedContract.typeContrat);
+      const updatedContractData = {
+        nom: selectedContract.nom,
+        dateDebut: new Date(selectedContract.startDate),
+        dateFin: endDate ? new Date(endDate) : null,
+        periodicite: selectedContract.periodicite,
+        typeContrat: selectedContract.typeContrat,
+        termeContrat: selectedContract.termeContrat,
+        idSite: parseInt(selectedContract.site),
+      };
+      const updatedContract = await updateContrat(selectedContract.id, updatedContractData);
+      setContracts(contracts.map(c => c.id === selectedContract.id ? updatedContract : c));
+      setSelectedContract(null);
+      toast.success("Contrat modifié avec succès");
+    } catch (error) {
+      toast.error("Erreur lors de la modification du contrat");
+    }
   };
 
   const handleDeleteContract = (id) => {
@@ -50,11 +115,16 @@ const ContratTabContent = () => {
     setContractToDelete(id);
   };
 
-  const confirmDeleteContract = () => {
-    setContracts(contracts.filter(c => c.id !== contractToDelete));
-    setIsDeleteDialogOpen(false);
-    setContractToDelete(null);
-    toast.success("Contrat supprimé avec succès");
+  const confirmDeleteContract = async () => {
+    try {
+      await deleteContrat(contractToDelete);
+      setContracts(contracts.filter(c => c.id !== contractToDelete));
+      setIsDeleteDialogOpen(false);
+      setContractToDelete(null);
+      toast.success("Contrat supprimé avec succès");
+    } catch (error) {
+      toast.error("Erreur lors de la suppression du contrat");
+    }
   };
 
   const cancelDeleteContract = () => {
@@ -89,23 +159,23 @@ const ContratTabContent = () => {
               </DialogHeader>
               <div>
                 <Input
-                  name="name"
+                  name="nom"
                   placeholder="Nom"
-                  onChange={(e) => setNewContract({ ...newContract, name: e.target.value })}
-                  value={newContract.name}
+                  onChange={(e) => setNewContract({ ...newContract, nom: e.target.value })}
+                  value={newContract.nom}
                   className="mb-4"
                 />
                 <Select
                   value={newContract.client}
-                  onValueChange={(value) => setNewContract({ ...newContract, client: value })}
+                  onValueChange={handleClientChange}
                 >
                   <SelectTrigger className="w-full mb-4">
                     <SelectValue placeholder="Sélectionnez un client" />
                   </SelectTrigger>
                   <SelectContent>
                     {clients.map((client) => (
-                      <SelectItem key={client} value={client}>
-                        {client}
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.nom}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -119,23 +189,8 @@ const ContratTabContent = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {sites.map((site) => (
-                      <SelectItem key={site} value={site}>
-                        {site}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Select
-                  value={newContract.system}
-                  onValueChange={(value) => setNewContract({ ...newContract, system: value })}
-                >
-                  <SelectTrigger className="w-full mb-4">
-                    <SelectValue placeholder="Sélectionnez un système" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {systems.map((system) => (
-                      <SelectItem key={system} value={system}>
-                        {system}
+                      <SelectItem key={site.id} value={site.id}>
+                        {site.nom}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -154,13 +209,14 @@ const ContratTabContent = () => {
                   name="endDate"
                   type="date"
                   placeholder="Date de fin"
-                  onChange={(e) => setNewContract({ ...newContract, endDate: e.target.value })}
+                  onChange={(e) => setNewContract({ ...newContract, endDate: calculateEndDate(e.target.value, newContract.typeContrat) })}
                   value={newContract.endDate}
                   className="mb-4"
+                  disabled={newContract.typeContrat === "Tacite"}
                 />
                 <Select
-                  value={newContract.periodicity}
-                  onValueChange={(value) => setNewContract({ ...newContract, periodicity: value })}
+                  value={newContract.periodicite}
+                  onValueChange={(value) => setNewContract({ ...newContract, periodicite: value })}
                 >
                   <SelectTrigger className="w-full mb-4">
                     <SelectValue placeholder="Sélectionnez une périodicité" />
@@ -172,8 +228,8 @@ const ContratTabContent = () => {
                   </SelectContent>
                 </Select>
                 <Select
-                  value={newContract.contractType}
-                  onValueChange={(value) => setNewContract({ ...newContract, contractType: value })}
+                  value={newContract.typeContrat}
+                  onValueChange={(value) => setNewContract({ ...newContract, typeContrat: value })}
                 >
                   <SelectTrigger className="w-full mb-4">
                     <SelectValue placeholder="Sélectionnez un type de contrat" />
@@ -187,8 +243,8 @@ const ContratTabContent = () => {
                   </SelectContent>
                 </Select>
                 <Select
-                  value={newContract.contractTerm}
-                  onValueChange={(value) => setNewContract({ ...newContract, contractTerm: value })}
+                  value={newContract.termeContrat}
+                  onValueChange={(value) => setNewContract({ ...newContract, termeContrat: value })}
                 >
                   <SelectTrigger className="w-full mb-4">
                     <SelectValue placeholder="Sélectionnez un terme de contrat" />
@@ -214,7 +270,6 @@ const ContratTabContent = () => {
               <TableHead>Nom</TableHead>
               <TableHead>Client</TableHead>
               <TableHead>Site</TableHead>
-              <TableHead>Système</TableHead>
               <TableHead>Date de début</TableHead>
               <TableHead>Date de fin</TableHead>
               <TableHead>Périodicité</TableHead>
@@ -226,15 +281,14 @@ const ContratTabContent = () => {
           <TableBody>
             {contracts.map((contract) => (
               <TableRow key={contract.id} className="cursor-pointer">
-                <TableCell>{contract.name}</TableCell>
-                <TableCell>{contract.client}</TableCell>
-                <TableCell>{contract.site}</TableCell>
-                <TableCell>{contract.system}</TableCell>
-                <TableCell>{contract.startDate}</TableCell>
-                <TableCell>{contract.endDate}</TableCell>
-                <TableCell>{contract.periodicity}</TableCell>
-                <TableCell>{contract.contractType}</TableCell>
-                <TableCell>{contract.contractTerm}</TableCell>
+                <TableCell>{contract.nom}</TableCell>
+                <TableCell>{clients.find(client => client.id === contract.idClient)?.nom || ""}</TableCell>
+                <TableCell>{sites.find(site => site.id === contract.idSite)?.nom || ""}</TableCell>
+                <TableCell>{new Date(contract.dateDebut).toLocaleDateString()}</TableCell>
+                <TableCell>{contract.dateFin ? new Date(contract.dateFin).toLocaleDateString() : "Tacite"}</TableCell>
+                <TableCell>{contract.periodicite}</TableCell>
+                <TableCell>{contract.typeContrat}</TableCell>
+                <TableCell>{contract.termeContrat}</TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
                     <FaEdit className="text-blue-500 cursor-pointer" onClick={() => handleEditContract(contract.id)} />
@@ -257,23 +311,23 @@ const ContratTabContent = () => {
               </DialogHeader>
               <div>
                 <Input
-                  name="name"
+                  name="nom"
                   placeholder="Nom"
-                  onChange={(e) => setSelectedContract({ ...selectedContract, name: e.target.value })}
-                  value={selectedContract.name}
+                  onChange={(e) => setSelectedContract({ ...selectedContract, nom: e.target.value })}
+                  value={selectedContract.nom}
                   className="mb-4"
                 />
                 <Select
                   value={selectedContract.client}
-                  onValueChange={(value) => setSelectedContract({ ...selectedContract, client: value })}
+                  onValueChange={handleClientChange}
                 >
                   <SelectTrigger className="w-full mb-4">
                     <SelectValue placeholder="Sélectionnez un client" />
                   </SelectTrigger>
                   <SelectContent>
                     {clients.map((client) => (
-                      <SelectItem key={client} value={client}>
-                        {client}
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.nom}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -287,46 +341,34 @@ const ContratTabContent = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {sites.map((site) => (
-                      <SelectItem key={site} value={site}>
-                        {site}
+                      <SelectItem key={site.id} value={site.id}>
+                        {site.nom}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-                <Select
-                  value={selectedContract.system}
-                  onValueChange={(value) => setSelectedContract({ ...selectedContract, system: value })}
-                >
-                  <SelectTrigger className="w-full mb-4">
-                    <SelectValue placeholder="Sélectionnez un système" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {systems.map((system) => (
-                      <SelectItem key={system} value={system}>
-                        {system}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="startDate">Date de début</Label>
                 <Input
                   name="startDate"
                   type="date"
                   placeholder="Date de début"
                   onChange={(e) => setSelectedContract({ ...selectedContract, startDate: e.target.value })}
-                  value={selectedContract.startDate}
+                  value={new Date(selectedContract.startDate).toISOString().split('T')[0]}
                   className="mb-4"
                 />
+                <Label htmlFor="endDate">Date de fin</Label>
                 <Input
                   name="endDate"
                   type="date"
                   placeholder="Date de fin"
-                  onChange={(e) => setSelectedContract({ ...selectedContract, endDate: e.target.value })}
-                  value={selectedContract.endDate}
+                  onChange={(e) => setSelectedContract({ ...selectedContract, endDate: calculateEndDate(e.target.value, selectedContract.typeContrat) })}
+                  value={selectedContract.endDate ? new Date(selectedContract.endDate).toISOString().split('T')[0] : ""}
                   className="mb-4"
+                  disabled={selectedContract.typeContrat === "Tacite"}
                 />
                 <Select
-                  value={selectedContract.periodicity}
-                  onValueChange={(value) => setSelectedContract({ ...selectedContract, periodicity: value })}
+                  value={selectedContract.periodicite}
+                  onValueChange={(value) => setSelectedContract({ ...selectedContract, periodicite: value })}
                 >
                   <SelectTrigger className="w-full mb-4">
                     <SelectValue placeholder="Sélectionnez une périodicité" />
@@ -338,8 +380,8 @@ const ContratTabContent = () => {
                   </SelectContent>
                 </Select>
                 <Select
-                  value={selectedContract.contractType}
-                  onValueChange={(value) => setSelectedContract({ ...selectedContract, contractType: value })}
+                  value={selectedContract.typeContrat}
+                  onValueChange={(value) => setSelectedContract({ ...selectedContract, typeContrat: value })}
                 >
                   <SelectTrigger className="w-full mb-4">
                     <SelectValue placeholder="Sélectionnez un type de contrat" />
@@ -353,8 +395,8 @@ const ContratTabContent = () => {
                   </SelectContent>
                 </Select>
                 <Select
-                  value={selectedContract.contractTerm}
-                  onValueChange={(value) => setSelectedContract({ ...selectedContract, contractTerm: value })}
+                  value={selectedContract.termeContrat}
+                  onValueChange={(value) => setSelectedContract({ ...selectedContract, termeContrat: value })}
                 >
                   <SelectTrigger className="w-full mb-4">
                     <SelectValue placeholder="Sélectionnez un terme de contrat" />

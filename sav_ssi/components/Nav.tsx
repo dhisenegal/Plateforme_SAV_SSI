@@ -47,7 +47,7 @@ const Nav = () => {
      <div className="flex items-center space-x-4">
       <ModeToggle />
         <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hidden md:block">
-          Connexion
+          <Link href="/auth/login">Connexion</Link>
         </button>
      </div>
       

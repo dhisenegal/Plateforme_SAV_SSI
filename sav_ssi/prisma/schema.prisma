@@ -14,6 +14,7 @@ model Utilisateur {
   nom        String
   prenom     String
   numero     String
+  etatCompte String   @default("actif")
   email      String   @unique
   idRole     Int
   Role       Role     @relation(fields: [idRole], references: [id])
@@ -73,6 +74,7 @@ model Site {
   Contacts  ContactSite[]
   Installations Installation[]
   DemandesIntervention DemandeIntervention[]
+  Contrats  Contrat[]
 }
 
 model Contact {
@@ -154,17 +156,20 @@ model InstallationEquipement {
   quantite         Int      // Ajout du champ quantite
   Equipement       Equipement   @relation(fields: [idEquipement], references: [id])
   Installation     Installation @relation(fields: [idInstallation], references: [id])
-  Contrats         Contrat[]
   Garanties        Garantie[]
 }
 
 model Contrat {
   id                Int      @id @default(autoincrement())
-  dateDebutContrat  DateTime
-  dateFinContrat    DateTime
+  nom               String
+  dateDebut         DateTime
+  dateFin           DateTime
   periodicite       String
-  idInstallationEq  Int
-  InstallationEquipement InstallationEquipement @relation(fields: [idInstallationEq], references: [id])
+  typeContrat       String
+  termeContrat      String
+  idSite            Int
+  Site              Site     @relation(fields: [idSite], references: [id])
+  
 }
 
 model Garantie {
