@@ -159,7 +159,15 @@ export default async function Page({ params, searchParams }: { params: { id: str
         where: { id: parseInt(id) },
         include: {
           Installation: {
-            include: {
+            include: {console.log('Error:', error);
+console.log('Client Name:', clientName);
+console.log('Site Name:', siteName);
+console.log('Systeme:', systeme);
+console.log('Equipements:', equipements);
+console.log('Date:', date);
+console.log('Type:', type);
+console.log('Description:', description);
+console.log('Statut:', statut);
               Client: { select: { nom: true } },
               Site: { select: { nom: true } },
             },
