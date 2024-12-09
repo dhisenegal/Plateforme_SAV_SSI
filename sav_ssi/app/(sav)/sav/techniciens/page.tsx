@@ -11,16 +11,13 @@ import Link from "next/link";
 const TechniniciensPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [techniciens, setTechniciens] = useState([
-<<<<<<< HEAD
-    { id: 1, prenom: "Aboubakrine", nom: "Fall", statut: "inactif" },
-=======
-    { id: 1, prenom: "Aboubakrine", nom: "Fall", statut: "inactif", telephone: "+221773815479" },
->>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
+    { id: 1, prenom: "Aboubakrine", nom: "Fall", statut: "inactif", numero: "+221773815479" },
   ]);
 
   // États pour le formulaire
   const [prenom, setPrenom] = useState("");
   const [nom, setNom] = useState("");
+  const [numero, setNumero] = useState("");
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
 
@@ -34,7 +31,8 @@ const TechniniciensPage = () => {
       prenom,
       nom,
       login,
-      statut: "inactif", // Statut par défaut
+      numero,
+      statut: "inactif",
     };
 
     // Mise à jour de la liste des techniciens
@@ -112,11 +110,18 @@ const TechniniciensPage = () => {
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
-<<<<<<< HEAD
-                    <Label htmlFor="login" className="text-right">Identifiant</Label>
-=======
+                    <Label htmlFor="nom" className="text-right">Numéro de téléphone</Label>
+                    <Input
+                      id="numero"
+                      value={numero}
+                      onChange={(e) => setNumero(e.target.value)}
+                      placeholder="+221 77 567 89 67"
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="login" className="text-right">Identifiant de connexion</Label>
->>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
                     <Input
                       id="login"
                       value={login}
@@ -127,11 +132,7 @@ const TechniniciensPage = () => {
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
-<<<<<<< HEAD
                     <Label htmlFor="password" className="text-right">Mot de passe</Label>
-=======
-                    <Label htmlFor="password" className="text-right">Mot de passe provisoire</Label>
->>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
                     <Input
                       id="password"
                       type="password"

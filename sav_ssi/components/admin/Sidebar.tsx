@@ -1,75 +1,48 @@
 "use client";
 
 import React, { useState } from "react";
-import { FaBars, FaTimes, FaUserAlt } from "react-icons/fa";
+import { FaBars, FaTimes, FaUserAlt, FaChevronDown, FaWarehouse, FaTachometerAlt } from "react-icons/fa";
 import Link from "next/link";
 import Image from "next/image";
-<<<<<<< HEAD
-import { FaHouse, FaPersonChalkboard } from "react-icons/fa6";
-import { TbReportSearch } from "react-icons/tb";
-import { AiFillTool } from "react-icons/ai";
-import { FaTasks, FaCalendarCheck, FaWarehouse } from "react-icons/fa";
-=======
-import {
-  FaTasks,
-  FaCalendarCheck,
-  FaWarehouse,
-} from "react-icons/fa";
-import {FaHouse,
-  FaPersonChalkboard,} from "react-icons/fa6";
-import { TbReportSearch } from "react-icons/tb";
-import { AiFillTool } from "react-icons/ai";
->>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
+import { MdSettings } from "react-icons/md";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isEquipmentsOpen, setIsEquipmentsOpen] = useState(false);
+  const [isUsersOpen, setIsUsersOpen] = useState(false);
 
   // Fonction pour gérer l'ouverture du menu hamburger
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
 
+  // Fonction pour gérer l'ouverture du sous-menu "Gestion des équipements"
+  const toggleEquipmentsMenu = () => {
+    setIsEquipmentsOpen(!isEquipmentsOpen);
+  };
+
+  // Fonction pour gérer l'ouverture du sous-menu "Gestion des utilisateurs"
+  const toggleUsersMenu = () => {
+    setIsUsersOpen(!isUsersOpen);
+  };
+
   return (
     <>
       {/* Bouton Hamburger pour les petits écrans */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
-<<<<<<< HEAD
         <button onClick={toggleMenu} className="text-white">
           {isOpen ? <FaTimes size={30} /> : <FaBars size={30} />}
-=======
-        <button
-          onClick={toggleMenu}
-          className="text-gray-800 bg-white p-2 rounded-full shadow-lg"
-        >
-          {isOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
->>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
         </button>
       </div>
 
       {/* Sidebar */}
       <div
-<<<<<<< HEAD
         className={`fixed top-0 left-0 h-full w-64 bg-gray-800 text-white p-6 z-40 transition-transform duration-300 ease-in-out
           ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
       >
         {/* Logo */}
         <div className="flex justify-center mb-6">
           <Image src="/logo.svg" alt="Logo" width={80} height={80} className="rounded-full" />
-=======
-        className={`fixed top-0 left-0 h-full w-64 bg-gray-900 text-white p-6 z-40 shadow-lg transition-transform duration-300 ease-in-out ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        } lg:translate-x-0 lg:shadow-none`}
-      >
-        {/* Logo */}
-        <div className="flex justify-center mb-6">
-          <Image
-            src="/logo.svg"
-            alt="Logo"
-            width={80}
-            height={80}
-            className="rounded-full"
-          />
->>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
         </div>
 
         {/* Navigation Scrollable */}
@@ -79,72 +52,91 @@ const Sidebar = () => {
               href="/admin"
               className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
             >
-              <FaHouse size={20} />
-              <span>Accueil</span>
+              <FaTachometerAlt size={20} />
+              <span>Tableau de bord</span>
             </Link>
           </li>
           <li>
-            <Link
-              href="/admin/maintenances"
-              className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
-            >
-              <AiFillTool size={20} />
-              <span>Maintenances</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/admin/interventions"
-              className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
-            >
-              <FaTasks size={20} />
-              <span>Interventions</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/admin/clients"
-              className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
+            <button
+              onClick={toggleUsersMenu}
+              className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors w-full text-left"
             >
               <FaUserAlt size={20} />
-              <span>Clients</span>
-            </Link>
+              <span>Gestion des utilisateurs</span>
+              <FaChevronDown className={`ml-auto transform ${isUsersOpen ? "rotate-180" : ""}`} />
+            </button>
+            {isUsersOpen && (
+              <ul className="pl-6 space-y-2">
+                <li>
+                  <Link
+                    href="/admin/utilisateurs/roles"
+                    className="flex items-center space-x-3 p-2 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    <FaUserAlt size={16} />
+                    <span>Rôles</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/admin/utilisateurs"
+                    className="flex items-center space-x-3 p-2 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    <FaUserAlt size={16} />
+                    <span>Utilisateurs</span>
+                  </Link>
+                </li>
+              </ul>
+            )}
           </li>
           <li>
-            <Link
-              href="/admin/techniciens"
-              className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
+            <button
+              onClick={toggleEquipmentsMenu}
+              className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors w-full text-left"
             >
-              <FaPersonChalkboard size={20} />
-              <span>Techniciens</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/admin/planning"
-              className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
-            >
-              <FaCalendarCheck size={20} />
-              <span>Planning</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/admin/equipements"
-              className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
-            >
-              <FaWarehouse size={20} />
-              <span>Équipements</span>
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/admin/rapports"
-              className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
-            >
-              <TbReportSearch size={20} />
-              <span>Rapports</span>
-            </Link>
+              <MdSettings size={20} />
+              <span>Gestion des équipements</span>
+              <FaChevronDown className={`ml-auto transform ${isEquipmentsOpen ? "rotate-180" : ""}`} />
+            </button>
+            {isEquipmentsOpen && (
+              <ul className="pl-6 space-y-2">
+                <li>
+                  <Link
+                    href="/admin/equipements/systeme"
+                    className="flex items-center space-x-3 p-2 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    <FaWarehouse size={16} />
+                    <span>Système</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/admin/equipements/marque"
+                    className="flex items-center space-x-3 p-2 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    <FaWarehouse size={16} />
+                    <span>Marque</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/admin/equipements/modele"
+                    className="flex items-center space-x-3 p-2 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    <FaWarehouse size={16} />
+                    <span>Modèle</span>
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    href="/admin/equipements"
+                    className="flex items-center space-x-3 p-2 rounded-md hover:bg-blue-600 transition-colors"
+                  >
+                    <FaWarehouse size={16} />
+                    <span>Equipements</span>
+                  </Link>
+                </li>
+              </ul>
+            )}
           </li>
         </ul>
       </div>

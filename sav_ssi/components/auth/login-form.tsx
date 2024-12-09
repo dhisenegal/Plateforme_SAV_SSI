@@ -96,7 +96,7 @@ export const LoginForm = () => {
                           placeholder="mamadou.sy"
                           type="text"
                           disabled={isPending}
-                          className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400"
+                          className="rounded-lg border-gray-300 focus:ring-2 focus:ring-blue-400 text-black"
                         />
                       </FormControl>
                       <FormMessage />
@@ -118,7 +118,7 @@ export const LoginForm = () => {
                           placeholder="*******"
                           type="password"
                           disabled={isPending}
-                          className="rounded-lg border-gray-300 focus:ring-2 focus:ring-purple-400"
+                          className="text-black rounded-lg border-gray-300 focus:ring-2 focus:ring-purple-400"
                         />
                       </FormControl>
                       <FormMessage />

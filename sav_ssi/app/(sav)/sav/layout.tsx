@@ -1,4 +1,4 @@
-import Sidebar from "@/components/admin/Sidebar";
+import Sidebar from "@/components/sav/Sidebar";
 import Navbar from "@/components/sav/Nav";
 import React from "react";
 

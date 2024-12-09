@@ -14,6 +14,7 @@ model Utilisateur {
   nom        String
   prenom     String
   numero     String
+  etatCompte String   @default("actif")
   email      String   @unique
   idRole     Int
   Role       Role     @relation(fields: [idRole], references: [id])
@@ -55,7 +56,6 @@ model VerificationToken {
   createdAt     DateTime @default(now())
 }
 
-
 model Client {
   id        Int      @id @default(autoincrement())
   nom       String
@@ -76,6 +76,7 @@ model Site {
   Contacts  ContactSite[]
   Installations Installation[]
   DemandesIntervention DemandeIntervention[]
+  Contrats  Contrat[]
 }
 
 model Contact {
@@ -149,23 +150,28 @@ model Installation {
 
 model InstallationEquipement {
   id              Int      @id @default(autoincrement())
+  statut           String
   dateInstallation DateTime
   dateMaintenance  DateTime?
-  statut           String
   idEquipement     Int
   idInstallation   Int
+  quantite         Int      // Ajout du champ quantite
   Equipement       Equipement   @relation(fields: [idEquipement], references: [id])
   Installation     Installation @relation(fields: [idInstallation], references: [id])
-  Contrats         Contrat[]
   Garanties        Garantie[]
 }
 
 model Contrat {
   id                Int      @id @default(autoincrement())
-  dateDebutContrat  DateTime
-  dateFinContrat    DateTime
-  idInstallationEq  Int
-  InstallationEquipement InstallationEquipement @relation(fields: [idInstallationEq], references: [id])
+  nom               String
+  dateDebut         DateTime
+  dateFin           DateTime
+  periodicite       String
+  typeContrat       String
+  termeContrat      String
+  idSite            Int
+  Site              Site     @relation(fields: [idSite], references: [id])
+  
 }
 
 model Garantie {
@@ -239,6 +245,10 @@ model Intervention {
   Technicien          Utilisateur @relation("TechnicienIntervention", fields: [idTechnicien], references: [id])
   Contact             Contact     @relation(fields: [idContact], references: [id])
   DemandeIntervention DemandeIntervention @relation(fields: [idDemandeIntervention], references: [id])
+<<<<<<< HEAD
 
   @@map("intervention")
 }
+=======
+}
+>>>>>>> cf9b275b36006f270af257f38c6e56ae81d33848

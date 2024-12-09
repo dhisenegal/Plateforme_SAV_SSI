@@ -4,32 +4,41 @@ import React, { useState } from "react";
 import { FaBars, FaTimes, FaUserAlt } from "react-icons/fa";
 import Link from "next/link";
 import Image from "next/image";
-import { FaHouse, FaPersonChalkboard } from "react-icons/fa6";
-import { TbReportSearch } from "react-icons/tb";
+import {
+  FaTasks,
+  FaCalendarCheck,
+  FaWarehouse,
+} from "react-icons/fa";
+import {FaHouse,
+  FaPersonChalkboard,} from "react-icons/fa6";
+import { TbPresentationAnalytics, TbReportSearch } from "react-icons/tb";
 import { AiFillTool } from "react-icons/ai";
-import { FaTasks, FaCalendarCheck, FaWarehouse } from "react-icons/fa";
 
 const Sidebar = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-  // Fonction pour gérer l'ouverture du menu Technicien
+  // Fonction pour gérer l'ouverture du menu hamburger
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
 
   return (
     <>
-      {/* Bouton  pour les petits écrans */}
+      {/* Bouton Hamburger pour les petits écrans */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
-        <button onClick={toggleMenu} className="text-white">
-          {isOpen ? <FaTimes size={30} /> : <FaBars size={30} />}
+        <button
+          onClick={toggleMenu}
+          className="text-gray-800 bg-white p-2 rounded-full shadow-lg"
+        >
+          {isOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
         </button>
       </div>
 
       {/* Sidebar */}
       <div
-        className={`fixed top-0 left-0 h-full w-64 bg-gray-800 text-white p-6 z-40 transition-transform duration-300 ease-in-out
-          ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+        className={`fixed top-0 left-0 h-full w-64 bg-gray-900 text-white p-6 z-40 shadow-lg transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        } lg:translate-x-0 lg:shadow-none`}
       >
         {/* Logo */}
         <div className="flex justify-center mb-6">
@@ -46,7 +55,7 @@ const Sidebar = () => {
         <ul className="space-y-4 overflow-y-auto h-[calc(100vh-180px)] scrollbar-hide">
           <li>
             <Link
-              href="/technicien"
+              href="/sav"
               className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
             >
               <FaHouse size={20} />
@@ -55,7 +64,7 @@ const Sidebar = () => {
           </li>
           <li>
             <Link
-              href="/technicien/Maintenances"
+              href="/sav/maintenances"
               className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
             >
               <AiFillTool size={20} />
@@ -64,30 +73,56 @@ const Sidebar = () => {
           </li>
           <li>
             <Link
-              href="/technicien/Interventions"
+              href="/sav/interventions"
               className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
             >
-              <FaWarehouse size={20} />
+              <FaTasks size={20} />
               <span>Interventions</span>
             </Link>
           </li>
           <li>
             <Link
-              href="/technicien/Planning"
+              href="/sav/clients"
+              className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
+            >
+              <FaUserAlt size={20} />
+              <span>Clients</span>
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/sav/techniciens"
+              className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
+            >
+              <FaPersonChalkboard size={20} />
+              <span>Techniciens</span>
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/sav/planning"
               className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
             >
               <FaCalendarCheck size={20} />
               <span>Planning</span>
             </Link>
           </li>
-
           <li>
             <Link
-              href="/technicien/Rapport"
+              href="/sav/rapports"
               className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
             >
               <TbReportSearch size={20} />
               <span>Rapports</span>
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/sav/reportings"
+              className="flex items-center space-x-3 p-3 rounded-md hover:bg-blue-600 transition-colors"
+            >
+              <TbPresentationAnalytics size={20} />
+              <span>Reportings</span>
             </Link>
           </li>
         </ul>
