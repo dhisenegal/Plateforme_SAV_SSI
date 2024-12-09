@@ -1,175 +1,102 @@
 "use client";
 
-import React from "react";
-import { useSession, signOut } from "next-auth/react";
-import Link from "next/link";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  LabelList,
-  XAxis,
-  PieChart,
-  Pie,
-  Cell,
-  Tooltip,
-  ResponsiveContainer,
-} from "recharts";
-import {
-  FaTools,
-  FaClipboardList,
-  FaCheckCircle,
-  FaCalendarAlt,
-} from "react-icons/fa";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-  CardDescription,
-} from "@/components/ui/card";
+import React, { useEffect, useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar } from 'recharts';
+import { PieChart, Pie, Cell } from 'recharts';
 
-// Données pour le graphique des demandes
-const demandeData = [
-  { name: "Extincteurs", value: 25 },
-  { name: "Alarmes", value: 15 },
-  { name: "Sprinklers", value: 10 },
-  { name: "Autres", value: 20 },
+const equipmentData = [
+  { name: 'Jan', sdi: 30, extincteurs: 20, autres: 10 },
+  { name: 'Feb', sdi: 40, extincteurs: 25, autres: 15 },
+  { name: 'Mar', sdi: 35, extincteurs: 30, autres: 20 },
+  { name: 'Apr', sdi: 50, extincteurs: 40, autres: 25 },
+  { name: 'May', sdi: 60, extincteurs: 45, autres: 30 },
+  { name: 'Jun', sdi: 70, extincteurs: 50, autres: 35 },
+  { name: 'Jul', sdi: 80, extincteurs: 55, autres: 40 },
 ];
 
-// Données pour le graphique des statuts d'interventions
-const statutData = [
-  { name: "En Cours", value: 35 },
-  { name: "Terminé", value: 75 },
-  { name: "Planifié", value: 10 },
+const userData = [
+  { name: 'Jan', clients: 10, responsables: 5, techniciens: 15 },
+  { name: 'Feb', clients: 15, responsables: 7, techniciens: 20 },
+  { name: 'Mar', clients: 20, responsables: 10, techniciens: 25 },
+  { name: 'Apr', clients: 25, responsables: 12, techniciens: 30 },
+  { name: 'May', clients: 30, responsables: 15, techniciens: 35 },
+  { name: 'Jun', clients: 35, responsables: 17, techniciens: 40 },
+  { name: 'Jul', clients: 40, responsables: 20, techniciens: 45 },
 ];
 
-const COLORS = ["#1D4ED8", "#F59E0B", "#10B981", "#EF4444"];
+const pieData = [
+  { name: 'SDI', value: 400 },
+  { name: 'Extincteurs', value: 300 },
+  { name: 'Autres', value: 300 },
+];
+
+const COLORS = ['#0088FE', '#00C49F', '#FFBB28'];
 
 const AdminPage = () => {
-  const { data: session } = useSession(); 
+  const [isClient, setIsClient] = useState(false);
 
-  const handleLogout = () => {
-    signOut(); // Déconnexion via next-auth
-  };
-  const barChartData = [
-    { month: "Janvier", requests: 120 },
-    { month: "Février", requests: 200 },
-    { month: "Mars", requests: 150 },
-    { month: "Avril", requests: 250 },
-    { month: "Mai", requests: 300 },
-    { month: "Juin", requests: 100 },
-    { month: "Juillet", requests: 50 },
-    { month: "Août", requests: 75 },
-    { month: "Septembre", requests: 100 },
-    { month: "Octobre", requests: 150 },
-    { month: "Novembre", requests: 200 },
-    { month: "Décembre", requests: 250 },
-  ];
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  if (!isClient) {
+    return null;
+  }
 
   return (
-    <div className="p-4 space-y-6">
-      <h1 className="text-2xl md:text-3xl font-bold text-blue-700 mb-6 text-center">
-        Tableau de bord Administrateur
-      </h1>
-
-      {/* Section déconnexion */}
-      {session && (
-        <Link href="/" onClick={handleLogout} 
-        className="ml-4 hover:text-blue-400 cursor-pointer">
-          Déconnexion
-        </Link>
-      )}
-
-      {/* Statistiques */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-        <Card className="bg-blue-300">
-          <CardHeader className="flex items-center space-x-4">
-            <FaTools size={24} className="text-blue-700" />
-            <CardTitle>Total Demandes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl md:text-2xl font-bold">120</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-yellow-300">
-          <CardHeader className="flex items-center space-x-4">
-            <FaClipboardList size={24} className="text-yellow-700" />
-            <CardTitle>En Cours</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl md:text-2xl font-bold">35</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-green-300">
-          <CardHeader className="flex items-center space-x-4">
-            <FaCheckCircle size={24} className="text-green-700" />
-            <CardTitle>Terminé</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl md:text-2xl font-bold">75</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-red-300">
-          <CardHeader className="flex items-center space-x-4">
-            <FaCalendarAlt size={24} className="text-red-700" />
-            <CardTitle>Planifié Aujourd'hui</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-xl md:text-2xl font-bold">10</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Graphiques */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-        {/* Bar Chart */}
+    <div className="p-6">
+      <h2 className="text-2xl font-bold mb-6">Tableau de bord</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Nombre de Demandes par Mois</CardTitle>
-            <CardDescription>
-              Évolution des demandes de Janvier à Décembre
-            </CardDescription>
+            <CardTitle>Équipements ajoutés</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={barChartData} margin={{ top: 20 }}>
+              <LineChart data={equipmentData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
+                <XAxis dataKey="name" />
+                <YAxis />
                 <Tooltip />
-                <Bar dataKey="requests" fill="#1D4ED8">
-                  <LabelList dataKey="requests" position="top" />
-                </Bar>
+                <Legend />
+                <Line type="monotone" dataKey="sdi" stroke="#8884d8" activeDot={{ r: 8 }} />
+                <Line type="monotone" dataKey="extincteurs" stroke="#82ca9d" />
+                <Line type="monotone" dataKey="autres" stroke="#ffc658" />
+              </LineChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Utilisateurs ajoutés</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={userData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="clients" fill="#8884d8" />
+                <Bar dataKey="responsables" fill="#82ca9d" />
+                <Bar dataKey="techniciens" fill="#ffc658" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
         </Card>
-
-        {/* Pie Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>Répartition des Demandes par Service</CardTitle>
+            <CardTitle>Répartition des équipements</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
-                <Pie
-                  data={demandeData}
-                  dataKey="value"
-                  nameKey="name"
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  fill="#8884d8"
-                >
-                  {demandeData.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
+                <Pie data={pieData} cx="50%" cy="50%" outerRadius={80} fill="#8884d8" dataKey="value">
+                  {pieData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
                 <Tooltip />

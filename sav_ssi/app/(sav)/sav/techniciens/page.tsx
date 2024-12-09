@@ -11,12 +11,13 @@ import Link from "next/link";
 const TechniniciensPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [techniciens, setTechniciens] = useState([
-    { id: 1, prenom: "Aboubakrine", nom: "Fall", statut: "inactif", telephone: "+221773815479" },
+    { id: 1, prenom: "Aboubakrine", nom: "Fall", statut: "inactif", numero: "+221773815479" },
   ]);
 
   // États pour le formulaire
   const [prenom, setPrenom] = useState("");
   const [nom, setNom] = useState("");
+  const [numero, setNumero] = useState("");
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
 
@@ -30,7 +31,8 @@ const TechniniciensPage = () => {
       prenom,
       nom,
       login,
-      statut: "inactif", // Statut par défaut
+      numero,
+      statut: "inactif",
     };
 
     // Mise à jour de la liste des techniciens
@@ -103,6 +105,17 @@ const TechniniciensPage = () => {
                       value={nom}
                       onChange={(e) => setNom(e.target.value)}
                       placeholder="Seck"
+                      className="col-span-3"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="nom" className="text-right">Numéro de téléphone</Label>
+                    <Input
+                      id="numero"
+                      value={numero}
+                      onChange={(e) => setNumero(e.target.value)}
+                      placeholder="+221 77 567 89 67"
                       className="col-span-3"
                       required
                     />

@@ -6,7 +6,7 @@ import { format, parse, startOfWeek, getDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import Modal from "react-modal";
-import EventForm from "@/components/admin/EventForm";
+import EventForm from "@/components/sav/EventForm";
 
 type EventData = {
   title: string;

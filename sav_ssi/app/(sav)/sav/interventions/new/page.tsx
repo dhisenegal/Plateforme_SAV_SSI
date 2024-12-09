@@ -1,4 +1,4 @@
-import InterventionForm from '@/components/admin/InterventionForm'
+import InterventionForm from '@/components/sav/InterventionForm'
 import React from 'react'
 
 const newInterventionPage = () => {

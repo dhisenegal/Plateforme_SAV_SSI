@@ -55,7 +55,6 @@ model VerificationToken {
   createdAt     DateTime @default(now())
 }
 
-
 model Client {
   id        Int      @id @default(autoincrement())
   nom       String
@@ -147,11 +146,12 @@ model Installation {
 
 model InstallationEquipement {
   id              Int      @id @default(autoincrement())
+  statut           String
   dateInstallation DateTime
   dateMaintenance  DateTime?
-  statut           String
   idEquipement     Int
   idInstallation   Int
+  quantite         Int      // Ajout du champ quantite
   Equipement       Equipement   @relation(fields: [idEquipement], references: [id])
   Installation     Installation @relation(fields: [idInstallation], references: [id])
   Contrats         Contrat[]
@@ -162,6 +162,7 @@ model Contrat {
   id                Int      @id @default(autoincrement())
   dateDebutContrat  DateTime
   dateFinContrat    DateTime
+  periodicite       String
   idInstallationEq  Int
   InstallationEquipement InstallationEquipement @relation(fields: [idInstallationEq], references: [id])
 }
