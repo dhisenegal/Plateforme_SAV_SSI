@@ -5,17 +5,29 @@ type EventData = {
   start: Date;
   end: Date;
   id: string;
+<<<<<<< HEAD
+=======
   techniciens?: string[];
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
 };
 
 type EventFormProps = {
   event: EventData | null;
+<<<<<<< HEAD
+=======
   techniciens: string[];
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
   onSave: (event: EventData) => void;
   onDelete: (id: string) => void;
   onClose: () => void;
 };
 
+<<<<<<< HEAD
+const EventForm: React.FC<EventFormProps> = ({ event, onSave, onDelete, onClose }) => {
+  const [title, setTitle] = useState(event?.title || "");
+  const [start, setStart] = useState(event?.start.toISOString().slice(0, 16) || "");
+  const [end, setEnd] = useState(event?.end.toISOString().slice(0, 16) || "");
+=======
 const EventForm: React.FC<EventFormProps> = ({
   event,
   techniciens,
@@ -35,6 +47,7 @@ const EventForm: React.FC<EventFormProps> = ({
   const [end, setEnd] = useState<string>(formatDateTimeInput(event?.end));
   
   const [selectedTechniciens, setSelectedTechniciens] = useState<string[]>(event?.techniciens || []);
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -45,12 +58,17 @@ const EventForm: React.FC<EventFormProps> = ({
       title,
       start: new Date(start),
       end: new Date(end),
+<<<<<<< HEAD
+=======
       techniciens: selectedTechniciens,
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
     };
 
     onSave(newEvent);
   };
 
+<<<<<<< HEAD
+=======
   const toggleTechnicien = (technicien: string) => {
     if (selectedTechniciens.includes(technicien)) {
       setSelectedTechniciens(selectedTechniciens.filter((t) => t !== technicien));
@@ -59,6 +77,7 @@ const EventForm: React.FC<EventFormProps> = ({
     }
   };
 
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <h2 className="text-xl font-bold mb-2">{event?.id ? "Modifier" : "Ajouter"} Événement</h2>
@@ -88,6 +107,8 @@ const EventForm: React.FC<EventFormProps> = ({
         required
       />
 
+<<<<<<< HEAD
+=======
       <div>
         <h3 className="font-semibold mb-2">Assigner aux techniciens :</h3>
         {techniciens.map((technicien) => (
@@ -102,6 +123,7 @@ const EventForm: React.FC<EventFormProps> = ({
         ))}
       </div>
 
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
       <div className="flex justify-between">
         <button type="button" onClick={onClose} className="px-4 py-2 bg-gray-300 rounded">Annuler</button>
         {event?.id && (

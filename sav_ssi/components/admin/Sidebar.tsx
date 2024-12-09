@@ -30,16 +30,29 @@ const Sidebar = () => {
     <>
       {/* Bouton Hamburger pour les petits écrans */}
       <div className="lg:hidden fixed top-4 left-4 z-50">
+<<<<<<< HEAD
+        <button onClick={toggleMenu} className="text-white">
+          {isOpen ? <FaTimes size={30} /> : <FaBars size={30} />}
+=======
         <button
           onClick={toggleMenu}
           className="text-gray-800 bg-white p-2 rounded-full shadow-lg"
         >
           {isOpen ? <FaTimes size={24} /> : <FaBars size={24} />}
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
         </button>
       </div>
 
       {/* Sidebar */}
       <div
+<<<<<<< HEAD
+        className={`fixed top-0 left-0 h-full w-64 bg-gray-800 text-white p-6 z-40 transition-transform duration-300 ease-in-out
+          ${isOpen ? "translate-x-0" : "-translate-x-full"} lg:translate-x-0`}
+      >
+        {/* Logo */}
+        <div className="flex justify-center mb-6">
+          <Image src="/logo.svg" alt="Logo" width={80} height={80} className="rounded-full" />
+=======
         className={`fixed top-0 left-0 h-full w-64 bg-gray-900 text-white p-6 z-40 shadow-lg transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         } lg:translate-x-0 lg:shadow-none`}
@@ -53,6 +66,7 @@ const Sidebar = () => {
             height={80}
             className="rounded-full"
           />
+>>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
         </div>
 
         {/* Navigation Scrollable */}
