@@ -122,7 +122,6 @@ const TechniniciensPage = () => {
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="login" className="text-right">Identifiant de connexion</Label>
->>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
                     <Input
                       id="login"
                       value={login}
@@ -133,11 +132,7 @@ const TechniniciensPage = () => {
                     />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
-<<<<<<< HEAD
                     <Label htmlFor="password" className="text-right">Mot de passe</Label>
-=======
-                    <Label htmlFor="password" className="text-right">Mot de passe provisoire</Label>
->>>>>>> 927a10670e773b53abf9af7862fa98b5f30053b9
                     <Input
                       id="password"
                       type="password"
