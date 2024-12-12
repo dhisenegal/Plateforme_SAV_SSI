@@ -5,16 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { FaBars, FaTimes } from "react-icons/fa";
 import { ModeToggle } from "./mode-toggle";
-<<<<<<< HEAD
 import {useSession, signOut} from "next-auth/react";
 import { useRouter } from "next/navigation";
-=======
->>>>>>> cf9b275b36006f270af257f38c6e56ae81d33848
 
 const Nav = () => {
   const [isOpen, setIsOpen] = useState(false);
 
-<<<<<<< HEAD
   const { data: session } = useSession(); 
   const router = useRouter(); 
 
@@ -28,11 +24,6 @@ const Nav = () => {
   const handleLogout = () => {
     signOut(); // Déconnexion via next-auth
   };
-=======
-  const toggleMenu = () => {
-    setIsOpen(!isOpen);
-  };
->>>>>>> cf9b275b36006f270af257f38c6e56ae81d33848
 
   return (
     <nav className="flex justify-between items-center py-4 px-8 shadow-lg fixed w-full bg-white z-50">
@@ -68,7 +59,6 @@ const Nav = () => {
      <div className="flex items-center space-x-4">
       <ModeToggle />
         <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hidden md:block">
-<<<<<<< HEAD
         {session ? (
             <Link href="/" onClick={handleLogout} 
             className="ml-4 hover:text-blue-400 cursor-pointer">
@@ -83,13 +73,6 @@ const Nav = () => {
         </button>
      </div>
       
-=======
-          <Link href="/auth/login">Connexion</Link>
-        </button>
-     </div>
-      
-
->>>>>>> cf9b275b36006f270af257f38c6e56ae81d33848
       {/* Icône Hamburger pour Mobile */}
       <div className="md:hidden flex items-center">
         <button onClick={toggleMenu} className="text-gray-700 focus:outline-none">
@@ -123,7 +106,6 @@ const Nav = () => {
             </li>
             <li>
               <button onClick={toggleMenu} className="bg-blue-600 text-white px-4 py-2 rounded-lg">
-<<<<<<< HEAD
               {session ? (
             <Link href="/" onClick={handleLogout} 
             className="ml-4 hover:text-blue-400 cursor-pointer">
@@ -135,9 +117,6 @@ const Nav = () => {
               Connexion
             </Link>
           )}
-=======
-                Connexion
->>>>>>> cf9b275b36006f270af257f38c6e56ae81d33848
               </button>
             </li>
           </ul>

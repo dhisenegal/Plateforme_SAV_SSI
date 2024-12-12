@@ -2,11 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "next-auth/react";
-<<<<<<< HEAD
 import { auth } from "@/auth";
-=======
-import {auth} from "@/auth"
->>>>>>> cf9b275b36006f270af257f38c6e56ae81d33848
 
 export const metadata: Metadata = {
   title: "Plateforme SAV SSI",

@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { FaBell, FaMoon, FaUserAlt, FaBars } from "react-icons/fa";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { useSession, signOut } from "next-auth/react";
+import Link from "next/link";
 
 const Navbar = () => {
   const { data: session } = useSession();
@@ -11,6 +12,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     signOut(); // Déconnexion via next-auth
+    
   };
 
   const handleManageAccount = () => {
@@ -53,7 +55,7 @@ const Navbar = () => {
                 Gérer mon compte
               </DropdownMenuItem>
               <DropdownMenuItem onSelect={handleLogout}>
-                <span className="text-red-700">Déconnexion</span>
+                <Link href="/" className="text-red-700">Déconnexion</Link>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

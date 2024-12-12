@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,31 +45,12 @@ const ContratTabContent = () => {
     setSites(data);
   };
 
-  const calculateEndDate = (startDate, typeContrat) => {
-    const date = new Date(startDate);
-    switch (typeContrat) {
-      case "1 an renouvelable":
-        date.setFullYear(date.getFullYear() + 1);
-        break;
-      case "2 ans renouvelable":
-        date.setFullYear(date.getFullYear() + 2);
-        break;
-      case "3 ans renouvelable":
-        date.setFullYear(date.getFullYear() + 3);
-        break;
-      default:
-        return null;
-    }
-    return date.toISOString().split('T')[0];
-  };
-
   const handleAddContract = async () => {
     try {
-      const endDate = calculateEndDate(newContract.startDate, newContract.typeContrat);
       const newContractData = {
         nom: newContract.nom,
         dateDebut: new Date(newContract.startDate),
-        dateFin: endDate ? new Date(endDate) : null,
+        dateFin: newContract.endDate ? new Date(newContract.endDate) : null,
         periodicite: newContract.periodicite,
         typeContrat: newContract.typeContrat,
         termeContrat: newContract.termeContrat,
@@ -91,11 +73,10 @@ const ContratTabContent = () => {
 
   const handleUpdateContract = async () => {
     try {
-      const endDate = calculateEndDate(selectedContract.startDate, selectedContract.typeContrat);
       const updatedContractData = {
         nom: selectedContract.nom,
         dateDebut: new Date(selectedContract.startDate),
-        dateFin: endDate ? new Date(endDate) : null,
+        dateFin: selectedContract.endDate ? new Date(selectedContract.endDate) : null,
         periodicite: selectedContract.periodicite,
         typeContrat: selectedContract.typeContrat,
         termeContrat: selectedContract.termeContrat,
@@ -138,6 +119,11 @@ const ContratTabContent = () => {
 
   const handleSuspendContract = (id) => {
     // Logic to suspend contract
+  };
+
+  const formatDate = (date) => {
+    const d = new Date(date);
+    return isNaN(d.getTime()) ? "" : d.toISOString().split('T')[0];
   };
 
   return (
@@ -209,10 +195,9 @@ const ContratTabContent = () => {
                   name="endDate"
                   type="date"
                   placeholder="Date de fin"
-                  onChange={(e) => setNewContract({ ...newContract, endDate: calculateEndDate(e.target.value, newContract.typeContrat) })}
+                  onChange={(e) => setNewContract({ ...newContract, endDate: e.target.value })}
                   value={newContract.endDate}
                   className="mb-4"
-                  disabled={newContract.typeContrat === "Tacite"}
                 />
                 <Select
                   value={newContract.periodicite}
@@ -282,8 +267,8 @@ const ContratTabContent = () => {
             {contracts.map((contract) => (
               <TableRow key={contract.id} className="cursor-pointer">
                 <TableCell>{contract.nom}</TableCell>
-                <TableCell>{clients.find(client => client.id === contract.idClient)?.nom || ""}</TableCell>
-                <TableCell>{sites.find(site => site.id === contract.idSite)?.nom || ""}</TableCell>
+                <TableCell>{contract.Site.Client.nom}</TableCell>
+                <TableCell>{contract.Site.nom}</TableCell>
                 <TableCell>{new Date(contract.dateDebut).toLocaleDateString()}</TableCell>
                 <TableCell>{contract.dateFin ? new Date(contract.dateFin).toLocaleDateString() : "Tacite"}</TableCell>
                 <TableCell>{contract.periodicite}</TableCell>
@@ -353,7 +338,7 @@ const ContratTabContent = () => {
                   type="date"
                   placeholder="Date de début"
                   onChange={(e) => setSelectedContract({ ...selectedContract, startDate: e.target.value })}
-                  value={new Date(selectedContract.startDate).toISOString().split('T')[0]}
+                  value={formatDate(selectedContract.startDate)}
                   className="mb-4"
                 />
                 <Label htmlFor="endDate">Date de fin</Label>
@@ -361,8 +346,8 @@ const ContratTabContent = () => {
                   name="endDate"
                   type="date"
                   placeholder="Date de fin"
-                  onChange={(e) => setSelectedContract({ ...selectedContract, endDate: calculateEndDate(e.target.value, selectedContract.typeContrat) })}
-                  value={selectedContract.endDate ? new Date(selectedContract.endDate).toISOString().split('T')[0] : ""}
+                  onChange={(e) => setSelectedContract({ ...selectedContract, endDate: e.target.value })}
+                  value={formatDate(selectedContract.endDate)}
                   className="mb-4"
                   disabled={selectedContract.typeContrat === "Tacite"}
                 />

@@ -64,14 +64,13 @@ model Client {
   Contacts  Contact[]
   Installations Installation[]
   DemandesIntervention DemandeIntervention[]
-
-  @@map("client")
 }
 
 model Site {
   id        Int      @id @default(autoincrement())
   nom       String
   idClient  Int
+  adresse   String
   Client    Client    @relation(fields: [idClient], references: [id])
   Contacts  ContactSite[]
   Installations Installation[]
@@ -245,10 +244,6 @@ model Intervention {
   Technicien          Utilisateur @relation("TechnicienIntervention", fields: [idTechnicien], references: [id])
   Contact             Contact     @relation(fields: [idContact], references: [id])
   DemandeIntervention DemandeIntervention @relation(fields: [idDemandeIntervention], references: [id])
-<<<<<<< HEAD
 
   @@map("intervention")
 }
-=======
-}
->>>>>>> cf9b275b36006f270af257f38c6e56ae81d33848
