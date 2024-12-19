@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@/components/ui/table";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { FaPlus, FaEye, FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus, FaEye, FaEdit, FaTrash, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { getAllClients, getAllSites, createSite, updateSite, deleteSite } from "@/actions/sav/site";
 import { getAllContrats } from "@/actions/sav/contrat";
 import { Client } from "@prisma/client";
@@ -21,6 +21,10 @@ const SitesTabContent = () => {
   const [selectedSite, setSelectedSite] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [siteToDelete, setSiteToDelete] = useState(null);
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -104,6 +108,41 @@ const SitesTabContent = () => {
     router.push(`/sav/sites/${siteId}`);
   };
 
+  const handleSelectRow = (siteId) => {
+    setSelectedRows((prevSelectedRows) =>
+      prevSelectedRows.includes(siteId)
+        ? prevSelectedRows.filter((id) => id !== siteId)
+        : [...prevSelectedRows, siteId]
+    );
+  };
+
+  const handleSelectAllRows = () => {
+    if (selectAll) {
+      setSelectedRows([]);
+    } else {
+      setSelectedRows(sites.map((site) => site.id));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentSites = sites.slice(indexOfFirstItem, indexOfLastItem);
+
+  const totalPages = Math.ceil(sites.length / itemsPerPage);
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
@@ -185,6 +224,13 @@ const SitesTabContent = () => {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead>
+              <input
+                type="checkbox"
+                checked={selectAll}
+                onChange={handleSelectAllRows}
+              />
+            </TableHead>
             <TableHead>Sites</TableHead>
             <TableHead>Client</TableHead>
             <TableHead>Contrat</TableHead>
@@ -193,8 +239,20 @@ const SitesTabContent = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sites.map((site) => (
-            <TableRow key={site.id} className="cursor-pointer" onClick={() => handleRowClick(site.id)}>
+          {currentSites.map((site) => (
+            <TableRow
+              key={site.id}
+              className={`cursor-pointer ${selectedRows.includes(site.id) ? 'bg-blue-100' : 'hover:bg-blue-100'}`}
+              onClick={() => handleRowClick(site.id)}
+            >
+              <TableCell>
+                <input
+                  type="checkbox"
+                  checked={selectedRows.includes(site.id)}
+                  onChange={() => handleSelectRow(site.id)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </TableCell>
               <TableCell>{site.nom}</TableCell>
               <TableCell>{site.Client.nom}</TableCell>
               <TableCell>{site.Contrats.length > 0 ? site.Contrats[0].nom : "Aucun contrat"}</TableCell>
@@ -210,6 +268,17 @@ const SitesTabContent = () => {
           ))}
         </TableBody>
       </Table>
+      <div className="flex justify-end items-center mt-4 gap-2">
+        <span>
+          Page {currentPage} / {totalPages}
+        </span>
+        <Button onClick={handlePreviousPage} disabled={currentPage === 1} className="bg-blue-500">
+          <FaArrowLeft />
+        </Button>
+        <Button onClick={handleNextPage} disabled={currentPage === totalPages} className="bg-blue-500">
+          <FaArrowRight />
+        </Button>
+      </div>
 
       {selectedSite && (
         <Dialog open={selectedSite !== null} onOpenChange={() => setSelectedSite(null)}>

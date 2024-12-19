@@ -1,20 +1,34 @@
-import Sidebar from "@/components/sav/Sidebar";
-import Navbar from "@/components/sav/Nav";
-import React from "react";
+import KBar from '@/components/kbar';
+import AppSidebar from '@/components/layout/app-sidebar';
+import Header from '@/components/layout/header';
+import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
+import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 
-const AdminLayout = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <div className="flex min-h-screen">
-      {/* Sidebar spécifique à l'admin */}
-      <Sidebar />
-      <div className="flex-1 flex flex-col lg:ml-64">
-        <Navbar />
-        <div className="p-8"> {/* Contenu principal */}
-          {children}
-        </div>
-      </div>
-    </div>
-  );
+export const metadata: Metadata = {
+  title: 'Next Shadcn Dashboard Starter',
+  description: 'Basic dashboard with Next.js and Shadcn'
 };
 
-export default AdminLayout;
+export default function DashboardLayout({
+  children
+}: {
+  children: React.ReactNode;
+}) {
+  // Persisting the sidebar state in the cookie.
+  const cookieStore = cookies();
+  const defaultOpen = cookieStore.get('sidebar:state')?.value === 'true';
+  return (
+    <KBar>
+      <SidebarProvider defaultOpen={defaultOpen}>
+        <AppSidebar />
+        <SidebarInset>
+          <Header />
+          {/* page main content */}
+          {children}
+          {/* page main content ends */}
+        </SidebarInset>
+      </SidebarProvider>
+    </KBar>
+  );
+}

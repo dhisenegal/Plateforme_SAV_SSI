@@ -1,33 +1,60 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { FaCalendarAlt, FaClock, FaFileAlt, FaArrowLeft, FaPlus, FaEdit, FaTrash } from "react-icons/fa";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@/components/ui/table";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
+import { FaCalendarAlt, FaClock, FaFileAlt, FaArrowLeft, FaPlus } from "react-icons/fa";
+import EquipementTab from "@/components/sav/EquipementTab";
+import MaintenanceTab from "@/components/sav/MaintenanceTab";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-
-const initialEquipments = [
-  { id: "1", name: "Équipement 1", system: "Système 1", installationDate: "2023-01-01" },
-  { id: "2", name: "Équipement 2", system: "Système 2", installationDate: "2023-02-01" },
-];
-
-const systems = ["Système 1", "Système 2", "Système 3"];
+import DetailSiteTab from "@/components/sav/ContactSiteTab";
+import { planifierMaintenance } from "@/actions/sav/maintenance";
+import { getAllTechniciens } from "@/actions/sav/technicien";
+import { getContactsBySite } from "@/actions/sav/contact";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
 
 const SiteDetailsPage = () => {
   const router = useRouter();
   const params = useParams();
-  const id = params?.id;
+  const id = Number(params?.id);
   const [activeTab, setActiveTab] = useState("interventions");
-  const [equipments, setEquipments] = useState(initialEquipments);
-  const [newEquipment, setNewEquipment] = useState({ name: "", system: "", installationDate: "" });
-  const [selectedEquipment, setSelectedEquipment] = useState(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [equipmentToDelete, setEquipmentToDelete] = useState(null);
+  const [numero, setNumero] = useState("");
+  const [dateMaintenance, setDateMaintenance] = useState("");
+  const [description, setDescription] = useState("");
+  const [statut, setStatut] = useState("planifiée");
+  const [typeMaintenance, setTypeMaintenance] = useState("curative");
+  const [idTechnicien, setIdTechnicien] = useState(0);
+  const [idContact, setIdContact] = useState(0);
+  const [techniciens, setTechniciens] = useState([]);
+  const [contacts, setContacts] = useState([]);
+  const [associerContact, setAssocierContact] = useState(false);
+
+  useEffect(() => {
+    const fetchTechniciens = async () => {
+      try {
+        const techniciens = await getAllTechniciens();
+        setTechniciens(techniciens);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des techniciens:", error);
+      }
+    };
+
+    const fetchContacts = async () => {
+      try {
+        const contacts = await getContactsBySite(id);
+        setContacts(contacts);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des contacts:", error);
+      }
+    };
+
+    fetchTechniciens();
+    fetchContacts();
+  }, [id]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -37,39 +64,38 @@ const SiteDetailsPage = () => {
     router.push("/sav/maintenances");
   };
 
-  const handleAddEquipment = () => {
-    const newId = (equipments.length + 1).toString();
-    setEquipments([...equipments, { id: newId, ...newEquipment }]);
-    setNewEquipment({ name: "", system: "", installationDate: "" });
-    toast.success("Équipement ajouté avec succès");
-  };
+  const handlePlanifierMaintenance = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-  const handleEditEquipment = (id) => {
-    const equipment = equipments.find(e => e.id === id);
-    setSelectedEquipment(equipment);
-  };
+    const maintenanceData = {
+      numero,
+      dateMaintenance,
+      description,
+      statut,
+      typeMaintenance,
+      idSite: id,
+      idTechnicien,
+      idContact,
+    };
 
-  const handleUpdateEquipment = () => {
-    setEquipments(equipments.map(e => e.id === selectedEquipment.id ? selectedEquipment : e));
-    setSelectedEquipment(null);
-    toast.success("Équipement modifié avec succès");
-  };
+    console.log("Données envoyées pour la planification de la maintenance:", JSON.stringify(maintenanceData, null, 2));
 
-  const handleDeleteEquipment = (id) => {
-    setIsDeleteDialogOpen(true);
-    setEquipmentToDelete(id);
-  };
+    try {
+      await planifierMaintenance(maintenanceData);
 
-  const confirmDeleteEquipment = () => {
-    setEquipments(equipments.filter(e => e.id !== equipmentToDelete));
-    setIsDeleteDialogOpen(false);
-    setEquipmentToDelete(null);
-    toast.success("Équipement supprimé avec succès");
-  };
-
-  const cancelDeleteEquipment = () => {
-    setIsDeleteDialogOpen(false);
-    setEquipmentToDelete(null);
+      toast.success("Maintenance planifiée avec succès !");
+      setNumero("");
+      setDateMaintenance("");
+      setDescription("");
+      setStatut("planifiée");
+      setTypeMaintenance("curative");
+      setIdTechnicien(0);
+      setIdContact(0);
+      setAssocierContact(false);
+    } catch (error) {
+      toast.error("Erreur lors de la planification de la maintenance.");
+      console.error("Erreur lors de la planification de la maintenance:", error);
+    }
   };
 
   return (
@@ -83,10 +109,123 @@ const SiteDetailsPage = () => {
             <FaArrowLeft className="mr-2" />
             Retour
           </button>
-          <button className="flex items-center mb-4 bg-blue-500 text-white hover:bg-blue-600 p-3 rounded-lg">
-            <FaPlus className="mr-2" />
-            Récurrence
-          </button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <button className="flex items-center mb-4 bg-blue-500 text-white hover:bg-blue-600 p-3 rounded-lg">
+                <FaPlus className="mr-2" />
+                Récurrence
+              </button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Planifier une maintenance</DialogTitle>
+                <DialogDescription>Remplissez les détails pour planifier une maintenance</DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handlePlanifierMaintenance}>
+                <div className="grid gap-4 py-4">
+                  <div className="grid grid-cols-1 gap-4">
+                    <Label htmlFor="numero">Numéro</Label>
+                    <Input
+                      id="numero"
+                      value={numero}
+                      onChange={(e) => setNumero(e.target.value)}
+                      placeholder="Numéro de maintenance"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    <Label htmlFor="dateMaintenance">Date</Label>
+                    <Input
+                      id="dateMaintenance"
+                      type="date"
+                      value={dateMaintenance}
+                      onChange={(e) => setDateMaintenance(e.target.value)}
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    <Label htmlFor="description">Description</Label>
+                    <Input
+                      id="description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder="Description de la maintenance"
+                      required
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    <Label htmlFor="typeMaintenance">Type</Label>
+                    <Select
+                      id="typeMaintenance"
+                      value={typeMaintenance}
+                      onValueChange={(value) => setTypeMaintenance(value)}
+                      required
+                    >
+                      <SelectTrigger>Choisir un type</SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="curative">Curative</SelectItem>
+                        <SelectItem value="preventive">Préventive</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    <Label htmlFor="idTechnicien">Technicien</Label>
+                    <Select
+                      id="idTechnicien"
+                      value={idTechnicien}
+                      onValueChange={(value) => setIdTechnicien(Number(value))}
+                      required
+                    >
+                      <SelectTrigger>Choisir un technicien</SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value={0} disabled>Choisir un technicien</SelectItem>
+                        {techniciens.map((technicien) => (
+                          <SelectItem key={technicien.id} value={technicien.id}>
+                            {technicien.prenom} {technicien.nom}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-1 gap-4">
+                    <Label htmlFor="associerContact">Associer un contact</Label>
+                    <Input
+                      id="associerContact"
+                      type="checkbox"
+                      checked={associerContact}
+                      onChange={(e) => setAssocierContact(e.target.checked)}
+                    />
+                  </div>
+                  {associerContact && (
+                    <div className="grid grid-cols-1 gap-4">
+                      <Label htmlFor="idContact">Contact</Label>
+                      <Select
+                        id="idContact"
+                        value={idContact}
+                        onValueChange={(value) => setIdContact(Number(value))}
+                        required
+                      >
+                        <SelectTrigger>Choisir un contact</SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={0} disabled>Choisir un contact</SelectItem>
+                          {contacts.map((contact) => (
+                            <SelectItem key={contact.id} value={contact.id}>
+                              {contact.prenom} {contact.nom}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button type="submit" className="bg-blue-700 hover:bg-blue-600 text-white">
+                    Planifier
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="flex flex-col items-center p-4 bg-white shadow rounded-lg">
@@ -134,169 +273,20 @@ const SiteDetailsPage = () => {
         </div>
 
         {activeTab === "interventions" && (
-          <div>
-            {/* Contenu du tab "Interventions" */}
-            <p>Aucune intervention pour l'instant</p>
-          </div>
+          <MaintenanceTab siteId={id} />
         )}
 
         {activeTab === "equipments" && (
-          <div>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl text-gray-800 font-bold">Équipements</h2>
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button className="bg-blue-500 text-white flex items-center">
-                    <FaPlus className="w-3 h-3 mr-2" />
-                    Associer un équipement
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
-                  <DialogHeader>
-                    <DialogTitle>Ajouter un Nouvel Équipement</DialogTitle>
-                    <DialogDescription>Entrez les détails du nouvel équipement.</DialogDescription>
-                  </DialogHeader>
-                  <div>
-                    <Input
-                      name="name"
-                      placeholder="Nom"
-                      onChange={(e) => setNewEquipment({ ...newEquipment, name: e.target.value })}
-                      value={newEquipment.name}
-                      className="mb-4"
-                    />
-                    <Select
-                      value={newEquipment.system}
-                      onValueChange={(value) => setNewEquipment({ ...newEquipment, system: value })}
-                    >
-                      <SelectTrigger className="w-full mb-4">
-                        <SelectValue placeholder="Sélectionnez un système" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {systems.map((system) => (
-                          <SelectItem key={system} value={system}>
-                            {system}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      name="installationDate"
-                      type="date"
-                      placeholder="Date d'installation"
-                      onChange={(e) => setNewEquipment({ ...newEquipment, installationDate: e.target.value })}
-                      value={newEquipment.installationDate}
-                      className="mb-4"
-                    />
-                    <Button onClick={handleAddEquipment} className="w-full bg-blue-500 text-white hover:bg-blue-600">
-                      Ajouter
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom de l'équipement</TableHead>
-                  <TableHead>Nom du système</TableHead>
-                  <TableHead>Date d'installation</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {equipments.map((equipment) => (
-                  <TableRow key={equipment.id} className="cursor-pointer">
-                    <TableCell>{equipment.name}</TableCell>
-                    <TableCell>{equipment.system}</TableCell>
-                    <TableCell>{equipment.installationDate}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <FaEdit className="text-blue-500 cursor-pointer" onClick={() => handleEditEquipment(equipment.id)} />
-                        <FaTrash className="text-red-500 cursor-pointer" onClick={() => handleDeleteEquipment(equipment.id)} />
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-
-            {selectedEquipment && (
-              <Dialog open={selectedEquipment !== null} onOpenChange={() => setSelectedEquipment(null)}>
-                <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
-                  <DialogHeader>
-                    <DialogTitle>Modifier l'Équipement</DialogTitle>
-                    <DialogDescription>Modifiez les détails de l'équipement.</DialogDescription>
-                  </DialogHeader>
-                  <div>
-                    <Input
-                      name="name"
-                      placeholder="Nom"
-                      onChange={(e) => setSelectedEquipment({ ...selectedEquipment, name: e.target.value })}
-                      value={selectedEquipment.name}
-                      className="mb-4"
-                    />
-                    <Select
-                      value={selectedEquipment.system}
-                      onValueChange={(value) => setSelectedEquipment({ ...selectedEquipment, system: value })}
-                    >
-                      <SelectTrigger className="w-full mb-4">
-                        <SelectValue placeholder="Sélectionnez un système" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {systems.map((system) => (
-                          <SelectItem key={system} value={system}>
-                            {system}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      name="installationDate"
-                      type="date"
-                      placeholder="Date d'installation"
-                      onChange={(e) => setSelectedEquipment({ ...selectedEquipment, installationDate: e.target.value })}
-                      value={selectedEquipment.installationDate}
-                      className="mb-4"
-                    />
-                    <div className="flex justify-between">
-                      <Button onClick={handleUpdateEquipment} className="bg-blue-500 text-white hover:bg-blue-600">
-                        Modifier
-                      </Button>
-                      <Button onClick={() => handleDeleteEquipment(selectedEquipment.id)} className="bg-red-500 text-white hover:bg-red-600">
-                        Supprimer
-                      </Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            )}
-          </div>
+          <EquipementTab siteId={id} />
         )}
 
         {activeTab === "details" && (
           <div>
             {/* Contenu du tab "Détails" */}
-            <p>Contenu pour Détails</p>
+            <DetailSiteTab siteId={id} />
           </div>
         )}
       </div>
-
-      <Dialog open={isDeleteDialogOpen} onOpenChange={cancelDeleteEquipment}>
-        <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
-          <DialogHeader>
-            <DialogTitle>Confirmation de Suppression</DialogTitle>
-            <DialogDescription>Êtes-vous sûr de vouloir supprimer cet équipement ?</DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-between">
-            <Button onClick={confirmDeleteEquipment} className="bg-red-500 text-white hover:bg-red-600">
-              Supprimer
-            </Button>
-            <Button onClick={cancelDeleteEquipment} className="bg-gray-500 text-white hover:bg-gray-600">
-              Annuler
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
 
       <ToastContainer />
     </>

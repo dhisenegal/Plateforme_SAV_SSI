@@ -5,8 +5,23 @@ export interface Utilisateur {
   nom: string;
   prenom: string;
   numero: string;
+  etatCompte: string;
   email: string;
   idRole: number;
+}
+export interface Contact {
+  id: number;
+  idClient: number;
+  idUtilisateur: number;
+  utilisateur: Utilisateur;
+}
+
+export interface ContactSite {
+  id: number;
+  estManager: boolean;
+  idSite: number;
+  idContact: number;
+  contact: Contact;
 }
 
 export interface Role {

@@ -23,6 +23,17 @@ export const getAllSites = async (): Promise<Site[]> => {
   });
 };
 
+// Récupérer les détails d'un site
+export const getSiteDetails = async (siteId: number): Promise<Site | null> => {
+  return await prisma.site.findUnique({
+    where: { id: siteId },
+    select: {
+      nom: true,
+      adresse: true,
+    },
+  });
+};
+
 // Créer un nouveau site
 export const createSite = async (data: {
   nom: string;
