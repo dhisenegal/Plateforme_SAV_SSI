@@ -50,7 +50,7 @@ const PlanningPage = async () => {
                     {getType(item)}
                   </td>
                   <td className="px-6 py-4 border-t text-gray-800 text-sm">
-                    {item.DemandeIntervention ? item.DemandeIntervention.statut : item.statut}
+                    {item.statut}  {/* Statut directement depuis la table 'intervention' */}
                   </td>
                   <td className="px-6 py-4 border-t text-center">
                     <Link
