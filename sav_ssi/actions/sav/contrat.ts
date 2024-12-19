@@ -21,7 +21,11 @@ export const getContratById = async (id: number): Promise<Contrat | null> => {
   return await prisma.contrat.findUnique({
     where: { id },
     include: {
-      Site: true,
+      Site: {
+        include: {
+          Client: true,
+        },
+      },
     },
   });
 };
@@ -30,7 +34,7 @@ export const getContratById = async (id: number): Promise<Contrat | null> => {
 export const createContrat = async (data: {
   nom: string;
   dateDebut: Date;
-  dateFin: Date;
+  dateFin: Date | null;
   periodicite: string;
   typeContrat: string;
   termeContrat: string;
@@ -38,6 +42,13 @@ export const createContrat = async (data: {
 }): Promise<Contrat> => {
   return await prisma.contrat.create({
     data,
+    include: {
+      Site: {
+        include: {
+          Client: true,
+        },
+      },
+    },
   });
 };
 
@@ -45,7 +56,7 @@ export const createContrat = async (data: {
 export const updateContrat = async (id: number, data: {
   nom?: string;
   dateDebut?: Date;
-  dateFin?: Date;
+  dateFin?: Date | null;
   periodicite?: string;
   typeContrat?: string;
   termeContrat?: string;
@@ -54,6 +65,13 @@ export const updateContrat = async (id: number, data: {
   return await prisma.contrat.update({
     where: { id },
     data,
+    include: {
+      Site: {
+        include: {
+          Client: true,
+        },
+      },
+    },
   });
 };
 

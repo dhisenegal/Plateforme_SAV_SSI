@@ -22,7 +22,7 @@ model Utilisateur {
   Interventions Intervention[] @relation("TechnicienIntervention")
   Maintenances Maintenance[]   @relation("TechnicienMaintenance")
   Sessions   Session[]
-  Accounts   Account[]
+  
 }
 
 model Role {
@@ -31,21 +31,13 @@ model Role {
   Utilisateurs  Utilisateur[]
 }
 
-model Account {
-  id            Int      @id @default(autoincrement())
-  userId        Int
-  provider      String
-  providerAccountId String
-  type          String
-  user          Utilisateur @relation(fields: [userId], references: [id])
-}
 
 model Session {
   id            Int      @id @default(autoincrement())
   userId        Int
   token         String
   expires       DateTime
-  Utilisateur   Utilisateur @relation(fields: [userId], references: [id])
+  Utilisateur   Utilisateur @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model VerificationToken {
@@ -64,16 +56,16 @@ model Client {
   Contacts  Contact[]
   Installations Installation[]
   DemandesIntervention DemandeIntervention[]
-
-  @@map("client")
 }
 
 model Site {
   id        Int      @id @default(autoincrement())
   nom       String
   idClient  Int
-  Client    Client    @relation(fields: [idClient], references: [id])
+  adresse   String
+  Client    Client    @relation(fields: [idClient], references: [id], onDelete: Cascade)
   Contacts  ContactSite[]
+  Maintenances Maintenance[]
   Installations Installation[]
   DemandesIntervention DemandeIntervention[]
   Contrats  Contrat[]
@@ -81,14 +73,14 @@ model Site {
 
 model Contact {
   id           Int         @id @default(autoincrement())
-  nomResponsable String
   idClient     Int
   idUtilisateur Int
-  Client       Client      @relation(fields: [idClient], references: [id])
-  Utilisateur  Utilisateur @relation(fields: [idUtilisateur], references: [id])
+  Client       Client      @relation(fields: [idClient], references: [id], onDelete: Cascade)
+  Utilisateur  Utilisateur @relation(fields: [idUtilisateur], references: [id], onDelete: Cascade)
   ContactSites ContactSite[]
   DemandesIntervention DemandeIntervention[]
   Interventions Intervention[]
+  Maintenances Maintenance[]
 }
 
 model ContactSite {
@@ -96,8 +88,8 @@ model ContactSite {
   estManager Boolean
   idSite    Int
   idContact Int
-  Site      Site      @relation(fields: [idSite], references: [id])
-  Contact   Contact   @relation(fields: [idContact], references: [id])
+  Site      Site      @relation(fields: [idSite], references: [id], onDelete: Cascade)
+  Contact   Contact   @relation(fields: [idContact], references: [id], onDelete: Cascade)
 }
 
 model Systeme {
@@ -136,15 +128,14 @@ model Installation {
   id        Int      @id @default(autoincrement())
   dateInstallation DateTime
   dateMaintenance  DateTime?
-  observations     String
+  observations     String?
   idClient         Int
   idSysteme        Int
   idSite           Int?
-  Client           Client     @relation(fields: [idClient], references: [id])
-  Systeme          Systeme    @relation(fields: [idSysteme], references: [id])
-  Site             Site?      @relation(fields: [idSite], references: [id])
+  Client           Client     @relation(fields: [idClient], references: [id],onDelete: Cascade)
+  Systeme          Systeme    @relation(fields: [idSysteme], references: [id], onDelete: Cascade)
+  Site             Site?      @relation(fields: [idSite], references: [id], onDelete: Cascade)
   EquipementsInstallation InstallationEquipement[]
-  Maintenances Maintenance[]
   DemandesIntervention DemandeIntervention[]
 }
 
@@ -156,8 +147,8 @@ model InstallationEquipement {
   idEquipement     Int
   idInstallation   Int
   quantite         Int      // Ajout du champ quantite
-  Equipement       Equipement   @relation(fields: [idEquipement], references: [id])
-  Installation     Installation @relation(fields: [idInstallation], references: [id])
+  Equipement       Equipement   @relation(fields: [idEquipement], references: [id], onDelete: Cascade)
+  Installation     Installation @relation(fields: [idInstallation], references: [id], onDelete: Cascade)
   Garanties        Garantie[]
 }
 
@@ -170,7 +161,7 @@ model Contrat {
   typeContrat       String
   termeContrat      String
   idSite            Int
-  Site              Site     @relation(fields: [idSite], references: [id])
+  Site              Site     @relation(fields: [idSite], references: [id], onDelete: Cascade)
   
 }
 
@@ -189,9 +180,11 @@ model Maintenance {
   description      String
   statut           EnumStatut_i          @default(PROGRAMME)
   typeMaintenance  String
-  idInstallation   Int
+  idSite   Int
   idTechnicien     Int
-  Installation     Installation @relation(fields: [idInstallation], references: [id])
+  idContact           Int
+  Contact           Contact?     @relation(fields: [idContact], references: [id])
+  Site     Site @relation(fields: [idSite], references: [id])
   Technicien       Utilisateur  @relation("TechnicienMaintenance", fields: [idTechnicien], references: [id])
   Actions          MaintenanceAction[]
 }
@@ -246,6 +239,7 @@ model Intervention {
   Technicien          Utilisateur @relation("TechnicienIntervention", fields: [idTechnicien], references: [id])
   Contact             Contact     @relation(fields: [idContact], references: [id])
   DemandeIntervention DemandeIntervention @relation(fields: [idDemandeIntervention], references: [id])
+<<<<<<< HEAD
 }
 enum EnumStatut_i {
   PROGRAMME
@@ -257,3 +251,8 @@ enum planification {
   NON_PLANIFIE
   PLANIFIE
 }
+=======
+
+  @@map("intervention")
+}
+>>>>>>> 22a55f8e6c7fe7528c466a4ebef407e8bd11f04f
