@@ -65,7 +65,6 @@ model Site {
   adresse   String
   Client    Client    @relation(fields: [idClient], references: [id], onDelete: Cascade)
   Contacts  ContactSite[]
-  Maintenances Maintenance[]
   Installations Installation[]
   DemandesIntervention DemandeIntervention[]
   Contrats  Contrat[]
@@ -80,7 +79,7 @@ model Contact {
   ContactSites ContactSite[]
   DemandesIntervention DemandeIntervention[]
   Interventions Intervention[]
-  Maintenances Maintenance[]
+  
 }
 
 model ContactSite {
@@ -136,6 +135,7 @@ model Installation {
   Systeme          Systeme    @relation(fields: [idSysteme], references: [id], onDelete: Cascade)
   Site             Site?      @relation(fields: [idSite], references: [id], onDelete: Cascade)
   EquipementsInstallation InstallationEquipement[]
+  Maintenance    Maintenance[]
   DemandesIntervention DemandeIntervention[]
 }
 
@@ -178,13 +178,11 @@ model Maintenance {
   numero           String
   dateMaintenance  DateTime
   description      String
-  statut           String
+  statut           EnumStatut_i          @default(PROGRAMME)
   typeMaintenance  String
-  idSite   Int
   idTechnicien     Int
-  idContact           Int
-  Contact           Contact?     @relation(fields: [idContact], references: [id])
-  Site     Site @relation(fields: [idSite], references: [id])
+  idInstallation    Int
+  Installation     Installation @relation(fields: [idInstallation], references: [id], onDelete: Cascade)
   Technicien       Utilisateur  @relation("TechnicienMaintenance", fields: [idTechnicien], references: [id])
   Actions          MaintenanceAction[]
 }
@@ -209,7 +207,7 @@ model MaintenanceAction {
 
 model DemandeIntervention {
   id               Int      @id @default(autoincrement())
-  statut           String
+  statut           planification         @default(NON_PLANIFIE)
   typePanneDeclare String
   dateDeclaration  DateTime
   idInstallation   Int
@@ -235,9 +233,22 @@ model Intervention {
   idTechnicien        Int
   idContact           Int
   idDemandeIntervention Int
+  statut               EnumStatut_i          @default(PROGRAMME)
   Technicien          Utilisateur @relation("TechnicienIntervention", fields: [idTechnicien], references: [id])
   Contact             Contact     @relation(fields: [idContact], references: [id])
   DemandeIntervention DemandeIntervention @relation(fields: [idDemandeIntervention], references: [id])
 
   @@map("intervention")
 }
+enum EnumStatut_i{
+  PROGRAMME 
+  EN_COURS
+  SUSPENDUE
+  TERMINE
+  }
+
+  
+  enum planification {
+   NON_PLANIFIE
+  PLANIFIE
+  }

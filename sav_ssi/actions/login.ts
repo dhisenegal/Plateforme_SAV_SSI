@@ -39,10 +39,10 @@ export const login = async (values: z.infer<typeof LoginSchema>) => {
     let redirectTo = DEFAULT_LOGIN_REDIRECT;
     if (user.Role.nom === "admin") {
       redirectTo = "/admin";
-    } else if (user.Role.nom === "client") {
-      redirectTo = "/";
+    } else if (user.Role.nom === "technicien") {
+      redirectTo = "/technicien";
     } else if (user.Role.nom === "sav") {
-      redirectTo = "/sav/overview";
+      redirectTo = "/sav";
     }
 
     // SignIn avec la redirection définie

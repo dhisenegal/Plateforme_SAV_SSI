@@ -1,6 +1,7 @@
 'use client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import {useRouter} from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,7 +14,12 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { signOut, useSession } from 'next-auth/react';
 export function UserNav() {
+  const router = useRouter();
   const { data: session } = useSession();
+  const handleSignOut = () => {
+    signOut();
+    router.push('/auth/login');
+  };
   if (session) {
     return (
       <DropdownMenu>
@@ -21,10 +27,10 @@ export function UserNav() {
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
               <AvatarImage
-                src={session.user?.image ?? ''}
-                alt={session.user?.name ?? ''}
+                src={session.utilisateur?.image ?? ''}
+                alt={session.utilisateur?.prenom ?? ''}
               />
-              <AvatarFallback>{session.user?.name?.[0]}</AvatarFallback>
+              <AvatarFallback>{session.utilisateur?.prenom?.[0]}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
@@ -32,32 +38,23 @@ export function UserNav() {
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">
-                {session.user?.name}
+                {session.utilisateur?.prenom}
               </p>
               <p className="text-xs leading-none text-muted-foreground">
-                {session.user?.email}
+                {session.utilisateur?.email}
               </p>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem>
-              Profile
+              Modifier mot de passe
               <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              Billing
-              <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuItem>
-              Settings
-              <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-            </DropdownMenuItem>
-            <DropdownMenuItem>New Team</DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => signOut()}>
-            Log out
+          <DropdownMenuItem onClick={() => handleSignOut()}>
+           <span className="text-red-500"> Déconnexion</span>
             <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
           </DropdownMenuItem>
         </DropdownMenuContent>

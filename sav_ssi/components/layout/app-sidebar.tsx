@@ -29,7 +29,7 @@ import {
   SidebarMenuSubItem,
   SidebarRail
 } from '@/components/ui/sidebar';
-import { navItems } from '@/constants/data';
+import { navItemsByRole } from '@/constants/data';
 import {
   BadgeCheck,
   Bell,
@@ -54,6 +54,16 @@ export const company = {
 export default function AppSidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
+
+  // Log the session to debug
+  console.log('Session:', session);
+
+  // Get the user's role from the session
+  const userRole = session?.user?.role; // Default to 'guest' if no role is found
+  console.log("role user", userRole);
+
+  // Get the navigation items for the user's role
+  const navItems = navItemsByRole[userRole] || [];
 
   return (
     <Sidebar collapsible="icon" className=''>

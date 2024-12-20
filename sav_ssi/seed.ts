@@ -23,9 +23,19 @@ async function main() {
     },
   });
 
+  const roleTechnicien = await prisma.role.upsert({
+    where: { id: 3 },
+    update: {},
+    create: {
+      id: 3,
+      nom: "technicien",
+    },
+  });
+
   // Créer des utilisateurs
   const hashedPasswordAdmin = await bcrypt.hash("passer", 10);
   const hashedPasswordUser = await bcrypt.hash("passer", 10);
+  const hashedPasswordTechnicien = await bcrypt.hash("passer", 10);
 
   const utilisateur1 = await prisma.utilisateur.upsert({
     where: { email: "admin@example.com" },
@@ -54,6 +64,20 @@ async function main() {
       etatCompte: "actif",
       email: "user@example.com",
       idRole: roleUser.id,
+    },
+  });
+  const utilisateur3 = await prisma.utilisateur.upsert({
+    where: { email: "technicien@example.com" },
+    update: {},
+    create: {
+      login: "technicien",
+      password: hashedPasswordTechnicien,
+      nom: "Technicien",
+      prenom: "Example",
+      numero: "0987654321",
+      etatCompte: "actif",
+      email: "technicien@example.com",
+      idRole: roleTechnicien.id,
     },
   });
 

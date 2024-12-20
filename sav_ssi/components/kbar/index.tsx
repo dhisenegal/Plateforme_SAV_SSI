@@ -1,5 +1,5 @@
 'use client';
-import { navItems } from '@/constants/data';
+import { navItemsByRole } from '@/constants/data';
 import {
   KBarAnimator,
   KBarPortal,
@@ -19,39 +19,41 @@ export default function KBar({ children }: { children: React.ReactNode }) {
     router.push(url);
   };
 
-  // These action are for the navigation
+  // These actions are for the navigation
   const actions = useMemo(
     () =>
-      navItems.flatMap((navItem) => {
-        // Only include base action if the navItem has a real URL and is not just a container
-        const baseAction =
-          navItem.url !== '#'
-            ? {
-                id: `${navItem.title.toLowerCase()}Action`,
-                name: navItem.title,
-                shortcut: navItem.shortcut,
-                keywords: navItem.title.toLowerCase(),
-                section: 'Navigation',
-                subtitle: `Go to ${navItem.title}`,
-                perform: () => navigateTo(navItem.url)
-              }
-            : null;
+      Object.values(navItemsByRole).flatMap((navItems) =>
+        navItems.flatMap((navItem) => {
+          // Only include base action if the navItem has a real URL and is not just a container
+          const baseAction =
+            navItem.url !== '#'
+              ? {
+                  id: `${navItem.title.toLowerCase()}Action`,
+                  name: navItem.title,
+                  shortcut: navItem.shortcut,
+                  keywords: navItem.title.toLowerCase(),
+                  section: 'Navigation',
+                  subtitle: `Go to ${navItem.title}`,
+                  perform: () => navigateTo(navItem.url)
+                }
+              : null;
 
-        // Map child items into actions
-        const childActions =
-          navItem.items?.map((childItem) => ({
-            id: `${childItem.title.toLowerCase()}Action`,
-            name: childItem.title,
-            shortcut: childItem.shortcut,
-            keywords: childItem.title.toLowerCase(),
-            section: navItem.title,
-            subtitle: `Go to ${childItem.title}`,
-            perform: () => navigateTo(childItem.url)
-          })) ?? [];
+          // Map child items into actions
+          const childActions =
+            navItem.items?.map((childItem) => ({
+              id: `${childItem.title.toLowerCase()}Action`,
+              name: childItem.title,
+              shortcut: childItem.shortcut,
+              keywords: childItem.title.toLowerCase(),
+              section: navItem.title,
+              subtitle: `Go to ${childItem.title}`,
+              perform: () => navigateTo(childItem.url)
+            })) ?? [];
 
-        // Return only valid actions (ignoring null base actions for containers)
-        return baseAction ? [baseAction, ...childActions] : childActions;
-      }),
+          // Return only valid actions (ignoring null base actions for containers)
+          return baseAction ? [baseAction, ...childActions] : childActions;
+        })
+      ),
     []
   );
 
@@ -61,6 +63,7 @@ export default function KBar({ children }: { children: React.ReactNode }) {
     </KBarProvider>
   );
 }
+
 const KBarComponent = ({ children }: { children: React.ReactNode }) => {
   useThemeSwitching();
 

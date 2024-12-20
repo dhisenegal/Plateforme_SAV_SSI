@@ -6,8 +6,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@/components/ui/table";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { FaPlus, FaEye, FaEdit, FaTrash, FaArrowLeft, FaArrowRight } from "react-icons/fa";
-import { getAllClients, getAllSites, createSite, updateSite, deleteSite } from "@/actions/sav/site";
-import { getAllContrats } from "@/actions/sav/contrat";
+import { getAllClients, getAllSites, createSite, updateSite, deleteSite, getAllContrats } from "@/actions/sav/site";
 import { Client } from "@prisma/client";
 import { ToastContainer, toast } from "react-toastify";
 import 'react-toastify/dist/ReactToastify.css';
@@ -25,18 +24,20 @@ const SitesTabContent = () => {
   const [selectAll, setSelectAll] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [totalSites, setTotalSites] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
       const clientsData = await getAllClients();
       const contratsData = await getAllContrats();
-      const sitesData = await getAllSites();
+      const { sites: sitesData, total } = await getAllSites(currentPage, itemsPerPage);
       setClients(clientsData);
       setContrats(contratsData);
       setSites(sitesData);
+      setTotalSites(total);
     };
     fetchData();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   const handleAddSite = async () => {
     try {
@@ -125,11 +126,7 @@ const SitesTabContent = () => {
     setSelectAll(!selectAll);
   };
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentSites = sites.slice(indexOfFirstItem, indexOfLastItem);
-
-  const totalPages = Math.ceil(sites.length / itemsPerPage);
+  const totalPages = Math.ceil(totalSites / itemsPerPage);
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
@@ -239,7 +236,7 @@ const SitesTabContent = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {currentSites.map((site) => (
+          {sites.map((site) => (
             <TableRow
               key={site.id}
               className={`cursor-pointer ${selectedRows.includes(site.id) ? 'bg-blue-100' : 'hover:bg-blue-100'}`}
