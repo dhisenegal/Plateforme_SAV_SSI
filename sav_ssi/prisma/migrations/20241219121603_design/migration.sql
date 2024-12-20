@@ -66,7 +66,6 @@ CREATE TABLE `Site` (
 -- CreateTable
 CREATE TABLE `Contact` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `nomResponsable` VARCHAR(191) NOT NULL,
     `idClient` INTEGER NOT NULL,
     `idUtilisateur` INTEGER NOT NULL,
 
@@ -123,7 +122,7 @@ CREATE TABLE `Installation` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `dateInstallation` DATETIME(3) NOT NULL,
     `dateMaintenance` DATETIME(3) NULL,
-    `observations` VARCHAR(191) NOT NULL,
+    `observations` VARCHAR(191) NULL,
     `idClient` INTEGER NOT NULL,
     `idSysteme` INTEGER NOT NULL,
     `idSite` INTEGER NULL,
@@ -174,10 +173,11 @@ CREATE TABLE `Maintenance` (
     `numero` VARCHAR(191) NOT NULL,
     `dateMaintenance` DATETIME(3) NOT NULL,
     `description` VARCHAR(191) NOT NULL,
-    `statut` VARCHAR(191) NOT NULL,
+    `statut` ENUM('PROGRAMME', 'EN_COURS', 'SUSPENDUE', 'TERMINE') NOT NULL DEFAULT 'PROGRAMME',
     `typeMaintenance` VARCHAR(191) NOT NULL,
-    `idInstallation` INTEGER NOT NULL,
+    `idSite` INTEGER NOT NULL,
     `idTechnicien` INTEGER NOT NULL,
+    `idContact` INTEGER NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -205,7 +205,7 @@ CREATE TABLE `MaintenanceAction` (
 -- CreateTable
 CREATE TABLE `DemandeIntervention` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `statut` VARCHAR(191) NOT NULL,
+    `statut` ENUM('NON_PLANIFIE', 'PLANIFIE') NOT NULL DEFAULT 'NON_PLANIFIE',
     `typePanneDeclare` VARCHAR(191) NOT NULL,
     `dateDeclaration` DATETIME(3) NOT NULL,
     `idInstallation` INTEGER NOT NULL,
@@ -229,6 +229,7 @@ CREATE TABLE `intervention` (
     `idTechnicien` INTEGER NOT NULL,
     `idContact` INTEGER NOT NULL,
     `idDemandeIntervention` INTEGER NOT NULL,
+    `statut` ENUM('PROGRAMME', 'EN_COURS', 'SUSPENDUE', 'TERMINE') NOT NULL DEFAULT 'PROGRAMME',
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -243,16 +244,16 @@ ALTER TABLE `Session` ADD CONSTRAINT `Session_userId_fkey` FOREIGN KEY (`userId`
 ALTER TABLE `Site` ADD CONSTRAINT `Site_idClient_fkey` FOREIGN KEY (`idClient`) REFERENCES `Client`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Contact` ADD CONSTRAINT `Contact_idClient_fkey` FOREIGN KEY (`idClient`) REFERENCES `Client`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Contact` ADD CONSTRAINT `Contact_idClient_fkey` FOREIGN KEY (`idClient`) REFERENCES `Client`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Contact` ADD CONSTRAINT `Contact_idUtilisateur_fkey` FOREIGN KEY (`idUtilisateur`) REFERENCES `Utilisateur`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Contact` ADD CONSTRAINT `Contact_idUtilisateur_fkey` FOREIGN KEY (`idUtilisateur`) REFERENCES `Utilisateur`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `ContactSite` ADD CONSTRAINT `ContactSite_idSite_fkey` FOREIGN KEY (`idSite`) REFERENCES `Site`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `ContactSite` ADD CONSTRAINT `ContactSite_idSite_fkey` FOREIGN KEY (`idSite`) REFERENCES `Site`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `ContactSite` ADD CONSTRAINT `ContactSite_idContact_fkey` FOREIGN KEY (`idContact`) REFERENCES `Contact`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `ContactSite` ADD CONSTRAINT `ContactSite_idContact_fkey` FOREIGN KEY (`idContact`) REFERENCES `Contact`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Equipement` ADD CONSTRAINT `Equipement_idMarqueSsi_fkey` FOREIGN KEY (`idMarqueSsi`) REFERENCES `MarqueSsi`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
@@ -264,19 +265,19 @@ ALTER TABLE `Equipement` ADD CONSTRAINT `Equipement_idModeleSsi_fkey` FOREIGN KE
 ALTER TABLE `Equipement` ADD CONSTRAINT `Equipement_idSysteme_fkey` FOREIGN KEY (`idSysteme`) REFERENCES `Systeme`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Installation` ADD CONSTRAINT `Installation_idClient_fkey` FOREIGN KEY (`idClient`) REFERENCES `Client`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Installation` ADD CONSTRAINT `Installation_idClient_fkey` FOREIGN KEY (`idClient`) REFERENCES `Client`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Installation` ADD CONSTRAINT `Installation_idSysteme_fkey` FOREIGN KEY (`idSysteme`) REFERENCES `Systeme`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Installation` ADD CONSTRAINT `Installation_idSysteme_fkey` FOREIGN KEY (`idSysteme`) REFERENCES `Systeme`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Installation` ADD CONSTRAINT `Installation_idSite_fkey` FOREIGN KEY (`idSite`) REFERENCES `Site`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE `Installation` ADD CONSTRAINT `Installation_idSite_fkey` FOREIGN KEY (`idSite`) REFERENCES `Site`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `InstallationEquipement` ADD CONSTRAINT `InstallationEquipement_idEquipement_fkey` FOREIGN KEY (`idEquipement`) REFERENCES `Equipement`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `InstallationEquipement` ADD CONSTRAINT `InstallationEquipement_idEquipement_fkey` FOREIGN KEY (`idEquipement`) REFERENCES `Equipement`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `InstallationEquipement` ADD CONSTRAINT `InstallationEquipement_idInstallation_fkey` FOREIGN KEY (`idInstallation`) REFERENCES `Installation`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `InstallationEquipement` ADD CONSTRAINT `InstallationEquipement_idInstallation_fkey` FOREIGN KEY (`idInstallation`) REFERENCES `Installation`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Contrat` ADD CONSTRAINT `Contrat_idSite_fkey` FOREIGN KEY (`idSite`) REFERENCES `Site`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -285,7 +286,10 @@ ALTER TABLE `Contrat` ADD CONSTRAINT `Contrat_idSite_fkey` FOREIGN KEY (`idSite`
 ALTER TABLE `Garantie` ADD CONSTRAINT `Garantie_idInstallationEq_fkey` FOREIGN KEY (`idInstallationEq`) REFERENCES `InstallationEquipement`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `Maintenance` ADD CONSTRAINT `Maintenance_idInstallation_fkey` FOREIGN KEY (`idInstallation`) REFERENCES `Installation`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Maintenance` ADD CONSTRAINT `Maintenance_idContact_fkey` FOREIGN KEY (`idContact`) REFERENCES `Contact`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Maintenance` ADD CONSTRAINT `Maintenance_idSite_fkey` FOREIGN KEY (`idSite`) REFERENCES `Site`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Maintenance` ADD CONSTRAINT `Maintenance_idTechnicien_fkey` FOREIGN KEY (`idTechnicien`) REFERENCES `Utilisateur`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

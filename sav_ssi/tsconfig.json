@@ -22,18 +22,6 @@
       "@/*": ["./*"]
     }
   },
-<<<<<<< HEAD
-  
-  "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "app/(technicien)/technicien/DetailMaintenance/[id].js",
-    "app/(technicien)/technicien/DetailMaintenance/[id].js"
-, "app/(technicien)/technicien/DetailMaintenance/test.js"  ],
-=======
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
->>>>>>> 22a55f8e6c7fe7528c466a4ebef407e8bd11f04f
   "exclude": ["node_modules"]
 }

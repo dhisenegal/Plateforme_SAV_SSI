@@ -22,10 +22,19 @@ async function main() {
       nom: "sav",
     },
   });
+  const roleTechnicien = await prisma.role.upsert({
+    where: { id: 3 },
+    update: {},
+    create: {
+      id: 3,
+      nom: "technicien",
+    },
+  });
 
   // Créer des utilisateurs
   const hashedPasswordAdmin = await bcrypt.hash("passer", 10);
   const hashedPasswordUser = await bcrypt.hash("passer", 10);
+  const hashedPasswordTechnicien = await bcrypt.hash("passer", 10);
 
   const utilisateur1 = await prisma.utilisateur.upsert({
     where: { email: "admin@example.com" },
@@ -56,6 +65,20 @@ async function main() {
       idRole: roleUser.id,
     },
   });
+  const utilisateur3 = await prisma.utilisateur.upsert({
+    where: { email: "technicien@example.com" },
+    update: {},
+    create: {
+      login: "technicien",
+      password: hashedPasswordTechnicien,
+      nom: "User",
+      prenom: "Example",
+      numero: "0987654321",
+      etatCompte: "actif",
+      email: "technicien@example.com",
+      idRole: roleTechnicien.id,
+    },
+  });
 
   // Créer des clients
   const client1 = await prisma.client.upsert({
@@ -77,8 +100,8 @@ async function main() {
       secteurDactivite: "Secteur 2",
     },
   });
-
-  // Créer des sites
+{
+  /* // Créer des sites
   const site1 = await prisma.site.upsert({
     where: { id: 1 },
     update: {},
@@ -133,6 +156,8 @@ async function main() {
   });
 
   console.log("Seed data created successfully");
+}*/
+}
 }
 
 main()
