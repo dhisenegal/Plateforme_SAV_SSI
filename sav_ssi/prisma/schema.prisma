@@ -237,18 +237,14 @@ model Intervention {
   Technicien          Utilisateur @relation("TechnicienIntervention", fields: [idTechnicien], references: [id])
   Contact             Contact     @relation(fields: [idContact], references: [id])
   DemandeIntervention DemandeIntervention @relation(fields: [idDemandeIntervention], references: [id])
-
-  @@map("intervention")
 }
-enum EnumStatut_i{
-  PROGRAMME 
+enum EnumStatut_i {
+  PROGRAMME
   EN_COURS
-  SUSPENDUE
+  SUSPENDU
   TERMINE
-  }
-
-  
-  enum planification {
-   NON_PLANIFIE
+}
+enum planification {
+  NON_PLANIFIE
   PLANIFIE
-  }
+}

@@ -48,8 +48,8 @@ const InterventionPage = async () => {
                 <td className="px-6 py-4 text-gray-700">
                   {getDescription(item)}
                 </td>
-                <td className={`px-6 py-4 font-bold ${item.DemandeIntervention.statut === "Terminé" ? "text-green-600" : "text-yellow-600"}`}>
-                  {item.DemandeIntervention.statut}
+                <td className={`px-6 py-4 font-bold ${item.statut === "Terminé" ? "text-green-600" : "text-yellow-600"}`}>
+                  {item.statut}
                 </td>
                 <td className="px-6 py-4">
                   <Link
