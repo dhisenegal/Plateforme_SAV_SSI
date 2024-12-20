@@ -7,6 +7,6 @@ export default async function Dashboard() {
   if (!session?.user) {
     return redirect('/auth/login');
   } else {
-    redirect('/superadmin/overview');
+    redirect('/sav/overview');
   }
 }

@@ -13,14 +13,21 @@ export const getAllContrats = async (): Promise<Contrat[]> => {
   return await prisma.contrat.findMany();
 };
 
-// Récupérer tous les sites
-export const getAllSites = async (): Promise<Site[]> => {
-  return await prisma.site.findMany({
-    include: {
-      Client: true,
-      Contrats: true,
-    },
-  });
+// Récupérer tous les sites avec pagination
+export const getAllSites = async (page: number, pageSize: number): Promise<{ sites: Site[], total: number }> => {
+  const [sites, total] = await prisma.$transaction([
+    prisma.site.findMany({
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      include: {
+        Client: true,
+        Contrats: true,
+      },
+    }),
+    prisma.site.count(),
+  ]);
+
+  return { sites, total };
 };
 
 // Récupérer les détails d'un site

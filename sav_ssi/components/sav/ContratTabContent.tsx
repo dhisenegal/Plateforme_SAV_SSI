@@ -1,11 +1,12 @@
 "use client";
+
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@/components/ui/table";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { FaPlus, FaEdit, FaTrash, FaSyncAlt, FaPause } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaSyncAlt, FaPause, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { Label } from "@/components/ui/label";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -22,14 +23,18 @@ const ContratTabContent = () => {
   const [selectedContract, setSelectedContract] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10);
+  const [totalContracts, setTotalContracts] = useState(0);
 
   useEffect(() => {
     const fetchContracts = async () => {
-      const data = await getAllContrats();
-      setContracts(data);
+      const { contrats, total } = await getAllContrats(currentPage, itemsPerPage);
+      setContracts(contrats);
+      setTotalContracts(total);
     };
     fetchContracts();
-  }, []);
+  }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
     const fetchClients = async () => {
@@ -124,6 +129,20 @@ const ContratTabContent = () => {
   const formatDate = (date) => {
     const d = new Date(date);
     return isNaN(d.getTime()) ? "" : d.toISOString().split('T')[0];
+  };
+
+  const totalPages = Math.ceil(totalContracts / itemsPerPage);
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
   };
 
   return (
@@ -286,6 +305,17 @@ const ContratTabContent = () => {
             ))}
           </TableBody>
         </Table>
+        <div className="flex justify-end items-center mt-4 gap-2">
+          <span>
+            Page {currentPage} / {totalPages}
+          </span>
+          <Button onClick={handlePreviousPage} disabled={currentPage === 1} className="bg-blue-500">
+            <FaArrowLeft />
+          </Button>
+          <Button onClick={handleNextPage} disabled={currentPage === totalPages} className="bg-blue-500">
+            <FaArrowRight />
+          </Button>
+        </div>
 
         {selectedContract && (
           <Dialog open={selectedContract !== null} onOpenChange={() => setSelectedContract(null)}>
@@ -429,5 +459,4 @@ const ContratTabContent = () => {
     </>
   );
 };
-
 export default ContratTabContent;

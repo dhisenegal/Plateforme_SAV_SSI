@@ -1,115 +1,167 @@
 import { NavItem } from '@/types';
-import { Home, ClipboardList, Users, Calendar, BarChart, FileText, PieChart } from 'lucide-react';
+import { Home, ClipboardList, Users, Calendar, BarChart, FileText, PieChart, Settings } from 'lucide-react';
 
-export type User = {
-  id: number;
-  name: string;
-  company: string;
-  role: string;
-  verified: boolean;
-  status: string;
+// Nav items for different roles
+export const navItemsByRole: { [key: string]: NavItem[] } = {
+  admin: [
+    {
+      title: 'Accueil',
+      url: '/admin',
+      icon: Home,
+      isActive: false,
+      shortcut: ['a', 'a'],
+      items: []
+    },
+    {
+      title: 'Gestion des utilisateurs',
+      url: '/admin/utilisateurs',
+      icon: Users,
+      isActive: false,
+      shortcut: ['u', 'u'],
+      items: [
+        {
+          title: 'Utilisateurs',
+          url: '/admin/utilisateurs',
+          isActive: false,
+          items: []
+        },
+        {
+          title: 'Rôles',
+          url: '/admin/utilisateurs/roles',
+          isActive: false,
+          items: []
+        }
+      ]
+    },
+    {
+      title: 'Gestion des équipements',
+      url: '/admin/equipements',
+      icon: Settings,
+      isActive: false,
+      shortcut: ['e', 'e'],
+      items: [
+        {
+          title: 'Systèmes',
+          url: '/admin/equipements/systeme',
+          isActive: false,
+          items: []
+        },
+        {
+          title: 'Marques',
+          url: '/admin/equipements/marque',
+          isActive: false,
+          items: []
+        },
+        {
+          title: 'Modèles',
+          url: '/admin/equipements/modele',
+          isActive: false,
+          items: []
+        }
+      ]
+    }
+  ],
+  sav: [
+    {
+      title: 'Accueil',
+      url: '/sav/overview',
+      icon: Home,
+      isActive: false,
+      shortcut: ['a', 'a'],
+      items: []
+    },
+    {
+      title: 'Maintenances',
+      url: '/sav/maintenances',
+      icon: PieChart,
+      isActive: false,
+      shortcut: ['m', 'm'],
+      items: []
+    },
+    {
+      title: 'Interventions',
+      url: '/sav/interventions',
+      icon: ClipboardList,
+      isActive: false,
+      shortcut: ['i', 'i'],
+      items: []
+    },
+    {
+      title: 'Clients',
+      url: '/sav/clients',
+      icon: Users,
+      isActive: false,
+      shortcut: ['c', 'c'],
+      items: []
+    },
+    {
+      title: 'Techniciens',
+      url: '/sav/techniciens',
+      icon: Users,
+      isActive: false,
+      shortcut: ['t', 't'],
+      items: []
+    },
+    {
+      title: 'Planning',
+      url: '/sav/planning',
+      icon: Calendar,
+      isActive: false,
+      shortcut: ['p', 'p'],
+      items: []
+    },
+    {
+      title: 'Rapports',
+      url: '/sav/rapports',
+      icon: FileText,
+      isActive: false,
+      shortcut: ['r', 'r'],
+      items: []
+    },
+    {
+      title: 'Reportings',
+      url: '/sav/reportings',
+      icon: BarChart,
+      isActive: false,
+      shortcut: ['r', 'r'],
+      items: []
+    }
+  ],
+  technicien: [
+    {
+      title: 'Accueil',
+      url: '/technicien',
+      icon: Home,
+      isActive: false,
+      shortcut: ['a', 'a'],
+      items: []
+    },
+    {
+      title: 'Maintenances',
+      url: '/technicien/maintenances',
+      icon: PieChart,
+      isActive: false,
+      shortcut: ['m', 'm'],
+      items: []
+    },
+    {
+      title: 'Interventions',
+      url: '/technicien/interventions',
+      icon: ClipboardList,
+      isActive: false,
+      shortcut: ['i', 'i'],
+      items: []
+    },
+    {
+      title: 'Rapports',
+      url: '/technicien/rapports',
+      icon: FileText,
+      isActive: false,
+      shortcut: ['r', 'r'],
+      items: []
+    }
+  ]
 };
-
-export const users: User[] = [
-  // ...existing users...
-];
-
-export type Employee = {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email: string;
-  phone: string;
-  gender: string;
-  date_of_birth: string; // Consider using a proper date type if possible
-  street: string;
-  city: string;
-  state: string;
-  country: string;
-  zipcode: string;
-  longitude?: number; // Optional field
-  latitude?: number; // Optional field
-  job: string;
-  profile_picture?: string | null; // Profile picture can be a string (URL) or null (if no picture)
-};
-
-export type Product = {
-  photo_url: string;
-  name: string;
-  description: string;
-  created_at: string;
-  price: number;
-  id: number;
-  category: string;
-  updated_at: string;
-};
-
-export const navItems: NavItem[] = [
-  {
-    title: 'Accueil',
-    url: '/sav/overview',
-    icon: Home,
-    isActive: false,
-    shortcut: ['a', 'a'],
-    items: [] // No child items
-  },
-  {
-    title: 'Maintenances',
-    url: '/sav/maintenances',
-    icon: PieChart,
-    isActive: false,
-    shortcut: ['m', 'm'],
-    items: [] // No child items
-  },
-  {
-    title: 'Interventions',
-    url: '/sav/interventions',
-    icon: ClipboardList,
-    isActive: false,
-    shortcut: ['i', 'i'],
-    items: [] // No child items
-  },
-  {
-    title: 'Clients',
-    url: '/sav/clients',
-    icon: Users,
-    isActive: false,
-    shortcut: ['c', 'c'],
-    items: [] // No child items
-  },
-  {
-    title: 'Techniciens',
-    url: '/sav/techniciens',
-    icon: Users,
-    isActive: false,
-    shortcut: ['t', 't'],
-    items: [] // No child items
-  },
-  {
-    title: 'Planning',
-    url: '/sav/planning',
-    icon: Calendar,
-    isActive: false,
-    shortcut: ['p', 'p'],
-    items: [] // No child items
-  },
-  {
-    title: 'Rapports',
-    url: '/sav/rapports',
-    icon: FileText,
-    isActive: false,
-    shortcut: ['r', 'r'],
-    items: [] // No child items
-  },
-  {
-    title: 'Reportings',
-    url: '/sav/reportings',
-    icon: BarChart,
-    isActive: false,
-    shortcut: ['r', 'r'],
-    items: [] // No child items
-  }
-];
 
 export interface Utilisateur {
   id: number;

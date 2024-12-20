@@ -31,6 +31,15 @@ async function main() {
     },
   });
 
+  const roleTechnicien = await prisma.role.upsert({
+    where: { id: 3 },
+    update: {},
+    create: {
+      id: 3,
+      nom: "technicien",
+    },
+  });
+
   // Créer des utilisateurs
   const hashedPasswordAdmin = await bcrypt.hash("passer", 10);
   const hashedPasswordUser = await bcrypt.hash("passer", 10);
@@ -71,7 +80,7 @@ async function main() {
     create: {
       login: "technicien",
       password: hashedPasswordTechnicien,
-      nom: "User",
+      nom: "Technicien",
       prenom: "Example",
       numero: "0987654321",
       etatCompte: "actif",
