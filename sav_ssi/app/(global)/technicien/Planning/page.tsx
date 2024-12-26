@@ -1,30 +1,48 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { FaPlus, FaEye, FaEdit, FaTrash, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import Link from 'next/link';
+import { FaPlus, FaEye, FaEdit, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getPlanning, formatDate, getClientName, getDescription, getType } from "@/actions/technicien/planning";
+import { getPlanning, formatDate, getClientName, getDescription, getType, getDateMaintenanceOrIntervention, getStatut } from '@/actions/technicien/planning';
 
 const PlanningTabContent = () => {
   const [selectedRows, setSelectedRows] = useState<number[]>([]);
-  const [currentPlanning, setCurrentPlanning] = useState<any[]>([]); // Renommé en currentPlanning
+  const [currentPlanning, setCurrentPlanning] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
 
   useEffect(() => {
-    // Exemple de récupération de planning (remplacer par votre API réelle)
-    const fetchPlanning = async () => {
-      
-      
-      setTotalPages(2); // Exemple de pagination, à remplacer par la logique réelle
-    };
-
     fetchPlanning();
   }, [currentPage]);
+
+  const fetchPlanning = async () => {
+    try {
+      const planning = await getPlanning(); // Récupération des données du planning depuis la base de données
+
+      // Ajout des informations dynamiques pour chaque élément du planning
+      const planningWithDetails = await Promise.all(
+        planning.map(async (plan) => {
+          const clientName = await getClientName(plan); // Récupération du nom du client
+          const description = await getDescription(plan); // Récupération de la description
+          const type = await getType(plan); // Récupération du type (intervention ou maintenance)
+          const date = await getDateMaintenanceOrIntervention(plan.id, type.toLowerCase()); // Récupération de la date
+          const formattedDate = await formatDate(date); // Formater la date
+          const statut = await getStatut(plan.id, type.toLowerCase()); // Récupération du statut
+          return { ...plan, client: clientName, description, dateMaintenance: formattedDate, type, statut };
+        })
+      );
+
+      setCurrentPlanning(planningWithDetails);
+      setTotalPages(1); // Exemple de pagination
+    } catch (error) {
+      console.error("Erreur lors de la récupération du planning :", error);
+    }
+  };
 
   const handleSelectRow = (id: number) => {
     setSelectedRows((prevSelected) =>
@@ -38,13 +56,8 @@ const PlanningTabContent = () => {
     if (selectedRows.length === currentPlanning.length) {
       setSelectedRows([]);
     } else {
-      setSelectedRows(currentPlanning.map((site) => site.id));
+      setSelectedRows(currentPlanning.map((plan) => plan.id));
     }
-  };
-
-  const handleRowClick = (id: number) => {
-    // Gérer le clic sur une ligne, par exemple, ouvrir une page de détails ou une fenêtre modale
-    console.log(`Row clicked for planning ID: ${id}`);
   };
 
   const handlePreviousPage = () => {
@@ -62,7 +75,7 @@ const PlanningTabContent = () => {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold"> Planning</h2>
+        <h2 className="text-2xl font-bold">Planning</h2>
         <Dialog>
           <DialogTrigger asChild>
             <Button className="bg-blue-500 text-white flex items-center">
@@ -75,20 +88,6 @@ const PlanningTabContent = () => {
               <DialogTitle>Ajouter un Nouveau Planning</DialogTitle>
               <DialogDescription>Sélectionnez un client, une description, et un type pour ajouter un planning.</DialogDescription>
             </DialogHeader>
-            <div>
-              <div className="mb-4">
-                <label className="block mb-2">Client</label>
-                {/* Input de sélection du client */}
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2">Description</label>
-                {/* Input de description */}
-              </div>
-              <div className="mb-4">
-                <label className="block mb-2">Type</label>
-                {/* Input du type */}
-              </div>
-            </div>
           </DialogContent>
         </Dialog>
       </div>
@@ -116,7 +115,7 @@ const PlanningTabContent = () => {
             <TableRow
               key={plan.id}
               className={`cursor-pointer ${selectedRows.includes(plan.id) ? 'bg-blue-100' : 'hover:bg-blue-100'}`}
-              onClick={() => handleRowClick(plan.id)}
+              onClick={() => console.log(`Row clicked for planning ID: ${plan.id}`)}
             >
               <TableCell>
                 <input
@@ -126,14 +125,17 @@ const PlanningTabContent = () => {
                   onClick={(e) => e.stopPropagation()}
                 />
               </TableCell>
-              <TableCell>{}</TableCell> {/* Formatage de la date */}
-              <TableCell>{}</TableCell>
-              <TableCell>{}</TableCell>
-              <TableCell>{}</TableCell>
-              <TableCell> {}</TableCell>
-              <TableCell>
+              <TableCell>{plan.dateMaintenance || 'Non défini'}</TableCell>
+              <TableCell>{plan.client}</TableCell>
+              <TableCell>{plan.description}</TableCell>
+              <TableCell>{plan.type}</TableCell>
+              <TableCell>{plan.statut || 'Non défini'}</TableCell>
+              <TableCell className="flex justify-center">
                 <div className="flex space-x-2">
-                  <FaEye className="text-blue-500 cursor-pointer" />
+                  
+                  <Link href={`/technicien/${plan.id}?type=${plan.type.toLowerCase()}`} passHref>
+                    <FaEye className="text-blue-500 cursor-pointer" />
+                  </Link>
                 </div>
               </TableCell>
             </TableRow>

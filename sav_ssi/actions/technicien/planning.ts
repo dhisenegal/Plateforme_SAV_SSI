@@ -3,6 +3,40 @@
 import prisma from "@/lib/prisma";
 
 
+
+
+// Fonction pour mettre à jour le statut de l'intervention
+export const updateInterventionStatus = async (id: number, statut: string) => {
+  try {
+    const result = await prisma.intervention.update({
+      where: { id: id },
+      data: {
+        statut: statut,
+      },
+    });
+    return result;
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du statut de l\'intervention :', error);
+    throw new Error('Erreur lors de la mise à jour du statut de l\'intervention');
+  }
+};
+// Fonction pour mettre à jour une intervention
+export const updateIntervention = async (id: number, diagnostics: string, travauxRealises: string) => {
+  try {
+    const result = await prisma.intervention.update({
+      where: { id: id },
+      data: {
+        diagnostics: diagnostics,
+        travauxRealises: travauxRealises,
+      },
+    });
+    return result;
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour de l\'intervention :', error);
+    throw new Error('Erreur lors de la mise à jour de l\'intervention');
+  }
+};
+
 export const getSiteByInstallation = async (installationId: number) => {
     try {
       const installation = await prisma.installation.findUnique({
@@ -160,7 +194,7 @@ export async function getNextMaintenance() {
   // Fonction pour formater la date
   export const formatDate = async (date) => {
     // Simuler un délai (par exemple pour un appel API ou un traitement externe)
-    await new Promise((resolve) => setTimeout(resolve, 100)); // 100 ms de délai pour simuler une action asynchrone
+    await new Promise((resolve) => setTimeout(resolve, 10)); // 10 ms de délai pour simuler une action asynchrone
   
     // Formater la date
     return new Date(date).toLocaleDateString("fr", {
@@ -174,7 +208,7 @@ export async function getNextMaintenance() {
   // Fonction pour récupérer le client
   export const getClientName = async (item) => {
     // Simuler un délai asynchrone (par exemple, un appel API)
-    await new Promise((resolve) => setTimeout(resolve, 100)); // Attente de 100 ms pour simuler un traitement
+    await new Promise((resolve) => setTimeout(resolve, 10)); // Attente de 10 ms pour simuler un traitement
   
     return item.DemandeIntervention
       ? item.DemandeIntervention.Client.nom
@@ -184,7 +218,7 @@ export async function getNextMaintenance() {
   // Fonction pour récupérer la description
   export const getDescription = async (item) => {
     // Simuler un délai asynchrone (par exemple, un appel API)
-    await new Promise((resolve) => setTimeout(resolve, 100)); // Attente de 100 ms pour simuler un traitement
+    await new Promise((resolve) => setTimeout(resolve, 10)); // Attente de 10 ms pour simuler un traitement
   
     if (item.DemandeIntervention) {
       // Cas d'une intervention
@@ -202,7 +236,7 @@ export async function getNextMaintenance() {
   // Fonction pour déterminer le type (intervention ou maintenance)
   export const getType = async (item) => {
     // Simuler un délai asynchrone si nécessaire
-    await new Promise((resolve) => setTimeout(resolve, 100)); // Attente de 100 ms pour simuler un traitement
+    await new Promise((resolve) => setTimeout(resolve, 10)); // Attente de 100 ms pour simuler un traitement
   
     return item.DemandeIntervention ? "Intervention" : "Maintenance";
   };
@@ -305,5 +339,36 @@ export async function getNextMaintenance() {
       throw new Error('Impossible de récupérer les équipements');
     }
   }
-  
-  
+  // Fonction pour récupérer la date d'une maintenance ou d'une intervention
+export const getDateMaintenanceOrIntervention = async (id, type) => {
+  try {
+    if (type === 'maintenance') {
+      // Récupère la maintenance avec l'ID donné
+      const maintenance = await prisma.maintenance.findUnique({
+        where: { id: id }, // Recherche par ID
+        select: {
+          dateMaintenance: true, // Sélectionne uniquement la date de maintenance
+        },
+      });
+
+      // Retourne la date ou un message par défaut si elle n'existe pas
+      return maintenance?.dateMaintenance || "Date inconnue";
+    } else if (type === 'intervention') {
+      // Récupère l'intervention avec l'ID donné
+      const intervention = await prisma.intervention.findUnique({
+        where: { id: id }, // Recherche par ID
+        select: {
+          dateIntervention: true, // Sélectionne uniquement la date d'intervention
+        },
+      });
+
+      // Retourne la date ou un message par défaut si elle n'existe pas
+      return intervention?.dateIntervention || "Date inconnue";
+    } else {
+      throw new Error('Type invalide');
+    }
+  } catch (error) {
+    console.error("Erreur lors de la récupération de la date :", error);
+    return "Erreur";
+  }
+};

@@ -1,78 +1,164 @@
-import React from "react";
-import Link from "next/link";
-import { getPlanning, formatDate, getClientName, getDescription, getType } from "@/lib/fonction"; // Importer les fonctions nécessaires
+'use client';
 
-const MaintenancePage = async () => {
-  try {
-    // Récupérer les données de planning, triées par date
-    const planning = await getPlanning();
+import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { FaPlus, FaEye, FaEdit, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { Button } from '@/components/ui/button';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { getPlanning, formatDate, getClientName, getDescription, getType, getDateMaintenanceOrIntervention, getStatut } from '@/actions/technicien/planning';
 
-    // Filtrer les maintenances
-    const maintenances = planning.filter(item => getType(item) === "Maintenance");
+const PlanningTabContent = () => {
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const [currentPlanning, setCurrentPlanning] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
 
-    if (maintenances.length === 0) {
-      return (
-        <div className="flex items-center justify-center h-full text-gray-500 text-lg font-medium">
-          Aucune maintenance prévue.
-        </div>
+  useEffect(() => {
+    fetchPlanning();
+  }, [currentPage]);
+
+  const fetchPlanning = async () => {
+    try {
+      const planning = await getPlanning(); // Récupération des données du planning depuis la base de données
+
+      // Filtrer pour ne garder que les maintenances
+      const maintenances = planning.filter(plan => !plan.DemandeIntervention);
+
+      // Ajout des informations dynamiques pour chaque maintenance
+      const planningWithDetails = await Promise.all(
+        maintenances.map(async (plan) => {
+          const clientName = await getClientName(plan); // Récupération du nom du client
+          const description = await getDescription(plan); // Récupération de la description
+          const type = await getType(plan); // Récupération du type (intervention ou maintenance)
+          const date = await getDateMaintenanceOrIntervention(plan.id, type.toLowerCase()); // Récupération de la date
+          const formattedDate = await formatDate(date); // Formater la date
+          const statut = await getStatut(plan.id, type.toLowerCase()); // Récupération du statut
+          return { ...plan, client: clientName, description, dateMaintenance: formattedDate, type, statut };
+        })
       );
-    }
 
-    return (
-      <div className="max-w-7xl mx-auto p-6 bg-gradient-to-r from-green-50 to-green-100 shadow-md rounded-xl">
-        <h1 className="text-4xl font-extrabold mb-8 text-green-700 text-center tracking-wide">
-          MAINTENANCES
-        </h1>
-        <table className="w-full table-auto bg-white rounded-lg shadow overflow-hidden">
-          <thead>
-            <tr className="bg-green-600 text-white text-left">
-              <th className="px-6 py-3 text-sm font-semibold uppercase">Date</th>
-              <th className="px-6 py-3 text-sm font-semibold uppercase">Client</th>
-              <th className="px-6 py-3 text-sm font-semibold uppercase">Description</th>
-              <th className="px-6 py-3 text-sm font-semibold uppercase">Statut</th>
-              <th className="px-6 py-3 text-sm font-semibold uppercase">Voir détails</th>
-            </tr>
-          </thead>
-          <tbody>
-            {maintenances.map((item, index) => (
-              <tr
-                key={item.id}
-                className={`${index % 2 === 0 ? "bg-green-50" : "bg-white"} hover:bg-green-100 transition-all duration-200`}
-              >
-                <td className="px-6 py-4 text-gray-700">
-                  {formatDate(item.dateMaintenance)}
-                </td>
-                <td className="px-6 py-4 text-gray-700">
-                  {getClientName(item)}
-                </td>
-                <td className="px-6 py-4 text-gray-700">
-                  {getDescription(item)}
-                </td>
-                <td className={`px-6 py-4 font-bold ${item.statut === "Terminé" ? "text-green-600" : "text-yellow-600"}`}>
-                  {item.statut}
-                </td>
-                <td className="px-6 py-4">
-                  <Link
-                    href={`/technicien/${item.id}?type=maintenance`}
-                    className="text-green-700 hover:underline hover:text-green-900 font-semibold transition-all duration-200"
-                  >
-                    Voir détails
+      setCurrentPlanning(planningWithDetails);
+      setTotalPages(1); // Exemple de pagination
+    } catch (error) {
+      console.error("Erreur lors de la récupération du planning :", error);
+    }
+  };
+
+  const handleSelectRow = (id: number) => {
+    setSelectedRows((prevSelected) =>
+      prevSelected.includes(id)
+        ? prevSelected.filter((rowId) => rowId !== id)
+        : [...prevSelected, id]
+    );
+  };
+
+  const handleSelectAllRows = () => {
+    if (selectedRows.length === currentPlanning.length) {
+      setSelectedRows([]);
+    } else {
+      setSelectedRows(currentPlanning.map((plan) => plan.id));
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">Maintenances</h2>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-500 text-white flex items-center">
+              <FaPlus className="w-5 h-5 mr-2" />
+              Ajouter
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
+            <DialogHeader>
+              <DialogTitle>Ajouter un Nouveau Planning</DialogTitle>
+              <DialogDescription>Sélectionnez un client, une description, et un type pour ajouter un planning.</DialogDescription>
+            </DialogHeader>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>
+              <input
+                type="checkbox"
+                checked={selectedRows.length === currentPlanning.length}
+                onChange={handleSelectAllRows}
+              />
+            </TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Client</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Statut</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {currentPlanning.map((plan) => (
+            <TableRow
+              key={plan.id}
+              className={`cursor-pointer ${selectedRows.includes(plan.id) ? 'bg-blue-100' : 'hover:bg-blue-100'}`}
+              onClick={() => console.log(`Row clicked for planning ID: ${plan.id}`)}
+            >
+              <TableCell>
+                <input
+                  type="checkbox"
+                  checked={selectedRows.includes(plan.id)}
+                  onChange={() => handleSelectRow(plan.id)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </TableCell>
+              <TableCell>{plan.dateMaintenance || 'Non défini'}</TableCell>
+              <TableCell>{plan.client}</TableCell>
+              <TableCell>{plan.description}</TableCell>
+              <TableCell>{plan.statut || 'Non défini'}</TableCell>
+              <TableCell className="flex justify-center">
+                <div className="flex space-x-2">
+                  
+                  <Link href={`/technicien/${plan.id}?type=${plan.type.toLowerCase()}`} passHref>
+                    <FaEye className="text-blue-500 cursor-pointer" />
                   </Link>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <div className="flex justify-end items-center mt-4 gap-2">
+        <span>
+          Page {currentPage} / {totalPages}
+        </span>
+        <Button onClick={handlePreviousPage} disabled={currentPage === 1} className="bg-blue-500">
+          <FaArrowLeft />
+        </Button>
+        <Button onClick={handleNextPage} disabled={currentPage === totalPages} className="bg-blue-500">
+          <FaArrowRight />
+        </Button>
       </div>
-    );
-  } catch (error) {
-    console.error("Erreur lors de la récupération des maintenances :", error);
-    return (
-      <div className="flex items-center justify-center h-full text-red-600 text-lg font-medium">
-        Erreur lors de la récupération des maintenances.
-      </div>
-    );
-  }
+
+      <ToastContainer />
+    </div>
+  );
 };
 
-export default MaintenancePage;
+export default PlanningTabContent;
