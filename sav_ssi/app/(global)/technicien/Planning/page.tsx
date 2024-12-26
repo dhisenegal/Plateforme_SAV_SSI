@@ -1,76 +1,161 @@
-import React from "react";
-import Link from "next/link";
-import { FaEye } from "react-icons/fa"; // Ajout d'une icône
-import { getPlanning, formatDate, getClientName, getDescription, getType } from "@/lib/fonction";
+'use client';
 
-const PlanningPage = async () => {
-  try {
-    const uniquePlanning = await getPlanning();
+import React, { useState, useEffect } from 'react';
+import { FaPlus, FaEye, FaEdit, FaTrash, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { Button } from '@/components/ui/button';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { getPlanning, formatDate, getClientName, getDescription, getType } from "@/actions/technicien/planning";
 
-    if (uniquePlanning.length === 0) {
-      return <div className="text-center text-gray-500">Aucune intervention ou maintenance prévue.</div>;
-    }
+const PlanningTabContent = () => {
+  const [selectedRows, setSelectedRows] = useState<number[]>([]);
+  const [currentPlanning, setCurrentPlanning] = useState<any[]>([]); // Renommé en currentPlanning
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [totalPages, setTotalPages] = useState<number>(1);
 
-    return (
-      <div className="max-w-6xl mx-auto p-6 bg-gray-50 shadow-xl rounded-lg border border-gray-300">
-        <div className="bg-gradient-to-r from-blue-500 to-indigo-600 p-6 rounded-lg text-white text-center shadow-lg">
-          <h1 className="text-4xl font-extrabold tracking-wide uppercase">Planning</h1>
-        </div>
-        <table className="w-full border-collapse bg-white shadow-md rounded-lg overflow-hidden mt-6">
-          <thead>
-            <tr className="bg-gradient-to-r from-gray-200 via-gray-300 to-gray-200 text-gray-700">
-              <th className="px-6 py-3 text-left font-bold text-sm uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left font-bold text-sm uppercase tracking-wider">Client</th>
-              <th className="px-6 py-3 text-left font-bold text-sm uppercase tracking-wider">Description</th>
-              <th className="px-6 py-3 text-left font-bold text-sm uppercase tracking-wider">Type</th>
-              <th className="px-6 py-3 text-left font-bold text-sm uppercase tracking-wider">Statut</th>
-              <th className="px-6 py-3 text-center font-bold text-sm uppercase tracking-wider">Voir détails</th>
-            </tr>
-          </thead>
-          <tbody>
-            {uniquePlanning.map((item, index) => {
-              const rowClass = getType(item) === "Intervention" ? "bg-orange-50 hover:bg-orange-100" : "bg-green-50 hover:bg-green-100";
-              const typeParam = getType(item).toLowerCase();
+  useEffect(() => {
+    // Exemple de récupération de planning (remplacer par votre API réelle)
+    const fetchPlanning = async () => {
+      
+      
+      setTotalPages(2); // Exemple de pagination, à remplacer par la logique réelle
+    };
 
-              return (
-                <tr
-                  key={`${item.id}-${item.dateIntervention || item.dateMaintenance}`}
-                  className={`${rowClass} ${index % 2 === 0 ? "bg-gray-100" : "bg-white"} hover:bg-blue-50 transition duration-300`}
-                >
-                  <td className="px-6 py-4 border-t text-gray-800 text-sm">
-                    {formatDate(item.dateIntervention || item.dateMaintenance)}
-                  </td>
-                  <td className="px-6 py-4 border-t text-gray-800 text-sm">
-                    {getClientName(item)}
-                  </td>
-                  <td className="px-6 py-4 border-t text-gray-800 text-sm">
-                    {getDescription(item)}
-                  </td>
-                  <td className="px-6 py-4 border-t text-gray-800 text-sm">
-                    {getType(item)}
-                  </td>
-                  <td className="px-6 py-4 border-t text-gray-800 text-sm">
-                    {item.statut}  {/* Statut directement depuis la table 'intervention' */}
-                  </td>
-                  <td className="px-6 py-4 border-t text-center">
-                    <Link
-                      href={`/technicien/${item.id}?type=${typeParam}`}
-                      className="text-blue-500 hover:text-blue-700 font-medium flex items-center justify-center gap-2 transition duration-200"
-                    >
-                      <FaEye /> Voir détails
-                    </Link>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+    fetchPlanning();
+  }, [currentPage]);
+
+  const handleSelectRow = (id: number) => {
+    setSelectedRows((prevSelected) =>
+      prevSelected.includes(id)
+        ? prevSelected.filter((rowId) => rowId !== id)
+        : [...prevSelected, id]
     );
-  } catch (error) {
-    console.error("Erreur lors de la récupération des interventions et des maintenances :", error);
-    return <div className="text-center text-red-600">Erreur lors de la récupération des interventions et des maintenances.</div>;
-  }
+  };
+
+  const handleSelectAllRows = () => {
+    if (selectedRows.length === currentPlanning.length) {
+      setSelectedRows([]);
+    } else {
+      setSelectedRows(currentPlanning.map((site) => site.id));
+    }
+  };
+
+  const handleRowClick = (id: number) => {
+    // Gérer le clic sur une ligne, par exemple, ouvrir une page de détails ou une fenêtre modale
+    console.log(`Row clicked for planning ID: ${id}`);
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold"> Planning</h2>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button className="bg-blue-500 text-white flex items-center">
+              <FaPlus className="w-5 h-5 mr-2" />
+              Ajouter
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
+            <DialogHeader>
+              <DialogTitle>Ajouter un Nouveau Planning</DialogTitle>
+              <DialogDescription>Sélectionnez un client, une description, et un type pour ajouter un planning.</DialogDescription>
+            </DialogHeader>
+            <div>
+              <div className="mb-4">
+                <label className="block mb-2">Client</label>
+                {/* Input de sélection du client */}
+              </div>
+              <div className="mb-4">
+                <label className="block mb-2">Description</label>
+                {/* Input de description */}
+              </div>
+              <div className="mb-4">
+                <label className="block mb-2">Type</label>
+                {/* Input du type */}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>
+              <input
+                type="checkbox"
+                checked={selectedRows.length === currentPlanning.length}
+                onChange={handleSelectAllRows}
+              />
+            </TableHead>
+            <TableHead>Date</TableHead>
+            <TableHead>Client</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Statut</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {currentPlanning.map((plan) => (
+            <TableRow
+              key={plan.id}
+              className={`cursor-pointer ${selectedRows.includes(plan.id) ? 'bg-blue-100' : 'hover:bg-blue-100'}`}
+              onClick={() => handleRowClick(plan.id)}
+            >
+              <TableCell>
+                <input
+                  type="checkbox"
+                  checked={selectedRows.includes(plan.id)}
+                  onChange={() => handleSelectRow(plan.id)}
+                  onClick={(e) => e.stopPropagation()}
+                />
+              </TableCell>
+              <TableCell>{}</TableCell> {/* Formatage de la date */}
+              <TableCell>{}</TableCell>
+              <TableCell>{}</TableCell>
+              <TableCell>{}</TableCell>
+              <TableCell> {}</TableCell>
+              <TableCell>
+                <div className="flex space-x-2">
+                  <FaEye className="text-blue-500 cursor-pointer" />
+                </div>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+
+      <div className="flex justify-end items-center mt-4 gap-2">
+        <span>
+          Page {currentPage} / {totalPages}
+        </span>
+        <Button onClick={handlePreviousPage} disabled={currentPage === 1} className="bg-blue-500">
+          <FaArrowLeft />
+        </Button>
+        <Button onClick={handleNextPage} disabled={currentPage === totalPages} className="bg-blue-500">
+          <FaArrowRight />
+        </Button>
+      </div>
+
+      <ToastContainer />
+    </div>
+  );
 };
 
-export default PlanningPage;
+export default PlanningTabContent;

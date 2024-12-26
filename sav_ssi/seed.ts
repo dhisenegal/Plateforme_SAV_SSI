@@ -22,6 +22,14 @@ async function main() {
       nom: "sav",
     },
   });
+  const roleTechnicien = await prisma.role.upsert({
+    where: { id: 3 },
+    update: {},
+    create: {
+      id: 3,
+      nom: "technicien",
+    },
+  });
 
   const roleTechnicien = await prisma.role.upsert({
     where: { id: 3 },
@@ -101,8 +109,8 @@ async function main() {
       secteurDactivite: "Secteur 2",
     },
   });
-
-  // Créer des sites
+{
+  /* // Créer des sites
   const site1 = await prisma.site.upsert({
     where: { id: 1 },
     update: {},
@@ -157,6 +165,8 @@ async function main() {
   });
 
   console.log("Seed data created successfully");
+}*/
+}
 }
 
 main()
