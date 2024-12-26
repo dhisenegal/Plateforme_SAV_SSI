@@ -82,3 +82,16 @@ export const deleteSite = async (id: number): Promise<Site> => {
     where: { id },
   });
 };
+// Récupérer les installations par site
+export const getInstallationsBySite = async (siteId: number) => {
+  return await prisma.installation.findMany({
+    where: { idSite: siteId },
+  });
+};
+
+// Récupérer les sites par client
+export const getSitesByClient = async (clientId: number) => {
+  return await prisma.site.findMany({
+    where: { idClient: clientId },
+  });
+};

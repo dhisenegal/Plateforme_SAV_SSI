@@ -1,10 +1,13 @@
+"use client";
+
 import { AreaGraph } from './area-graph';
 import { BarGraph } from './bar-graph';
 import { PieGraph } from './pie-graph';
-import { CalendarDateRangePicker } from '@/components/date-range-picker';
+import {useSession} from "next-auth/react";
 import PageContainer from '@/components/layout/page-container';
 import { RecentInterventions } from './recent-interventions';
-import { Button } from '@/components/ui/button';
+
+
 import {
   Card,
   CardContent,
@@ -15,12 +18,13 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function OverViewPage() {
+  const { data: session } = useSession();
   return (
     <PageContainer scrollable>
       <div className="space-y-2">
         <div className="flex items-center justify-between space-y-2">
           <h2 className="text-2xl font-bold tracking-tight">
-            Heyyy Bienvenue 👋
+            Heyyy Bienvenue {session?.user?.prenom}👋
           </h2>
           {/*<div className="hidden items-center space-x-2 md:flex">
             <CalendarDateRangePicker />

@@ -173,7 +173,7 @@ CREATE TABLE `Maintenance` (
     `numero` VARCHAR(191) NOT NULL,
     `dateMaintenance` DATETIME(3) NOT NULL,
     `description` VARCHAR(191) NOT NULL,
-    `statut` ENUM('PROGRAMME', 'EN_COURS', 'SUSPENDUE', 'TERMINE') NOT NULL DEFAULT 'PROGRAMME',
+    `statut` ENUM('PROGRAMME', 'EN_COURS', 'SUSPENDU', 'TERMINE') NOT NULL DEFAULT 'PROGRAMME',
     `typeMaintenance` VARCHAR(191) NOT NULL,
 <<<<<<<< HEAD:sav_ssi/prisma/migrations/20241219121603_design/migration.sql
     `idSite` INTEGER NOT NULL,
@@ -222,7 +222,7 @@ CREATE TABLE `DemandeIntervention` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
-CREATE TABLE `intervention` (
+CREATE TABLE `Intervention` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `diagnostics` VARCHAR(191) NOT NULL,
     `travauxRealises` VARCHAR(191) NOT NULL,
@@ -234,7 +234,7 @@ CREATE TABLE `intervention` (
     `idTechnicien` INTEGER NOT NULL,
     `idContact` INTEGER NOT NULL,
     `idDemandeIntervention` INTEGER NOT NULL,
-    `statut` ENUM('PROGRAMME', 'EN_COURS', 'SUSPENDUE', 'TERMINE') NOT NULL DEFAULT 'PROGRAMME',
+    `statut` ENUM('PROGRAMME', 'EN_COURS', 'SUSPENDU', 'TERMINE') NOT NULL DEFAULT 'PROGRAMME',
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -325,10 +325,10 @@ ALTER TABLE `DemandeIntervention` ADD CONSTRAINT `DemandeIntervention_idSite_fke
 ALTER TABLE `DemandeIntervention` ADD CONSTRAINT `DemandeIntervention_idContact_fkey` FOREIGN KEY (`idContact`) REFERENCES `Contact`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `intervention` ADD CONSTRAINT `intervention_idTechnicien_fkey` FOREIGN KEY (`idTechnicien`) REFERENCES `Utilisateur`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Intervention` ADD CONSTRAINT `Intervention_idTechnicien_fkey` FOREIGN KEY (`idTechnicien`) REFERENCES `Utilisateur`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `intervention` ADD CONSTRAINT `intervention_idContact_fkey` FOREIGN KEY (`idContact`) REFERENCES `Contact`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Intervention` ADD CONSTRAINT `Intervention_idContact_fkey` FOREIGN KEY (`idContact`) REFERENCES `Contact`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE `intervention` ADD CONSTRAINT `intervention_idDemandeIntervention_fkey` FOREIGN KEY (`idDemandeIntervention`) REFERENCES `DemandeIntervention`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE `Intervention` ADD CONSTRAINT `Intervention_idDemandeIntervention_fkey` FOREIGN KEY (`idDemandeIntervention`) REFERENCES `DemandeIntervention`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

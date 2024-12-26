@@ -34,11 +34,12 @@ export default {
     async session({ session, user }) {
       // Fetch the user's role from the database
       const dbUser = await prisma.utilisateur.findUnique({
-        where: { email: session.user.email },
+        where: { email: session.user.email,
+         },
         include: { Role: true },
       });
         // Add the user's role to the session object
-        session.user.role = dbUser?.Role?.nom || 'guest';
+        session.user.role = dbUser?.Role?.nom || '';
         return session;
       },
     }

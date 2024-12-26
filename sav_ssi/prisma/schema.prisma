@@ -22,7 +22,6 @@ model Utilisateur {
   Interventions Intervention[] @relation("TechnicienIntervention")
   Maintenances Maintenance[]   @relation("TechnicienMaintenance")
   Sessions   Session[]
-  
 }
 
 model Role {
@@ -30,7 +29,6 @@ model Role {
   nom           String
   Utilisateurs  Utilisateur[]
 }
-
 
 model Session {
   id            Int      @id @default(autoincrement())
@@ -49,107 +47,107 @@ model VerificationToken {
 }
 
 model Client {
-  id        Int      @id @default(autoincrement())
-  nom       String
-  secteurDactivite String
-  Sites     Site[]
-  Contacts  Contact[]
-  Installations Installation[]
+  id                Int      @id @default(autoincrement())
+  nom               String
+  secteurDactivite  String
+  Sites             Site[]
+  Contacts          Contact[]
+  Installations     Installation[]
   DemandesIntervention DemandeIntervention[]
 }
 
 model Site {
-  id        Int      @id @default(autoincrement())
-  nom       String
-  idClient  Int
-  adresse   String
-  Client    Client    @relation(fields: [idClient], references: [id], onDelete: Cascade)
-  Contacts  ContactSite[]
-  Installations Installation[]
+  id                Int      @id @default(autoincrement())
+  nom               String
+  idClient          Int
+  adresse           String
+  Client            Client    @relation(fields: [idClient], references: [id], onDelete: Cascade)
+  Contacts          ContactSite[]
+  Installations     Installation[]
   DemandesIntervention DemandeIntervention[]
-  Contrats  Contrat[]
+  Contrats          Contrat[]
 }
 
 model Contact {
-  id           Int         @id @default(autoincrement())
-  idClient     Int
-  idUtilisateur Int
-  Client       Client      @relation(fields: [idClient], references: [id], onDelete: Cascade)
-  Utilisateur  Utilisateur @relation(fields: [idUtilisateur], references: [id], onDelete: Cascade)
-  ContactSites ContactSite[]
+  id                Int         @id @default(autoincrement())
+  idClient          Int
+  idUtilisateur     Int
+  Client            Client      @relation(fields: [idClient], references: [id], onDelete: Cascade)
+  Utilisateur       Utilisateur @relation(fields: [idUtilisateur], references: [id], onDelete: Cascade)
+  ContactSites      ContactSite[]
   DemandesIntervention DemandeIntervention[]
-  Interventions Intervention[]
-  
+  Interventions     Intervention[]
 }
 
 model ContactSite {
-  id        Int      @id @default(autoincrement())
-  estManager Boolean
-  idSite    Int
-  idContact Int
-  Site      Site      @relation(fields: [idSite], references: [id], onDelete: Cascade)
-  Contact   Contact   @relation(fields: [idContact], references: [id], onDelete: Cascade)
+  id                Int      @id @default(autoincrement())
+  estManager        Boolean
+  idSite            Int
+  idContact         Int
+  Site              Site      @relation(fields: [idSite], references: [id], onDelete: Cascade)
+  Contact           Contact   @relation(fields: [idContact], references: [id], onDelete: Cascade)
 }
 
 model Systeme {
-  id           Int      @id @default(autoincrement())
-  nom          String
-  Equipements  Equipement[]
-  Actions      ActionMaintenance[]
-  Installations Installation[]
+  id                Int      @id @default(autoincrement())
+  nom               String
+  Equipements       Equipement[]
+  Actions           ActionMaintenance[]
+  Installations     Installation[]
+  Interventions Intervention[]
 }
 
 model Equipement {
-  id           Int      @id @default(autoincrement())
-  nom          String
-  idMarqueSsi  Int
-  idModeleSsi  Int
-  idSysteme    Int
-  MarqueSsi    MarqueSsi @relation(fields: [idMarqueSsi], references: [id])
-  ModeleSsi    ModeleSsi @relation(fields: [idModeleSsi], references: [id])
-  Systeme      Systeme   @relation(fields: [idSysteme], references: [id])
+  id                Int      @id @default(autoincrement())
+  nom               String
+  idMarqueSsi       Int
+  idModeleSsi       Int
+  idSysteme         Int
+  MarqueSsi         MarqueSsi @relation(fields: [idMarqueSsi], references: [id])
+  ModeleSsi         ModeleSsi @relation(fields: [idModeleSsi], references: [id])
+  Systeme           Systeme   @relation(fields: [idSysteme], references: [id])
   InstallationsEquipement InstallationEquipement[]
 }
 
 model MarqueSsi {
-  id         Int         @id @default(autoincrement())
-  nom        String
-  Equipements Equipement[]
+  id                Int         @id @default(autoincrement())
+  nom               String
+  Equipements       Equipement[]
 }
 
 model ModeleSsi {
-  id         Int         @id @default(autoincrement())
-  nom        String
-  Equipements Equipement[]
+  id                Int         @id @default(autoincrement())
+  nom               String
+  Equipements       Equipement[]
 }
 
 model Installation {
-  id        Int      @id @default(autoincrement())
-  dateInstallation DateTime
-  dateMaintenance  DateTime?
-  observations     String?
-  idClient         Int
-  idSysteme        Int
-  idSite           Int?
-  Client           Client     @relation(fields: [idClient], references: [id],onDelete: Cascade)
-  Systeme          Systeme    @relation(fields: [idSysteme], references: [id], onDelete: Cascade)
-  Site             Site?      @relation(fields: [idSite], references: [id], onDelete: Cascade)
+  id                Int      @id @default(autoincrement())
+  dateInstallation  DateTime
+  dateMaintenance   DateTime?
+  observations      String?
+  idClient          Int
+  idSysteme         Int
+  idSite            Int?
+  Client            Client     @relation(fields: [idClient], references: [id], onDelete: Cascade)
+  Systeme           Systeme    @relation(fields: [idSysteme], references: [id], onDelete: Cascade)
+  Site              Site?      @relation(fields: [idSite], references: [id], onDelete: Cascade)
   EquipementsInstallation InstallationEquipement[]
-  Maintenance    Maintenance[]
-  DemandesIntervention DemandeIntervention[]
+  Maintenance       Maintenance[]
+ 
 }
 
 model InstallationEquipement {
-  id              Int      @id @default(autoincrement())
-  statut           String
-  dateInstallation DateTime
-  dateMaintenance  DateTime?
-  idEquipement     Int
-  idInstallation   Int
-  quantite         Int      // Ajout du champ quantite
-  Equipement       Equipement   @relation(fields: [idEquipement], references: [id], onDelete: Cascade)
-  Installation     Installation @relation(fields: [idInstallation], references: [id], onDelete: Cascade)
-  Garanties        Garantie[]
+  id                Int      @id @default(autoincrement())
+  statut            String
+  dateInstallation  DateTime
+  dateMaintenance   DateTime?
+  idEquipement      Int
+  idInstallation    Int
+  quantite          Int
+  Equipement        Equipement   @relation(fields: [idEquipement], references: [id], onDelete: Cascade)
+  Installation      Installation @relation(fields: [idInstallation], references: [id], onDelete: Cascade)
+  Garanties         Garantie[]
 }
 
 model Contrat {
@@ -159,10 +157,8 @@ model Contrat {
   dateFin           DateTime
   periodicite       String
   typeContrat       String
-  termeContrat      String
   idSite            Int
   Site              Site     @relation(fields: [idSite], references: [id], onDelete: Cascade)
-  
 }
 
 model Garantie {
@@ -174,77 +170,65 @@ model Garantie {
 }
 
 model Maintenance {
-  id               Int      @id @default(autoincrement())
-  numero           String
-  dateMaintenance  DateTime
-  description      String
-  statut           EnumStatut_i          @default(PROGRAMME)
-  typeMaintenance  String
-  idTechnicien     Int
+  id                Int      @id @default(autoincrement())
+  numero            String
+  dateMaintenance   DateTime
+  description       String
+  statut            EnumStatut_i @default(NON_PLANIFIE)
+  typeMaintenance   String
+  idTechnicien      Int
   idInstallation    Int
-  Installation     Installation @relation(fields: [idInstallation], references: [id], onDelete: Cascade)
-  Technicien       Utilisateur  @relation("TechnicienMaintenance", fields: [idTechnicien], references: [id])
-  Actions          MaintenanceAction[]
+  Installation      Installation @relation(fields: [idInstallation], references: [id], onDelete: Cascade)
+  Technicien        Utilisateur  @relation("TechnicienMaintenance", fields: [idTechnicien], references: [id])
+  Actions           MaintenanceAction[]
 }
 
 model ActionMaintenance {
-  id           Int      @id @default(autoincrement())
-  libeleAction String
-  idSysteme    Int
-  Systeme      Systeme   @relation(fields: [idSysteme], references: [id])
+  id                Int      @id @default(autoincrement())
+  libeleAction      String
+  idSysteme         Int
+  Systeme           Systeme   @relation(fields: [idSysteme], references: [id])
   MaintenanceActions MaintenanceAction[]
 }
 
 model MaintenanceAction {
-  id             Int      @id @default(autoincrement())
-  statut         Boolean
-  observation    String
-  idMaintenance  Int
-  idAction       Int
-  Maintenance    Maintenance       @relation(fields: [idMaintenance], references: [id])
-  Action         ActionMaintenance @relation(fields: [idAction], references: [id])
+  id                Int      @id @default(autoincrement())
+  statut            Boolean
+  observation       String
+  idMaintenance     Int
+  idAction          Int
+  Maintenance       Maintenance       @relation(fields: [idMaintenance], references: [id])
+  Action            ActionMaintenance @relation(fields: [idAction], references: [id])
 }
-
-model DemandeIntervention {
-  id               Int      @id @default(autoincrement())
-  statut           planification         @default(NON_PLANIFIE)
-  typePanneDeclare String
-  dateDeclaration  DateTime
-  idInstallation   Int
-  idClient         Int
-  idSite           Int
-  idContact        Int
-  Installation     Installation @relation(fields: [idInstallation], references: [id])
-  Client           Client       @relation(fields: [idClient], references: [id])
-  Site             Site         @relation(fields: [idSite], references: [id])
-  Contact          Contact      @relation(fields: [idContact], references: [id])
-  Interventions    Intervention[]
-}
-
 model Intervention {
-  id                  Int      @id @default(autoincrement())
-  diagnostics         String
-  travauxRealises     String
-  pieceFournies       String
-  dateIntervention    DateTime
-  dureeHeure          Int
-  numero              Int
-  ficheInt            String
-  idTechnicien        Int
-  idContact           Int
-  idDemandeIntervention Int
-  statut               EnumStatut_i          @default(PROGRAMME)
-  Technicien          Utilisateur @relation("TechnicienIntervention", fields: [idTechnicien], references: [id])
-  Contact             Contact     @relation(fields: [idContact], references: [id])
-  DemandeIntervention DemandeIntervention @relation(fields: [idDemandeIntervention], references: [id])
+  id                Int      @id @default(autoincrement())
+  statut            EnumStatut_i @default(NON_PLANIFIE)
+  typePanneDeclare  String
+  dateDeclaration   DateTime
+  idSysteme         Int?
+  idClient          Int?
+  idSite            Int?
+  Systeme      Systeme @relation(fields: [idSysteme], references: [id])
+  Client            Client       @relation(fields: [idClient], references: [id])
+  Site              Site         @relation(fields: [idSite], references: [id])
+  diagnostics       String?
+  travauxRealises   String?
+  pieceFournies     String?
+  dateIntervention  DateTime?
+  dureeHeure        Int?
+  numero            Int?
+  ficheInt          String?
+  idTechnicien      Int?
+  prenomContact     String?
+  telephoneContact  String?
+  adresse           String?
+  Technicien        Utilisateur @relation("TechnicienIntervention", fields: [idTechnicien], references: [id])
 }
+
 enum EnumStatut_i {
-  PROGRAMME
   EN_COURS
   SUSPENDU
   TERMINE
-}
-enum planification {
   NON_PLANIFIE
   PLANIFIE
 }
