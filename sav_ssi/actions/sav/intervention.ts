@@ -1,35 +1,7 @@
 "use server";
 
 import { prisma } from "@/prisma";
-import { Intervention, DemandeIntervention } from "@prisma/client";
-
-// Récupérer toutes les demandes d'intervention
-export const getAllDemandesIntervention = async (): Promise<DemandeIntervention[]> => {
-  return await prisma.demandeIntervention.findMany();
-};
-
-// Créer une nouvelle demande d'intervention
-export const createDemandeIntervention = async (data: {
-  typePanneDeclare: string;
-  dateDeclaration: Date;
-  idClient: number;
-  idSite: number;
-  idInstallation: number;
-}): Promise<DemandeIntervention> => {
-  return await prisma.demandeIntervention.create({
-    data,
-  });
-};
-
-// Récupérer les installations par site
-export const getInstallationsBySite = async (siteId: number) => {
-  return await prisma.installation.findMany({
-    where: { idSite: siteId },
-    include: {
-      Systeme: true,
-    },
-  });
-};
+import { Intervention } from "@prisma/client";
 
 // Récupérer toutes les interventions
 export const getInterventions = async (
@@ -44,20 +16,10 @@ export const getInterventions = async (
 ) => {
   const where = {
     AND: [
-      {
-        OR: [
-          { diagnostics: { contains: search } },
-          { travauxRealises: { contains: search } },
-          { numero: { equals: !isNaN(parseInt(search)) ? parseInt(search) : undefined } }
-        ]
-      },
+      
       { statut: status ? { equals: status } : undefined },
       { idTechnicien: technicianId ? { equals: parseInt(technicianId) } : undefined },
-      {
-        DemandeIntervention: {
-          idClient: clientId ? { equals: parseInt(clientId) } : undefined,
-        }
-      },
+      { idClient: clientId ? { equals: parseInt(clientId) } : undefined },
       {
         dateIntervention: {
           gte: startDate ? new Date(startDate) : undefined,
@@ -74,86 +36,67 @@ export const getInterventions = async (
       take: pageSize,
       include: {
         Technicien: true,
-        Contact: {
-          include: {
-            Utilisateur: true
-          }
-        },
-        DemandeIntervention: {
-          include: {
-            Client: true,
-            Site: true
-          }
-        }
+        Client: true,
+        Site: true,
+        Systeme: true
       },
       orderBy: {
         dateIntervention: 'desc'
       }
     }),
-    prisma.intervention.count({ where })
+    prisma.intervention.count(),
   ]);
 
   return { interventions, total };
 };
 
-export const getInterventionById = async (id: number) => {
-  return await prisma.intervention.findUnique({
-    where: { id },
+
+// Créer une nouvelle intervention
+export const createIntervention = async (data: {
+  typePanneDeclare: string;
+  dateDeclaration: Date;
+  prenomContact: string;
+  telephoneContact: string;
+  adresse: string;
+  numero: number | null;
+  statut: string;
+  datePlanifiee?: Date;
+  idTechnicien?: number;
+  idClient: number;
+  idSite: number;
+  idSysteme: number;
+}): Promise<Intervention> => {
+  // Construire l'objet de données de base
+  const interventionData = {
+    typePanneDeclare: data.typePanneDeclare,
+    dateDeclaration: data.dateDeclaration,
+    prenomContact: data.prenomContact,
+    telephoneContact: data.telephoneContact,
+    adresse: data.adresse,
+    numero: data.numero,
+    statut: data.statut || "NON_PLANIFIE",
+    datePlanifiee: data.datePlanifiee || null,
+    Client: { connect: { id: data.idClient } },
+    Site: { connect: { id: data.idSite } },
+    Systeme: { connect: { id: data.idSysteme } },
+  };
+
+  // Ajouter le technicien seulement s'il est fourni
+  if (data.idTechnicien) {
+    interventionData["Technicien"] = { connect: { id: data.idTechnicien } };
+  }
+
+  return await prisma.intervention.create({
+    data: interventionData,
     include: {
       Technicien: true,
-      Contact: {
-        include: {
-          Utilisateur: true
-        }
-      },
-      DemandeIntervention: {
-        include: {
-          Client: true,
-          Site: true,
-          Installation: {
-            include: {
-              Systeme: true
-            }
-          }
-        }
-      }
+      Client: true,
+      Site: true,
+      Systeme: true
     }
   });
 };
 
-export const createIntervention = async (data: {
-  diagnostics: string;
-  travauxRealises: string;
-  pieceFournies: string;
-  dateIntervention: Date;
-  dureeHeure: number;
-  numero: number;
-  ficheInt: string;
-  idTechnicien: number;
-  idContact: number;
-  idDemandeIntervention: number;
-}) => {
-  return await prisma.intervention.create({
-    data: {
-      ...data,
-      statut: 'PROGRAMME'
-    },
-    include: {
-      Technicien: true,
-      Contact: {
-        include: {
-          Utilisateur: true
-        }
-      },
-      DemandeIntervention: {
-        include: {
-          Client: true,
-          Site: true
-        }
-      }
-    }
-  });
-};
 
 export const updateIntervention = async (
   id: number,
@@ -164,17 +107,9 @@ export const updateIntervention = async (
     data,
     include: {
       Technicien: true,
-      Contact: {
-        include: {
-          Utilisateur: true
-        }
-      },
-      DemandeIntervention: {
-        include: {
-          Client: true,
-          Site: true
-        }
-      }
+      Client: true,
+      Site: true,
+      Systeme: true
     }
   });
 };

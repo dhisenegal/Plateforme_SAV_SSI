@@ -31,12 +31,12 @@ async function main() {
     },
   });
 
-  const roleTechnicien = await prisma.role.upsert({
-    where: { id: 3 },
+  const roleClient = await prisma.role.upsert({
+    where: { id: 4 },
     update: {},
     create: {
-      id: 3,
-      nom: "technicien",
+      id: 4,
+      nom: "client",
     },
   });
 

@@ -184,7 +184,7 @@ const SitesTabContent = () => {
                   value={newSite.nom}
                 />
               </div>
-              <div className="mb-4">
+             {/* <div className="mb-4">
                 <label className="block mb-2">Contrat</label>
                 <Select
                   value={newSite.contractId}
@@ -201,7 +201,7 @@ const SitesTabContent = () => {
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </div>*/}
               <div className="mb-4">
                 <label className="block mb-2">Adresse</label>
                 <Input

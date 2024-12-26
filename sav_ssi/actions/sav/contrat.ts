@@ -42,19 +42,24 @@ export const createContrat = async (data: {
   dateFin: Date | null;
   periodicite: string;
   typeContrat: string;
-  termeContrat: string;
+  pieceMainDoeuvre: boolean;
   idSite: number;
 }): Promise<Contrat> => {
-  return await prisma.contrat.create({
-    data,
-    include: {
-      Site: {
-        include: {
-          Client: true,
+  try {
+    return await prisma.contrat.create({
+      data,
+      include: {
+        Site: {
+          include: {
+            Client: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.log("Erreur lors de la création du contrat:", error);
+    throw new Error("Erreur lors de la création du contrat");
+  }
 };
 
 // Mettre à jour un contrat
@@ -64,25 +69,35 @@ export const updateContrat = async (id: number, data: {
   dateFin?: Date | null;
   periodicite?: string;
   typeContrat?: string;
-  termeContrat?: string;
+  pieceMainDoeuvre?: boolean;
   idSite?: number;
 }): Promise<Contrat> => {
-  return await prisma.contrat.update({
-    where: { id },
-    data,
-    include: {
-      Site: {
-        include: {
-          Client: true,
+  try {
+    return await prisma.contrat.update({
+      where: { id },
+      data,
+      include: {
+        Site: {
+          include: {
+            Client: true,
+          },
         },
       },
-    },
-  });
+    });
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour du contrat:", error);
+    throw new Error("Erreur lors de la mise à jour du contrat");
+  }
 };
 
 // Supprimer un contrat
 export const deleteContrat = async (id: number): Promise<Contrat> => {
-  return await prisma.contrat.delete({
-    where: { id },
-  });
+  try {
+    return await prisma.contrat.delete({
+      where: { id },
+    });
+  } catch (error) {
+    console.error("Erreur lors de la suppression du contrat:", error);
+    throw new Error("Erreur lors de la suppression du contrat");
+  }
 };
