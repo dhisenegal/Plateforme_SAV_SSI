@@ -46,9 +46,9 @@ import * as React from 'react';
 import Image from 'next/image';
 
 export const company = {
-  name: 'DHI',
+ 
   logo: '/logo.svg',
-  plan: 'Enterprise'
+
 };
 
 export default function AppSidebar() {
@@ -72,15 +72,11 @@ export default function AppSidebar() {
           <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
             <Image src={company.logo} alt="logo" className='' width={120} height={120}/>
           </div>
-          <div className="grid flex-1 text-left text-sm leading-tight">
-            <span className="truncate font-semibold">{company.name}</span>
-            <span className="truncate text-xs">{company.plan}</span>
-          </div>
+          
         </div>
       </SidebarHeader>
       <SidebarContent className="overflow-x-hidden">
         <SidebarGroup>
-          <SidebarGroupLabel>Overview</SidebarGroupLabel>
           <SidebarMenu>
             {navItems.map((item) => {
               const Icon = item.icon ? item.icon : null;
@@ -149,16 +145,16 @@ export default function AppSidebar() {
                 >
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage
-                      src={session?.user?.image || ''}
-                      alt={session?.user?.name || ''}
+                      src={session?.user?.image || '/avatar.jpg'}
+                      alt={session?.user?.prenom || ''}
                     />
                     <AvatarFallback className="rounded-lg">
-                      {session?.user?.name?.slice(0, 2)?.toUpperCase() || 'CN'}
+                      {session?.user?.prenom?.slice(0, 2)?.toUpperCase() || 'CN'}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
                     <span className="truncate font-semibold">
-                      {session?.user?.name || ''}
+                      {session?.user?.prenom || ''}
                     </span>
                     <span className="truncate text-xs">
                       {session?.user?.email || ''}
@@ -177,17 +173,17 @@ export default function AppSidebar() {
                   <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                     <Avatar className="h-8 w-8 rounded-lg">
                       <AvatarImage
-                        src={session?.user?.image || ''}
-                        alt={session?.user?.name || ''}
+                        src={session?.user?.image || '/avatar.jpg'}
+                        alt={session?.user?.prenom || ''}
                       />
                       <AvatarFallback className="rounded-lg">
-                        {session?.user?.name?.slice(0, 2)?.toUpperCase() ||
+                        {session?.user?.prenom?.slice(0, 2)?.toUpperCase() ||
                           'CN'}
                       </AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">
-                        {session?.user?.name || ''}
+                        {session?.user?.prenom || ''}
                       </span>
                       <span className="truncate text-xs">
                         {' '}
@@ -201,11 +197,7 @@ export default function AppSidebar() {
                 <DropdownMenuGroup>
                   <DropdownMenuItem>
                     <BadgeCheck />
-                    Account
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <CreditCard />
-                    Billing
+                    Compte
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <Bell />
@@ -215,7 +207,7 @@ export default function AppSidebar() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem>
                   <LogOut />
-                  Log out
+                  Déconnexion
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -57,6 +57,12 @@ export const navItemsByRole: { [key: string]: NavItem[] } = {
           url: '/admin/equipements/modele',
           isActive: false,
           items: []
+        },
+        {
+          title: 'Equipements',
+          url: '/admin/equipements',
+          isActive: false,
+          items: []
         }
       ]
     }

@@ -6,6 +6,8 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { SessionProvider } from 'next-auth/react';
 import { auth } from '@/auth';
+import { Suspense } from 'react';
+import Loading from './loading';
 export const metadata: Metadata = {
   title: 'Plateforme SAV SSI',
   description: 'Plateforme de gestion de la SAV SSI'
@@ -29,7 +31,10 @@ export default async function DashboardLayout({
         <SidebarInset>
           <Header />
           {/* page main content */}
-          {children}
+          <Suspense fallback={<Loading/>}>
+            {children}
+          </Suspense>
+        
           {/* page main content ends */}
         </SidebarInset>
       </SidebarProvider>

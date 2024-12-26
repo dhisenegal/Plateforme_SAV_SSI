@@ -1,7 +1,6 @@
 'use client';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import {useRouter} from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -14,11 +13,11 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { signOut, useSession } from 'next-auth/react';
 export function UserNav() {
-  const router = useRouter();
+
   const { data: session } = useSession();
   const handleSignOut = () => {
-    signOut();
-    router.push('/auth/login');
+    signOut({callbackUrl: '/auth/login'});
+   
   };
   if (session) {
     return (
@@ -27,10 +26,10 @@ export function UserNav() {
           <Button variant="ghost" className="relative h-8 w-8 rounded-full">
             <Avatar className="h-8 w-8">
               <AvatarImage
-                src={session.utilisateur?.image ?? ''}
-                alt={session.utilisateur?.prenom ?? ''}
+                src={session.user?.image ?? '/avatar.jpg'}
+                alt={session.user?.prenom ?? ''}
               />
-              <AvatarFallback>{session.utilisateur?.prenom?.[0]}</AvatarFallback>
+              <AvatarFallback>{session.user?.prenom?.[0]}</AvatarFallback>
             </Avatar>
           </Button>
         </DropdownMenuTrigger>
@@ -38,10 +37,10 @@ export function UserNav() {
           <DropdownMenuLabel className="font-normal">
             <div className="flex flex-col space-y-1">
               <p className="text-sm font-medium leading-none">
-                {session.utilisateur?.prenom}
+                {session.user?.prenom}
               </p>
               <p className="text-xs leading-none text-muted-foreground">
-                {session.utilisateur?.email}
+                {session.user?.email}
               </p>
             </div>
           </DropdownMenuLabel>

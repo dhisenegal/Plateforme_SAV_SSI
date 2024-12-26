@@ -17,7 +17,13 @@ const EquipementTab = ({ siteId }) => {
   const [availableEquipments, setAvailableEquipments] = useState([]);
   const [systemes, setSystemes] = useState([]);
   const [selectedSysteme, setSelectedSysteme] = useState("");
-  const [newEquipment, setNewEquipment] = useState({ idEquipement: "", quantite: 1, dateInstallation: "", observations: "" });
+  const [newEquipment, setNewEquipment] = useState({
+    idEquipement: "",
+    idSysteme: "",
+    quantite: 1,
+    dateInstallation: "",
+    observations: ""
+  });
   const [selectedEquipment, setSelectedEquipment] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [equipmentToDelete, setEquipmentToDelete] = useState(null);
@@ -60,21 +66,43 @@ const EquipementTab = ({ siteId }) => {
     fetchSystemes();
   }, [siteId]);
 
+  const isValidDate = (dateString: string): boolean => {
+    const date = new Date(dateString);
+    return date instanceof Date && !isNaN(date.getTime());
+  };
+  
   const handleAddEquipment = async () => {
     try {
+      if (!newEquipment.idEquipement) {
+        toast.error("Veuillez sélectionner un équipement");
+        return;
+      }
+      
+      if (!isValidDate(newEquipment.dateInstallation)) {
+        toast.error("Date d'installation invalide");
+        return;
+      }
+      
       const newEquip = await createInstallationEquipement({
         ...newEquipment,
         idSite: parseInt(siteId),
+        idSysteme: parseInt(selectedSysteme)
       });
+      
       setEquipments([...equipments, newEquip]);
-      setNewEquipment({ idEquipement: "", quantite: 1, dateInstallation: "", observations: "" });
+      setNewEquipment({
+        idEquipement: "",
+        idSysteme: "",
+        quantite: 1,
+        dateInstallation: "",
+        observations: ""
+      });
       toast.success("Équipement ajouté avec succès");
     } catch (error) {
       console.error("Erreur lors de l'ajout de l'équipement:", error);
       toast.error("Erreur lors de l'ajout de l'équipement");
     }
   };
-
   const handleEditEquipment = (id) => {
     const equipment = equipments.find(e => e.id === id);
     setSelectedEquipment(equipment);
@@ -104,13 +132,18 @@ const EquipementTab = ({ siteId }) => {
 
   const confirmDeleteEquipment = async () => {
     try {
+      if (!equipmentToDelete) {
+        toast.error("Aucun équipement sélectionné pour la suppression");
+        return;
+      }
+      
       await deleteInstallationEquipement(equipmentToDelete);
       setEquipments(equipments.filter(e => e.id !== equipmentToDelete));
       setIsDeleteDialogOpen(false);
       setEquipmentToDelete(null);
       toast.success("Équipement supprimé avec succès");
     } catch (error) {
-      console.error("Erreur lors de la suppression de l'équipement:", error);
+      console.error("Erreur lors de la suppression:", error);
       toast.error("Erreur lors de la suppression de l'équipement");
     }
   };
@@ -185,7 +218,7 @@ const EquipementTab = ({ siteId }) => {
                 name="quantite"
                 type="number"
                 placeholder="Quantité"
-                onChange={(e) => setNewEquipment({ ...newEquipment, quantite: Number(e.target.value) })}
+                onChange={(e) => setNewEquipment({ ...newEquipment, quantite: Number(e.target.value) })} 
                 value={newEquipment.quantite}
                 className="mb-4"
               />
@@ -271,7 +304,7 @@ const EquipementTab = ({ siteId }) => {
                 name="quantite"
                 type="number"
                 placeholder="Quantité"
-                onChange={(e) => setSelectedEquipment({ ...selectedEquipment, quantite: Number(e.target.value) })}
+                onChange={(e) => setSelectedEquipment({ ...selectedEquipment, quantite: Number(e.target.value) })} 
                 value={selectedEquipment.quantite}
                 className="mb-4"
               />
@@ -279,14 +312,14 @@ const EquipementTab = ({ siteId }) => {
                 name="dateInstallation"
                 type="date"
                 placeholder="Date d'installation"
-                onChange={(e) => setSelectedEquipment({ ...selectedEquipment, dateInstallation: e.target.value })}
+                onChange={(e) => setSelectedEquipment({ ...selectedEquipment, dateInstallation: e.target.value })} 
                 value={selectedEquipment.dateInstallation}
                 className="mb-4"
               />
               <Input
                 name="observations"
                 placeholder="Observations"
-                onChange={(e) => setSelectedEquipment({ ...selectedEquipment, observations: e.target.value })}
+                onChange={(e) => setSelectedEquipment({ ...selectedEquipment, observations: e.target.value })} 
                 value={selectedEquipment.observations}
                 className="mb-4"
               />

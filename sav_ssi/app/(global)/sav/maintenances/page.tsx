@@ -1,9 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
-import SitesTabContent from "@/components/sav/SitesTabContent";
-import ContratTabContent from "@/components/sav/ContratTabContent";
+import dynamic from "next/dynamic";
+import { FaSpinner } from "react-icons/fa";
 
+const SitesTabContent = dynamic(() => import("@/components/sav/SitesTabContent"), {
+  ssr: false,
+  loading: () => <div className="flex items-center justify-center gap-3">
+    <FaSpinner className="animate-spin" />
+     Chargement en cours...</div>,
+});
+const ContratTabContent = dynamic(() => import("@/components/sav/ContratTabContent"), {
+  ssr: false,
+});
 const MaintenancesPage = () => {
   const [activeTab, setActiveTab] = useState("sites");
 
