@@ -15,7 +15,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 
 const SiteDetailsPage = () => {
   const router = useRouter();
@@ -64,7 +64,7 @@ const SiteDetailsPage = () => {
     router.push("/sav/maintenances");
   };
 
-  const handlePlanifierMaintenance = async (e: React.FormEvent) => {
+  const handlePlanifierMaintenance = async (e) => {
     e.preventDefault();
 
     const maintenanceData = {
@@ -113,7 +113,7 @@ const SiteDetailsPage = () => {
             <DialogTrigger asChild>
               <button className="flex items-center mb-4 bg-blue-500 text-white hover:bg-blue-600 p-3 rounded-lg">
                 <FaPlus className="mr-2" />
-                Récurrence
+                Planifier Maintenance
               </button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
@@ -161,7 +161,9 @@ const SiteDetailsPage = () => {
                       onValueChange={(value) => setTypeMaintenance(value)}
                       required
                     >
-                      <SelectTrigger>Choisir un type</SelectTrigger>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choisir un type" />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="curative">Curative</SelectItem>
                         <SelectItem value="preventive">Préventive</SelectItem>
@@ -176,7 +178,9 @@ const SiteDetailsPage = () => {
                       onValueChange={(value) => setIdTechnicien(Number(value))}
                       required
                     >
-                      <SelectTrigger>Choisir un technicien</SelectTrigger>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Choisir un technicien" />
+                      </SelectTrigger>
                       <SelectContent>
                         <SelectItem value={0} disabled>Choisir un technicien</SelectItem>
                         {techniciens.map((technicien) => (
@@ -205,7 +209,9 @@ const SiteDetailsPage = () => {
                         onValueChange={(value) => setIdContact(Number(value))}
                         required
                       >
-                        <SelectTrigger>Choisir un contact</SelectTrigger>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Choisir un contact" />
+                        </SelectTrigger>
                         <SelectContent>
                           <SelectItem value={0} disabled>Choisir un contact</SelectItem>
                           {contacts.map((contact) => (
@@ -268,7 +274,7 @@ const SiteDetailsPage = () => {
             className={`py-2 px-4 ${activeTab === "details" ? "border-b-4 border-blue-500 text-blue-500" : "border-b-4 border-transparent text-gray-500"}`}
             onClick={() => handleTabChange("details")}
           >
-            Détails
+            Contacts
           </button>
         </div>
 

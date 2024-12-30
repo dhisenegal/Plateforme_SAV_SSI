@@ -6,8 +6,6 @@ import { PieGraph } from './pie-graph';
 import {useSession} from "next-auth/react";
 import PageContainer from '@/components/layout/page-container';
 import { RecentInterventions } from './recent-interventions';
-
-
 import {
   Card,
   CardContent,

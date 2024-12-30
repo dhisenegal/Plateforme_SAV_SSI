@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
 import { FaPlus, FaEdit, FaTrash, FaPause, FaPlay, FaCalendarAlt } from "react-icons/fa";
@@ -11,10 +11,12 @@ import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "react-toastify";
+import { getAllTechniciens } from "@/actions/sav/technicien";
 import { getInterventions, updateIntervention, deleteIntervention } from "@/actions/sav/intervention";
 import CreateInterventionModal from "@/components/sav/CreateInterventionModal";
 
 const InterventionsList = () => {
+  const [techniciens, setTechniciens] = useState([]);
   const [interventions, setInterventions] = useState([]);
   const [totalInterventions, setTotalInterventions] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
@@ -31,10 +33,23 @@ const InterventionsList = () => {
   const itemsPerPage = 10;
 
   useEffect(() => {
+    const fetchTechniciens = async () => {
+      try {
+        const technicienData = await getAllTechniciens();
+        setTechniciens(technicienData);
+      } catch (error) {
+        toast.error("Erreur lors du chargement des techniciens");
+      }
+    };
+
+    fetchTechniciens();
+  }, []);
+
+  useEffect(() => {
     fetchInterventions();
   }, [currentPage, searchQuery, statusFilter, startDate, endDate]);
 
-  const fetchInterventions = async () => {
+  const fetchInterventions = useCallback(async () => {
     try {
       const { interventions, total } = await getInterventions(
         currentPage,
@@ -51,9 +66,9 @@ const InterventionsList = () => {
     } catch (error) {
       toast.error("Erreur lors du chargement des interventions");
     }
-  };
+  }, [currentPage, searchQuery, statusFilter, startDate, endDate]);
 
-  const getStatusBadge = (status) => {
+  const getStatusBadge = useCallback((status) => {
     const statusStyles = {
       NON_PLANIFIE: "bg-gray-500",
       PLANIFIE: "bg-yellow-500",
@@ -67,9 +82,9 @@ const InterventionsList = () => {
         {status}
       </Badge>
     );
-  };
+  }, []);
 
-  const handleStatusUpdate = async (intervention, newStatus) => {
+  const handleStatusUpdate = useCallback(async (intervention, newStatus) => {
     try {
       await updateIntervention(intervention.id, { statut: newStatus });
       toast.success("Statut mis à jour avec succès");
@@ -77,9 +92,9 @@ const InterventionsList = () => {
     } catch (error) {
       toast.error("Erreur lors de la mise à jour du statut");
     }
-  };
+  }, [fetchInterventions]);
 
-  const handlePlanningSubmit = async (e) => {
+  const handlePlanningSubmit = useCallback(async (e) => {
     e.preventDefault();
     try {
       await updateIntervention(selectedIntervention.id, {
@@ -93,9 +108,9 @@ const InterventionsList = () => {
     } catch (error) {
       toast.error("Erreur lors de la mise à jour de la planification");
     }
-  };
+  }, [fetchInterventions, planningData, selectedIntervention]);
 
-  const handleDelete = async (id) => {
+  const handleDelete = useCallback(async (id) => {
     if (window.confirm("Êtes-vous sûr de vouloir supprimer cette intervention ?")) {
       try {
         await deleteIntervention(id);
@@ -105,7 +120,7 @@ const InterventionsList = () => {
         toast.error("Erreur lors de la suppression");
       }
     }
-  };
+  }, [fetchInterventions]);
 
   return (
     <div className="p-6">
@@ -261,8 +276,17 @@ const InterventionsList = () => {
                   <SelectValue placeholder="Sélectionner un technicien" />
                 </SelectTrigger>
                 <SelectContent>
-                  {/* Vous devrez ajouter la liste des techniciens ici */}
-                </SelectContent>
+              {techniciens.length > 0 ? (
+                techniciens.map((technicien) => (
+                  <SelectItem key={technicien.id} value={technicien.id}>
+                    {technicien.nom} {technicien.prenom}
+                  </SelectItem>
+                ))
+              ) : (
+                <div className="p-2 text-gray-500">Aucun technicien disponible</div>
+               )}
+            </SelectContent>
+
               </Select>
             </div>
 

@@ -12,6 +12,9 @@ const SitesTabContent = dynamic(() => import("@/components/sav/SitesTabContent")
 });
 const ContratTabContent = dynamic(() => import("@/components/sav/ContratTabContent"), {
   ssr: false,
+  loading: () => <div className="flex items-center justify-center gap-3">
+    <FaSpinner className="animate-spin" />
+     Chargement en cours...</div>,
 });
 const MaintenancesPage = () => {
   const [activeTab, setActiveTab] = useState("sites");

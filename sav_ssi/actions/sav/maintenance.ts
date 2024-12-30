@@ -13,6 +13,7 @@ export const planifierMaintenance = async (data: {
   idSite: number;
   idTechnicien: number;
   idContact: number;
+  idInstallation: number; // Ajouter l'ID de l'installation
 }): Promise<Maintenance> => {
   console.log("Données reçues pour la planification de la maintenance:", JSON.stringify(data, null, 2));
 
@@ -49,6 +50,17 @@ export const planifierMaintenance = async (data: {
     throw new Error(`Contact with ID ${data.idContact} does not exist.`);
   }
 
+  // Vérifier si l'installation existe
+  const installation = await prisma.installation.findUnique({
+    where: { id: data.idInstallation },
+  });
+
+  console.log("Installation trouvée:", JSON.stringify(installation, null, 2));
+
+  if (!installation) {
+    throw new Error(`Installation with ID ${data.idInstallation} does not exist.`);
+  }
+
   const maintenance = await prisma.maintenance.create({
     data: {
       numero: data.numero,
@@ -59,6 +71,7 @@ export const planifierMaintenance = async (data: {
       idSite: data.idSite,
       idTechnicien: data.idTechnicien,
       idContact: data.idContact,
+      idInstallation: data.idInstallation, // Inclure l'ID de l'installation
     },
   });
 
@@ -104,3 +117,4 @@ export const updateMaintenance = async (id: number, data: {
     data,
   });
 };
+
