@@ -144,7 +144,7 @@ export const navItemsByRole: { [key: string]: NavItem[] } = {
     },
     {
       title: 'Maintenances',
-      url: '/technicien/maintenances',
+      url: '/technicien/Maintenances',
       icon: PieChart,
       isActive: false,
       shortcut: ['m', 'm'],
@@ -152,8 +152,16 @@ export const navItemsByRole: { [key: string]: NavItem[] } = {
     },
     {
       title: 'Interventions',
-      url: '/technicien/interventions',
+      url: '/technicien/Interventions',
       icon: ClipboardList,
+      isActive: false,
+      shortcut: ['i', 'i'],
+      items: []
+    },
+    {
+      title: 'Planning',
+      url: '/technicien/Planning',
+      icon: Calendar,
       isActive: false,
       shortcut: ['i', 'i'],
       items: []

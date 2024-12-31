@@ -55,9 +55,9 @@ const PlanningPage = async () => {
                   <td className="px-6 py-4 border-t text-center">
                     <Link
                       href={`/technicien/${item.id}?type=${typeParam}`}
-                      className="text-blue-500 hover:text-blue-700 font-medium flex items-center justify-center gap-2 transition duration-200"
+                      
                     >
-                      <FaEye /> Voir détails
+                      
                     </Link>
                   </td>
                 </tr>
