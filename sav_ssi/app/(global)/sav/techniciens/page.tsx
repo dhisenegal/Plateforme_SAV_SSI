@@ -211,9 +211,9 @@ const TechniciensPage = () => {
         </TableHeader>
         <TableBody>
           {filteredTechniciens.map((technicien) => (
-            <TableRow key={technicien.id}>
+            <TableRow key={technicien.id} className="cursor-pointer hover:bg-blue-100">
               <TableCell>
-                <Link href={`/admin/techniciens/${technicien.id}`} className="text-blue-500 hover:underline">
+                <Link href={`/admin/techniciens/${technicien.id}`}>
                   {technicien.prenom}
                 </Link>
               </TableCell>

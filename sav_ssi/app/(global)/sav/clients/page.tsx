@@ -2,10 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import { getClients, addClient, deleteClient, updateClient } from "@/actions/sav/client";
-import { FaEdit, FaTrash, FaEye } from "react-icons/fa";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import { FaEdit, FaTrash, FaEye, FaPlus } from "react-icons/fa";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { ToastContainer, toast } from "react-toastify";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@/components/ui/table";
+import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { useRouter } from "next/navigation";
 
@@ -29,36 +32,31 @@ const ClientsPage = () => {
   const [clientToDelete, setClientToDelete] = useState<number | null>(null);
   const router = useRouter();
 
-  // Récupérer les clients au chargement
   useEffect(() => {
     const fetchClients = async () => {
       try {
         const data = await getClients();
         setClients(data);
       } catch (error) {
-        console.error("Erreur lors de la récupération des clients:", error);
         toast.error("Erreur lors de la récupération des clients");
       }
     };
     fetchClients();
   }, []);
 
-  // Ajouter un client
   const handleAddClient = async () => {
     try {
       const newClient = await addClient(nom, secteurDactivite);
       setClients((prevClients) => [...prevClients, newClient]);
-      setShowForm(false); // Hide the form after adding a client
+      setShowForm(false);
       setNom("");
       setSecteurDactivite("");
       toast.success("Client ajouté avec succès");
     } catch (error) {
-      console.error("Erreur lors de l'ajout du client:", error);
       toast.error("Erreur lors de l'ajout du client");
     }
   };
 
-  // Modifier un client
   const handleUpdateClient = async () => {
     if (currentClientId !== null) {
       try {
@@ -66,19 +64,17 @@ const ClientsPage = () => {
         setClients((prevClients) =>
           prevClients.map((client) => (client.id === currentClientId ? updatedClient : client))
         );
-        setShowForm(false); // Hide the form after updating a client
+        setShowForm(false);
         setNom("");
         setSecteurDactivite("");
         setIsEditing(false);
         toast.success("Client modifié avec succès");
       } catch (error) {
-        console.error("Erreur lors de la mise à jour du client:", error);
         toast.error("Erreur lors de la mise à jour du client");
       }
     }
   };
 
-  // Supprimer un client
   const handleDeleteClient = async () => {
     if (clientToDelete !== null) {
       try {
@@ -88,18 +84,15 @@ const ClientsPage = () => {
         setClientToDelete(null);
         toast.success("Client supprimé avec succès");
       } catch (error) {
-        console.error("Erreur lors de la suppression du client:", error);
         toast.error("Erreur lors de la suppression du client");
       }
     }
   };
 
-  // Afficher les détails d'un client
   const handleViewDetails = (clientId: number) => {
     router.push(`/sav/clients/${clientId}`);
   };
 
-  // Préparer le formulaire pour l'édition
   const handleEditClient = (client: Client) => {
     setCurrentClientId(client.id);
     setNom(client.nom);
@@ -108,18 +101,15 @@ const ClientsPage = () => {
     setShowForm(true);
   };
 
-  // Préparer la suppression d'un client
   const handlePrepareDeleteClient = (clientId: number) => {
     setClientToDelete(clientId);
     setShowDeleteDialog(true);
   };
 
-  // Filtrer les clients en fonction de la recherche
   const filteredClients = clients.filter((client) =>
     client.nom.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  // Pagination
   const indexOfLastClient = currentPage * clientsPerPage;
   const indexOfFirstClient = indexOfLastClient - clientsPerPage;
   const currentClients = filteredClients.slice(indexOfFirstClient, indexOfLastClient);
@@ -129,88 +119,103 @@ const ClientsPage = () => {
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Gestion des Clients</h1>
+        <h1 className="text-2xl font-bold">Clients</h1>
         <Dialog open={showForm} onOpenChange={setShowForm}>
           <DialogTrigger asChild>
-            <Button className="bg-blue-500 text-white">
+            <Button className="bg-blue-500 text-white flex items-center">
+              <FaPlus className="mr-2" />
               {isEditing ? "Modifier Client" : "Ajouter Client"}
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>{isEditing ? "Modifier le Client" : "Ajouter un Nouveau Client"}</DialogTitle>
               <DialogDescription>Entrez les détails du client.</DialogDescription>
             </DialogHeader>
-            <div>
-              <label className="block mb-2">Nom</label>
-              <input
-                type="text"
-                value={nom}
-                onChange={(e) => setNom(e.target.value)}
-                className="mb-4 p-2 border border-gray-300 rounded w-full"
-              />
-              <label className="block mb-2">Secteur d'activité</label>
-              <input
-                type="text"
-                value={secteurDactivite}
-                onChange={(e) => setSecteurDactivite(e.target.value)}
-                className="mb-4 p-2 border border-gray-300 rounded w-full"
-              />
-              <Button onClick={isEditing ? handleUpdateClient : handleAddClient} className="w-full bg-blue-500 text-white hover:bg-blue-600">
-                {isEditing ? "Modifier" : "Ajouter"}
-              </Button>
-            </div>
+            <form onSubmit={isEditing ? handleUpdateClient : handleAddClient}>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <Label htmlFor="nom">Nom</Label>
+                  <Input
+                    id="nom"
+                    value={nom}
+                    onChange={(e) => setNom(e.target.value)}
+                    placeholder="Nom du client"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  <Label htmlFor="secteurDactivite">Secteur d'activité</Label>
+                  <Input
+                    id="secteurDactivite"
+                    value={secteurDactivite}
+                    onChange={(e) => setSecteurDactivite(e.target.value)}
+                    placeholder="Secteur d'activité"
+                    required
+                  />
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="submit" className="bg-blue-700 hover:bg-blue-600 text-white w-full">
+                  {isEditing ? "Modifier" : "Ajouter"}
+                </Button>
+              </DialogFooter>
+            </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      <input
-        type="text"
-        placeholder="Rechercher un client"
-        value={searchQuery}
-        onChange={(e) => setSearchQuery(e.target.value)}
-        className="mb-4 p-2 border border-gray-300 rounded w-full"
-      />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <Input
+          type="text"
+          placeholder="Rechercher un client"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+      </div>
 
-      <table className="w-full table-auto border-collapse">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="py-2 px-4 text-left border-b">Nom</th>
-            <th className="py-2 px-4 text-left border-b">Secteur d'activité</th>
-            <th className="py-2 px-4 text-center border-b">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nom</TableHead>
+            <TableHead>Secteur d'activité</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
           {currentClients.map((client) => (
-            <tr key={client.id} className="hover:bg-gray-50">
-              <td className="py-2 px-4 border-b">{client.nom}</td>
-              <td className="py-2 px-4 border-b">{client.secteurDactivite}</td>
-              <td className="py-2 px-4 border-b text-center">
-                <div className="flex justify-center space-x-2">
-                  <FaEye className="text-blue-500 cursor-pointer" onClick={() => handleViewDetails(client.id)} />
-                  <FaEdit className="text-yellow-500 cursor-pointer" onClick={() => handleEditClient(client)} />
-                  <FaTrash className="text-red-500 cursor-pointer" onClick={() => handlePrepareDeleteClient(client.id)} />
-                </div>
-              </td>
-            </tr>
+            <TableRow key={client.id} className="cursor-pointer hover:bg-blue-100">
+              <TableCell>{client.nom}</TableCell>
+              <TableCell>{client.secteurDactivite}</TableCell>
+              <TableCell className="flex space-x-2 justify-center">
+                <FaEye className="text-blue-500 cursor-pointer" onClick={() => handleViewDetails(client.id)} />
+                <FaEdit className="text-yellow-500 cursor-pointer" onClick={() => handleEditClient(client)} />
+                <FaTrash className="text-red-500 cursor-pointer" onClick={() => handlePrepareDeleteClient(client.id)} />
+              </TableCell>
+            </TableRow>
           ))}
-        </tbody>
-      </table>
+        </TableBody>
+      </Table>
 
-      <div className="flex justify-center mt-4">
-        {Array.from({ length: Math.ceil(filteredClients.length / clientsPerPage) }, (_, index) => (
-          <button
-            key={index + 1}
-            onClick={() => paginate(index + 1)}
-            className={`px-3 py-1 mx-1 rounded ${currentPage === index + 1 ? "bg-blue-500 text-white" : "bg-gray-200"}`}
-          >
-            {index + 1}
-          </button>
-        ))}
+      <div className="flex justify-between items-center mt-4">
+        <div>
+          Total: {filteredClients.length} client(s)
+        </div>
+        <div className="flex space-x-2">
+          {Array.from({ length: Math.ceil(filteredClients.length / clientsPerPage) }, (_, index) => (
+            <Button
+              key={index + 1}
+              onClick={() => paginate(index + 1)}
+              className={currentPage === index + 1 ? "bg-blue-600 text-white" : "bg-blue-500 text-white"}
+            >
+              {index + 1}
+            </Button>
+          ))}
+        </div>
       </div>
 
       <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-        <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Confirmation de Suppression</DialogTitle>
             <DialogDescription>Êtes-vous sûr de vouloir supprimer ce client ?</DialogDescription>
