@@ -157,6 +157,7 @@ model Contrat {
   dateFin           DateTime
   periodicite       String
   typeContrat       String
+  pieceMainDoeuvre  Boolean @default(false )
   idSite            Int
   Site              Site     @relation(fields: [idSite], references: [id], onDelete: Cascade)
 }

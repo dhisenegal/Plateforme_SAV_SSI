@@ -291,7 +291,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
               <InterventionSection form={form} isEditable={isEditable} />
             )}
             {/* Section spécifique à la maintenance */}
- {type === 'maintenance' && details.systeme === 'SYSTÈME DE DETECTION INCENDIE CONVENTIONNEL' && (
+            {type === 'maintenance' && details.systeme === 'SYSTÈME DE DETECTION INCENDIE CONVENTIONNEL' && (
   <div className="mt-6">
     <h2 className="text-lg font-semibold text-gray-900 mb-4">Détection Incendie</h2>
     <Table className="min-w-full bg-white border border-gray-200">
@@ -346,29 +346,14 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                 </label>
               </div>
             </TableCell>
-            <TableCell className="p-3 text-center">
-              <FaEdit
-                className="cursor-pointer text-blue-600"
-                onClick={() => setIsObservationDialogOpen((prev) => ({ ...prev, [idx]: true }))}
+            <TableCell className="p-3">
+              <textarea
+                className="w-full max-w-xs p-2 border border-gray-300 rounded-md"
+                rows={2}
+                placeholder="Veuillez remplir vos observations ici"
+                value={observations[idx] || ''}
+                onChange={(e) => handleObservationChange(idx, e.target.value)}
               />
-              <Dialog open={isObservationDialogOpen[idx]} onOpenChange={(open) => setIsObservationDialogOpen((prev) => ({ ...prev, [idx]: open }))}>
-                <DialogOverlay className="fixed inset-0 bg-black opacity-30" />
-                <DialogContent className="fixed inset-0 flex items-center justify-center p-4">
-                  <div className="bg-white p-4 rounded shadow-md w-full max-w-md">
-                    <DialogHeader title="Observations" description="Entrez vos observations pour cette tâche." />
-                    <textarea
-                      className="w-full p-2 border border-gray-300 rounded-md"
-                      rows={4}
-                      placeholder="Entrez vos observations pour cette tâche"
-                      value={observations[idx] || ''}
-                      onChange={(e) => handleObservationChange(idx, e.target.value)}
-                    />
-                    <div className="flex justify-end mt-4">
-                      <Button onClick={() => setIsObservationDialogOpen((prev) => ({ ...prev, [idx]: false }))}>Fermer</Button>
-                    </div>
-                  </div>
-                </DialogContent>
-              </Dialog>
             </TableCell>
           </TableRow>
         ))}
@@ -376,6 +361,350 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     </Table>
   </div>
 )}
+  {type === 'maintenance' && details.systeme === 'MOYENS DE SECOURS RIA' && (
+  <div className="mt-6">
+    <h2 className="text-lg font-semibold text-gray-900 mb-4">Moyens de Secours - RIA</h2>
+    <Table className="min-w-full bg-white border border-gray-200">
+      <TableHeader>
+        <TableRow>
+          <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-2/5">Tâche</TableHead>
+          <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-1/5">Statut</TableHead>
+          <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-2/5">Observations</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {[
+          'Vérification de l\'accessibilité',
+          'Inspection du boîtier',
+          'Test de pression',
+          'Vérification de la vanne d\'arrêt',
+          'Contrôle du flexible',
+          'Vérification de la lance',
+          'Contrôle du raccordement au réseau d\'eau',
+          'Vérification des vannes et clapets',
+          'Ouverture du robinet',
+          'Contrôle du débit d’eau',
+          'Test de la lance et du jet',
+          'Graissage des pièces mobiles',
+          'Vérification des joints et filtres',
+          'Vérification des éléments de signalisation',
+        ].map((task, idx) => (
+          <TableRow key={idx} className="border-b hover:bg-blue-100">
+            <TableCell className="p-3">{task}</TableCell>
+            <TableCell className="p-3">
+              <div className="flex space-x-4">
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`statut-ria-${idx}`}
+                    value="valide"
+                    className="hidden"
+                    onChange={() => handleStatusChange(idx, 'valide')}
+                  />
+                  <FaCheckCircle
+                    className={`cursor-pointer ${selectedStatus[idx] === 'valide' ? 'text-green-600' : 'text-gray-400'}`}
+                    onClick={() => handleStatusChange(idx, 'valide')}
+                  />
+                </label>
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`statut-ria-${idx}`}
+                    value="non-valide"
+                    className="hidden"
+                    onChange={() => handleStatusChange(idx, 'non-valide')}
+                  />
+                  <FaTimesCircle
+                    className={`cursor-pointer ${selectedStatus[idx] === 'non-valide' ? 'text-red-600' : 'text-gray-400'}`}
+                    onClick={() => handleStatusChange(idx, 'non-valide')}
+                  />
+                </label>
+              </div>
+            </TableCell>
+            <TableCell className="p-3">
+              <textarea
+                className="w-full max-w-xs p-2 border border-gray-300 rounded-md"
+                rows={2}
+                placeholder="Veuillez remplir vos observations ici"
+                value={observations[idx] || ''}
+                onChange={(e) => handleObservationChange(idx, e.target.value)}
+              />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
+)}
+{type === 'maintenance' && details.systeme === 'CENTRALISATEUR DE MISE EN SECURITE INCENDIE' && (
+  <div className="mt-6">
+    <h2 className="text-lg font-semibold text-gray-900 mb-4">CENTRALISATEUR DE MISE EN SECURITE INCENDIE</h2>
+    <Table className="min-w-full bg-white border border-gray-200">
+      <TableHeader>
+        <TableRow>
+          <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-2/5">Tâche</TableHead>
+          <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-1/5">Statut</TableHead>
+          <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-2/5">Observations</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {[
+          'Test fonctionnalité *',
+          'Vérification carte électronique de la centrale',
+          'Dépoussiérage des détecteurs',
+          'Dépoussiérage des sirènes',
+          'Vérification alimentation des panneaux lumineux',
+          'Vérification de la pression des bouteilles',
+          'Test fonctionnalité périphériques*',
+        ].map((task, idx) => (
+          <TableRow key={idx} className="border-b hover:bg-blue-100">
+            <TableCell className="p-3">{task}</TableCell>
+            <TableCell className="p-3">
+              <div className="flex space-x-4">
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`statut-extincteurs-${idx}`}
+                    value="valide"
+                    className="hidden"
+                    onChange={() => handleStatusChange(idx, 'valide')}
+                  />
+                  <FaCheckCircle
+                    className={`cursor-pointer ${selectedStatus[idx] === 'valide' ? 'text-green-600' : 'text-gray-400'}`}
+                    onClick={() => handleStatusChange(idx, 'valide')}
+                  />
+                </label>
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`statut-extincteurs-${idx}`}
+                    value="non-valide"
+                    className="hidden"
+                    onChange={() => handleStatusChange(idx, 'non-valide')}
+                  />
+                  <FaTimesCircle
+                    className={`cursor-pointer ${selectedStatus[idx] === 'non-valide' ? 'text-red-600' : 'text-gray-400'}`}
+                    onClick={() => handleStatusChange(idx, 'non-valide')}
+                  />
+                </label>
+              </div>
+            </TableCell>
+            <TableCell className="p-3">
+              <textarea
+                className="w-full max-w-xs p-2 border border-gray-300 rounded-md"
+                rows={2}
+                placeholder="Veuillez remplir vos observations ici"
+                value={observations[idx] || ''}
+                onChange={(e) => handleObservationChange(idx, e.target.value)}
+              />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
+)}
+{type === 'maintenance' && details.systeme === 'COLONNE SECHE' && (
+  <div className="mt-6">
+    <h2 className="text-lg font-semibold text-gray-900 mb-4">COLONNE SECHE</h2>
+    <Table className="min-w-full bg-white border border-gray-200">
+      <TableHeader>
+        <TableRow>
+          <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-2/5">Tâche</TableHead>
+          <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-1/5">Statut</TableHead>
+          <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-2/5">Observations</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {[
+          'Inspection visuelle',
+          'Accessibilité des dispositifs',
+          'Présence de bouchons ou d\'obstructions',
+          'Test de pression',
+          'Débit',
+          'Test des robinets et vannes',
+          'Test de fonctionnement sous pression',
+          'Vannes anti-retour',
+          'Système de fermeture',
+        ].map((task, idx) => (
+          <TableRow key={idx} className="border-b hover:bg-blue-100">
+            <TableCell className="p-3">{task}</TableCell>
+            <TableCell className="p-3">
+              <div className="flex space-x-4">
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`statut-colonne-${idx}`}
+                    value="valide"
+                    className="hidden"
+                    onChange={() => handleStatusChange(idx, 'valide')}
+                  />
+                  <FaCheckCircle
+                    className={`cursor-pointer ${selectedStatus[idx] === 'valide' ? 'text-green-600' : 'text-gray-400'}`}
+                    onClick={() => handleStatusChange(idx, 'valide')}
+                  />
+                </label>
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`statut-colonne-${idx}`}
+                    value="non-valide"
+                    className="hidden"
+                    onChange={() => handleStatusChange(idx, 'non-valide')}
+                  />
+                  <FaTimesCircle
+                    className={`cursor-pointer ${selectedStatus[idx] === 'non-valide' ? 'text-red-600' : 'text-gray-400'}`}
+                    onClick={() => handleStatusChange(idx, 'non-valide')}
+                  />
+                </label>
+              </div>
+            </TableCell>
+            <TableCell className="p-3">
+              <textarea
+                className="w-full max-w-xs p-2 border border-gray-300 rounded-md"
+                rows={2}
+                placeholder="Veuillez remplir vos observations ici"
+                value={observations[idx] || ''}
+                onChange={(e) => handleObservationChange(idx, e.target.value)}
+              />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
+)}
+{type === 'maintenance' && details.systeme === 'COLONNE HUMIDE' && (
+  <div className="mt-6">
+    <h2 className="text-lg font-semibold text-gray-900 mb-4">COLONNE HUMIDE</h2>
+    <Table className="min-w-full bg-white border border-gray-200">
+      <TableHeader>
+        <TableRow>
+          <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-2/5">Tâche</TableHead>
+          <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-1/5">Statut</TableHead>
+          <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-2/5">Observations</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {[
+          'Vérification de l\'accessibilité',
+          'Inspection du boîtier',
+          'Test de pression',
+          'Vérification de la vanne d\'arrêt',
+          'Contrôle du flexible',
+          'Vérification de la lance',
+          'Contrôle du raccordement au réseau d\'eau',
+          'Vérification des vannes et clapets',
+          'Ouverture du robinet',
+          'Contrôle du débit d’eau',
+          'Test de la lance et du jet',
+          'Graissage des pièces mobiles',
+          'Vérification des joints et filtres',
+          'Vérification des éléments de signalisation',
+        ].map((task, idx) => (
+          <TableRow key={idx} className="border-b hover:bg-blue-100">
+            <TableCell className="p-3">{task}</TableCell>
+            <TableCell className="p-3">
+              <div className="flex space-x-4">
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`statut-colonne-humide-${idx}`}
+                    value="valide"
+                    className="hidden"
+                    onChange={() => handleStatusChange(idx, 'valide')}
+                  />
+                  <FaCheckCircle
+                    className={`cursor-pointer ${selectedStatus[idx] === 'valide' ? 'text-green-600' : 'text-gray-400'}`}
+                    onClick={() => handleStatusChange(idx, 'valide')}
+                  />
+                </label>
+                <label className="inline-flex items-center cursor-pointer">
+                  <input
+                    type="radio"
+                    name={`statut-colonne-humide-${idx}`}
+                    value="non-valide"
+                    className="hidden"
+                    onChange={() => handleStatusChange(idx, 'non-valide')}
+                  />
+                  <FaTimesCircle
+                    className={`cursor-pointer ${selectedStatus[idx] === 'non-valide' ? 'text-red-600' : 'text-gray-400'}`}
+                    onClick={() => handleStatusChange(idx, 'non-valide')}
+                  />
+                </label>
+              </div>
+            </TableCell>
+            <TableCell className="p-3">
+              <textarea
+                className="w-full max-w-xs p-2 border border-gray-300 rounded-md"
+                rows={2}
+                placeholder="Veuillez remplir vos observations ici"
+                value={observations[idx] || ''}
+                onChange={(e) => handleObservationChange(idx, e.target.value)}
+              />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
+)}
+{type === 'maintenance' && details.systeme === 'MOYENS DE SECOURS EXTINCTEURS' && (
+  <div className="mt-6">
+    <h2 className="text-lg font-semibold text-gray-900 mb-4">MOYENS DE SECOURS EXTINCTEURS</h2>
+    <Table className="min-w-full bg-white border border-gray-200">
+      <TableHeader>
+        <TableRow>
+          <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-1/5">Tâche</TableHead>
+          <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-4/5">Commentaires</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {[
+          'Numéro',
+          'EMPLACEMENT DE L\'EXTINCTEUR',
+          'MARQUE',
+          'TYPE EXTINCTEUR',
+          'PP PA',
+          'ANNEE',
+          'V5 ou V10',
+          'DATE DERNIERE V10 ou V5',
+          'A REFORMER',
+          'EXT. HS (Si à réparer, à ch.)',
+          'VA FAITE',
+          'PRESSION PP RELEVE',
+          'CH. A FAIRE',
+          'CHARGE DE REF.',
+          'AZOTE',
+          'AG EXT',
+          'SPARKLET',
+          'POIDS MAX',
+          'POIDS MIN',
+          'POIDS MESURE',
+          'TARE EN GRAM',
+          'EXT. A FIXER',
+          'MANQUE PANNEAU',
+          'NUMEROTATION ETX. PA. A POSER',
+          'OBSERVATIONS',
+        ].map((task, idx) => (
+          <TableRow key={idx} className="border-b hover:bg-blue-100">
+            <TableCell className="p-3">{task}</TableCell>
+            <TableCell className="p-3">
+              <textarea
+                className="w-full max-w-xs p-2 border border-gray-300 rounded-md"
+                rows={2}
+                placeholder="Veuillez remplir vos observations ici"
+                value={observations[idx] || ''}
+                onChange={(e) => handleObservationChange(idx, e.target.value)}
+              />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  </div>
+)}
+
             {/* Boutons Suspendre/Reprendre, Sauvegarder et Valider */}
             <div className="flex justify-end space-x-4 mt-6">
               <Button
