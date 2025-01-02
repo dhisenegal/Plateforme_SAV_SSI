@@ -39,6 +39,9 @@ export default {
         include: { Role: true },
       });
         // Add the user's role to the session object
+        session.user.id = dbUser?.id;
+        session.user.nom = dbUser?.nom;
+        session.user.prenom = dbUser?.prenom;
         session.user.role = dbUser?.Role?.nom || '';
         return session;
       },

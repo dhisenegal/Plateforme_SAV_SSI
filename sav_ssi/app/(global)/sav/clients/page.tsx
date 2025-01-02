@@ -44,7 +44,8 @@ const ClientsPage = () => {
     fetchClients();
   }, []);
 
-  const handleAddClient = async () => {
+  const handleAddClient = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       const newClient = await addClient(nom, secteurDactivite);
       setClients((prevClients) => [...prevClients, newClient]);
@@ -54,10 +55,12 @@ const ClientsPage = () => {
       toast.success("Client ajouté avec succès");
     } catch (error) {
       toast.error("Erreur lors de l'ajout du client");
+      console.log(error);
     }
   };
 
-  const handleUpdateClient = async () => {
+  const handleUpdateClient = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (currentClientId !== null) {
       try {
         const updatedClient = await updateClient(currentClientId, { nom, secteurDactivite });

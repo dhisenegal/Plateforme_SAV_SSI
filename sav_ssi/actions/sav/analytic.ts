@@ -105,3 +105,107 @@ export async function getAnalyticsData(startDate: Date, endDate: Date) {
     throw new Error("Failed to fetch analytics data");
   }
 }
+//Fonction pour analyser les délais des interventions
+export interface DelayAnalytics {
+  onTime: number;
+  delayed: number;
+  interventions: {
+    id: number;
+    client: string | null;
+    technicien: string | null;
+    dateDeclaration: Date;
+    dateIntervention: Date | null;
+    systeme: string | null;
+    isOnTime: boolean;
+    delayInHours: number;
+  }[];
+}
+
+export async function getInterventionDelayAnalytics(
+  startDate: Date,
+  endDate: Date
+): Promise<DelayAnalytics> {
+  'use server';
+  
+  try {
+    const interventions = await prisma.intervention.findMany({
+      where: {
+        AND: [
+          {
+            dateDeclaration: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+          {
+            dateIntervention: {
+              not: null,
+            },
+          },
+          {
+            statut: "TERMINE",
+          },
+        ],
+      },
+      include: {
+        Client: {
+          select: {
+            nom: true,
+          },
+        },
+        Technicien: {
+          select: {
+            nom: true,
+            prenom: true,
+          },
+        },
+        Systeme: {
+          select: {
+            nom: true,
+          },
+        },
+      },
+    });
+
+    let onTime = 0;
+    let delayed = 0;
+    const analyzedInterventions = interventions.map((intervention) => {
+      const declarationDate = new Date(intervention.dateDeclaration);
+      const interventionDate = intervention.dateIntervention!;
+      
+      const delayInHours = Math.abs(
+        (interventionDate.getTime() - declarationDate.getTime()) / (1000 * 60 * 60)
+      );
+      
+      const isOnTime = delayInHours <= 48;
+      
+      if (isOnTime) {
+        onTime++;
+      } else {
+        delayed++;
+      }
+
+      return {
+        id: intervention.id,
+        client: intervention.Client?.nom || null,
+        technicien: intervention.Technicien 
+          ? `${intervention.Technicien.prenom} ${intervention.Technicien.nom}`
+          : null,
+        dateDeclaration: declarationDate,
+        dateIntervention: interventionDate,
+        systeme: intervention.Systeme?.nom || null,
+        isOnTime,
+        delayInHours,
+      };
+    });
+
+    return {
+      onTime,
+      delayed,
+      interventions: analyzedInterventions,
+    };
+  } catch (error) {
+    console.error("Error analyzing intervention delays:", error);
+    throw new Error("Failed to analyze intervention delays");
+  }
+}

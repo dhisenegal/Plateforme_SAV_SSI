@@ -1,5 +1,6 @@
 import { NavItem } from '@/types';
-import { Home, ClipboardList, Users, Calendar, BarChart, FileText, PieChart, Settings } from 'lucide-react';
+import { PaperPlaneIcon } from '@radix-ui/react-icons';
+import { Home, ClipboardList, Users, Calendar, BarChart, FileText, PieChart, Settings, House, LocateIcon } from 'lucide-react';
 
 // Nav items for different roles
 export const navItemsByRole: { [key: string]: NavItem[] } = {
@@ -96,6 +97,22 @@ export const navItemsByRole: { [key: string]: NavItem[] } = {
       title: 'Clients',
       url: '/sav/clients',
       icon: Users,
+      isActive: false,
+      shortcut: ['c', 'c'],
+      items: []
+    },
+    {
+      title: 'Sites',
+      url: '/sav/sites',
+      icon: LocateIcon,
+      isActive: false,
+      shortcut: ['c', 'c'],
+      items: []
+    },
+    {
+      title: 'Contrats',
+      url: '/sav/contrats',
+      icon: PaperPlaneIcon,
       isActive: false,
       shortcut: ['c', 'c'],
       items: []

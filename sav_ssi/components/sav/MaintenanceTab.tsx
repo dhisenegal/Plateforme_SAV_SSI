@@ -1,273 +1,210 @@
-import React, { useEffect, useState } from "react";
-import { getMaintenancesBySite, updateMaintenanceStatus, updateMaintenance } from "@/actions/sav/maintenance";
-import { getAllTechniciens } from "@/actions/sav/technicien";
-import { Maintenance } from "@prisma/client";
-import { Table, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { FaPause, FaPlay, FaEdit, FaCheck } from "react-icons/fa";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { planifierMaintenance } from '@/actions/sav/maintenance';
+import { getAllTechniciens } from '@/actions/sav/technicien';
+import { getContactsBySite } from '@/actions/sav/contact';
+import { getInstallationsBySite } from '@/actions/sav/installation';
 
-interface MaintenanceTabProps {
-  siteId: number;
-}
-
-const MaintenanceTab: React.FC<MaintenanceTabProps> = ({ siteId }) => {
-  const [maintenances, setMaintenances] = useState<Maintenance[]>([]);
-  const [filteredMaintenances, setFilteredMaintenances] = useState<Maintenance[]>([]);
+const MaintenanceTab = ({ siteId }: { siteId: number }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [installations, setInstallations] = useState<any[]>([]);
+  const [selectedInstallation, setSelectedInstallation] = useState<any>(null);
   const [techniciens, setTechniciens] = useState<any[]>([]);
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [page, setPage] = useState<number>(0);
-  const [selectedMaintenance, setSelectedMaintenance] = useState<Maintenance | null>(null);
-  const [actionType, setActionType] = useState<string>("");
-  const [numero, setNumero] = useState<string>("");
-  const [dateMaintenance, setDateMaintenance] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
-  const [statut, setStatut] = useState<string>("");
-  const [typeMaintenance, setTypeMaintenance] = useState<string>("");
-  const [idTechnicien, setIdTechnicien] = useState<number>(0);
-  const rowsPerPage = 10;
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    numero: '',
+    dateMaintenance: '',
+    description: '',
+    typeMaintenance: '',
+    idTechnicien: 0,
+    idContact: 0,
+    idInstallation: 0
+  });
 
   useEffect(() => {
-    const fetchMaintenances = async () => {
+    const loadInitialData = async () => {
       try {
-        const maintenances = await getMaintenancesBySite(siteId);
-        setMaintenances(maintenances);
-        setFilteredMaintenances(maintenances);
+        const [installationsData, techniciensData, contactsData] = await Promise.all([
+          getInstallationsBySite(siteId),
+          getAllTechniciens(),
+          getContactsBySite(siteId)
+        ]);
+
+        setInstallations(installationsData);
+        setTechniciens(techniciensData);
+        setContacts(contactsData);
       } catch (error) {
-        console.error("Erreur lors de la récupération des maintenances:", error);
+        console.error("Erreur lors du chargement des données:", error);
       }
     };
 
-    const fetchTechniciens = async () => {
-      try {
-        const techniciens = await getAllTechniciens();
-        setTechniciens(techniciens);
-      } catch (error) {
-        console.error("Erreur lors de la récupération des techniciens:", error);
-      }
-    };
-
-    fetchMaintenances();
-    fetchTechniciens();
-  }, [siteId]);
-
-  useEffect(() => {
-    if (statusFilter === "all") {
-      setFilteredMaintenances(maintenances);
-    } else {
-      setFilteredMaintenances(maintenances.filter(m => m.statut === statusFilter));
+    if (isOpen) {
+      loadInitialData();
     }
-  }, [statusFilter, maintenances]);
+  }, [siteId, isOpen]);
 
-  const handleStatusToggle = async (id: number, currentStatus: string) => {
-    const newStatus = currentStatus === "planifiée" ? "suspendue" : "planifiée";
+  const handleInstallationSelect = (installationId: string) => {
+    const installation = installations.find(i => i.id === parseInt(installationId));
+    setSelectedInstallation(installation);
+    setFormData(prev => ({ ...prev, idInstallation: parseInt(installationId) }));
+  };
+
+  const handleSubmit = async () => {
     try {
-      await updateMaintenanceStatus(id, newStatus);
-      setMaintenances(maintenances.map(m => m.id === id ? { ...m, statut: newStatus } : m));
+      await planifierMaintenance({
+        ...formData,
+        idSite: siteId,
+        statut: 'PLANIFIE',
+        dateMaintenance: new Date(formData.dateMaintenance).toISOString()
+      });
+      setIsOpen(false);
+      // Vous pouvez ajouter ici un callback pour rafraîchir la liste des maintenances
     } catch (error) {
-      console.error("Erreur lors de la mise à jour du statut de la maintenance:", error);
+      console.error("Erreur lors de la planification:", error);
     }
   };
-
-  const handleAction = (maintenance: Maintenance, type: string) => {
-    setSelectedMaintenance(maintenance);
-    setActionType(type);
-    if (type === "edit") {
-      setNumero(maintenance.numero);
-      setDateMaintenance(new Date(maintenance.dateMaintenance).toISOString().split("T")[0]);
-      setDescription(maintenance.description);
-      setStatut(maintenance.statut);
-      setTypeMaintenance(maintenance.typeMaintenance);
-      setIdTechnicien(maintenance.idTechnicien);
-    }
-  };
-
-  const handleConfirmAction = async () => {
-    if (selectedMaintenance) {
-      if (actionType === "toggle") {
-        await handleStatusToggle(selectedMaintenance.id, selectedMaintenance.statut);
-      } else if (actionType === "close") {
-        await updateMaintenanceStatus(selectedMaintenance.id, "clôturée");
-      } else if (actionType === "edit") {
-        const updatedMaintenance = await updateMaintenance(selectedMaintenance.id, {
-          numero,
-          dateMaintenance: new Date(dateMaintenance),
-          description,
-          statut,
-          typeMaintenance,
-          idTechnicien,
-        });
-        setMaintenances(maintenances.map(m => m.id === selectedMaintenance.id ? updatedMaintenance : m));
-      }
-      setSelectedMaintenance(null);
-      setActionType("");
-    }
-  };
-
-  const totalPages = Math.ceil(filteredMaintenances.length / rowsPerPage);
 
   return (
-    <div>
-      <div className="mb-4 flex justify-between items-center">
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="p-2 border border-gray-300 rounded"
-        >
-          <option value="all">Tous</option>
-          <option value="planifiée">Planifiée</option>
-          <option value="suspendue">Suspendue</option>
-          <option value="clôturée">Clôturée</option>
-        </select>
-      </div>
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableCell>Numéro</TableCell>
-            <TableCell>Date</TableCell>
-            <TableCell>Description</TableCell>
-            <TableCell>Statut</TableCell>
-            <TableCell>Type</TableCell>
-            <TableCell>Technicien</TableCell>
-            <TableCell>Contact</TableCell>
-            <TableCell>Actions</TableCell>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredMaintenances.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((maintenance) => (
-            <TableRow key={maintenance.id}>
-              <TableCell>{maintenance.numero}</TableCell>
-              <TableCell>{new Date(maintenance.dateMaintenance).toLocaleDateString()}</TableCell>
-              <TableCell>{maintenance.description}</TableCell>
-              <TableCell>{maintenance.statut}</TableCell>
-              <TableCell>{maintenance.typeMaintenance}</TableCell>
-              <TableCell>{maintenance.Technicien?.prenom} {maintenance.Technicien?.nom}</TableCell>
-              <TableCell>{maintenance.Contact?.prenom} {maintenance.Contact?.nom}</TableCell>
-              <TableCell className="flex space-x-2">
-                <button onClick={() => handleAction(maintenance, "toggle")}>
-                  {maintenance.statut === "planifiée" ? <FaPause className="text-red-500 text-xl" /> : <FaPlay className="text-green-500"/>}
-                </button>
-                <button onClick={() => handleAction(maintenance, "edit")}>
-                  <FaEdit className="text-blue-500 text-xl" />
-                </button>
-                <button onClick={() => handleAction(maintenance, "close")}>
-                  <FaCheck className="text-green-800 text-xl"/>
-                </button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-      <div className="flex justify-center items-center mt-4">
-        {Array.from({ length: totalPages }, (_, index) => (
-          <button
-            key={index}
-            onClick={() => setPage(index)}
-            className={`p-2 mx-1 border rounded ${page === index ? 'bg-blue-500 text-white' : 'bg-white text-blue-500'}`}
-          >
-            {index + 1}
-          </button>
-        ))}
-      </div>
+    <div className="w-full">
+      <Button onClick={() => setIsOpen(true)} className="mb-4">
+        Planifier une maintenance
+      </Button>
 
-      {selectedMaintenance && (
-        <Dialog open={!!selectedMaintenance} onOpenChange={() => setSelectedMaintenance(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{actionType === "edit" ? "Modifier la maintenance" : "Confirmer l'action"}</DialogTitle>
-            </DialogHeader>
-            {actionType === "edit" ? (
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Planifier une nouvelle maintenance</DialogTitle>
+          </DialogHeader>
+
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <div className="mb-4">
-                  <label htmlFor="numero">Numéro</label>
-                  <Input
-                    id="numero"
-                    value={numero}
-                    onChange={(e) => setNumero(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="dateMaintenance">Date</label>
-                  <Input
-                    id="dateMaintenance"
-                    type="date"
-                    value={dateMaintenance}
-                    onChange={(e) => setDateMaintenance(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="description">Description</label>
-                  <Input
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="statut">Statut</label>
-                  <Select
-                    id="statut"
-                    value={statut}
-                    onValueChange={(value) => setStatut(value)}
-                    required
-                  >
-                    <SelectTrigger>Choisir un statut</SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="planifiée">Planifiée</SelectItem>
-                      <SelectItem value="suspendue">Suspendue</SelectItem>
-                      <SelectItem value="clôturée">Clôturée</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="typeMaintenance">Type</label>
-                  <Select
-                    id="typeMaintenance"
-                    value={typeMaintenance}
-                    onValueChange={(value) => setTypeMaintenance(value)}
-                    required
-                  >
-                    <SelectTrigger>Choisir un type</SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="curative">Curative</SelectItem>
-                      <SelectItem value="preventive">Préventive</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="mb-4">
-                  <label htmlFor="idTechnicien">Technicien</label>
-                  <Select
-                    id="idTechnicien"
-                    value={idTechnicien}
-                    onValueChange={(value) => setIdTechnicien(Number(value))}
-                    required
-                  >
-                    <SelectTrigger>Choisir un technicien</SelectTrigger>
-                    <SelectContent>
-                      {techniciens.map((technicien) => (
-                        <SelectItem key={technicien.id} value={technicien.id}>
-                          {technicien.prenom} {technicien.nom}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                <label className="block mb-2">Installation</label>
+                <Select onValueChange={handleInstallationSelect}>
+                  <SelectTrigger>
+                    Sélectionner une installation
+                  </SelectTrigger>
+                  <SelectContent>
+                    {installations.map((installation) => (
+                      <SelectItem key={installation.id} value={installation.id.toString()}>
+                        {`${installation.Systeme.nom} - Installé le ${new Date(installation.dateInstallation).toLocaleDateString()}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            ) : (
-              <p>Êtes-vous sûr de vouloir {actionType === "toggle" ? "changer le statut" : "clôturer"} cette maintenance ?</p>
-            )}
-            <DialogFooter>
-              <Button onClick={handleConfirmAction}>Confirmer</Button>
-              <Button variant="secondary" onClick={() => setSelectedMaintenance(null)}>Annuler</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+
+              {selectedInstallation && (
+                <div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Détails de l'installation</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p>Système: {selectedInstallation.Systeme.nom}</p>
+                      <p>Date d'installation: {new Date(selectedInstallation.dateInstallation).toLocaleDateString()}</p>
+                      {selectedInstallation.dateMaintenance && (
+                        <p>Dernière maintenance: {new Date(selectedInstallation.dateMaintenance).toLocaleDateString()}</p>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-2">Numéro</label>
+                <Input
+                  value={formData.numero}
+                  onChange={(e) => setFormData(prev => ({ ...prev, numero: e.target.value }))}
+                  placeholder="Numéro de maintenance"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2">Date prévue</label>
+                <Input
+                  type="date"
+                  value={formData.dateMaintenance}
+                  onChange={(e) => setFormData(prev => ({ ...prev, dateMaintenance: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block mb-2">Description</label>
+              <Input
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Description des travaux à effectuer"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block mb-2">Type de maintenance</label>
+                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, typeMaintenance: value }))}>
+                  <SelectTrigger>
+                    Sélectionner un type
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="preventive">Préventive</SelectItem>
+                    <SelectItem value="curative">Curative</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block mb-2">Technicien</label>
+                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, idTechnicien: parseInt(value) }))}>
+                  <SelectTrigger>
+                    Sélectionner un technicien
+                  </SelectTrigger>
+                  <SelectContent>
+                    {techniciens.map((tech) => (
+                      <SelectItem key={tech.id} value={tech.id.toString()}>
+                        {`${tech.prenom} ${tech.nom}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block mb-2">Contact sur site</label>
+                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, idContact: parseInt(value) }))}>
+                  <SelectTrigger>
+                    Sélectionner un contact
+                  </SelectTrigger>
+                  <SelectContent>
+                    {contacts.map((contact) => (
+                      <SelectItem key={contact.id} value={contact.id.toString()}>
+                        {`${contact.prenom} ${contact.nom}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleSubmit}>
+              Planifier
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
