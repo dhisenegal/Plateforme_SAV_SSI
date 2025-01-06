@@ -7,10 +7,10 @@ export function RecentInterventions() {
         <TableHeader className="bg-gray-50">
           <TableRow>
             <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Technicien
+              Client
             </TableCell>
             <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Client
+              Type
             </TableCell>
             <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Date
@@ -20,57 +20,57 @@ export function RecentInterventions() {
         <TableBody className="bg-white divide-y divide-gray-200">
           <TableRow>
             <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm font-medium text-gray-900">Olivia Martin</p>
+              <p className="text-sm font-medium text-gray-900">SONATEL</p>
             </TableCell>
             <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">ABC Corp</p>
+              <p className="text-sm text-gray-900">INTERVENTION</p>
             </TableCell>
             <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">01/10/2023</p>
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm font-medium text-gray-900">Jackson Lee</p>
-            </TableCell>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">XYZ Inc</p>
-            </TableCell>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">02/10/2023</p>
+              <p className="text-sm text-gray-900">01/01/2025</p>
             </TableCell>
           </TableRow>
           <TableRow>
             <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm font-medium text-gray-900">Isabella Nguyen</p>
+              <p className="text-sm font-medium text-gray-900">SENELEC</p>
             </TableCell>
             <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">DEF Ltd</p>
+              <p className="text-sm text-gray-900">MAINTENANCE</p>
             </TableCell>
             <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">03/10/2023</p>
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm font-medium text-gray-900">William Kim</p>
-            </TableCell>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">GHI LLC</p>
-            </TableCell>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">04/10/2023</p>
+              <p className="text-sm text-gray-900">02/01/2025</p>
             </TableCell>
           </TableRow>
           <TableRow>
             <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm font-medium text-gray-900">Sofia Davis</p>
+              <p className="text-sm font-medium text-gray-900">DER</p>
             </TableCell>
             <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">JKL Co</p>
+              <p className="text-sm text-gray-900">INTERVENTION</p>
             </TableCell>
             <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">05/10/2023</p>
+              <p className="text-sm text-gray-900">03/01/2025</p>
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell className="px-6 py-4 whitespace-nowrap">
+              <p className="text-sm font-medium text-gray-900">SONATEL</p>
+            </TableCell>
+            <TableCell className="px-6 py-4 whitespace-nowrap">
+              <p className="text-sm text-gray-900">MAINTENANCE</p>
+            </TableCell>
+            <TableCell className="px-6 py-4 whitespace-nowrap">
+              <p className="text-sm text-gray-900">03/01/2025</p>
+            </TableCell>
+          </TableRow>
+          <TableRow>
+            <TableCell className="px-6 py-4 whitespace-nowrap">
+              <p className="text-sm font-medium text-gray-900">SENELEC</p>
+            </TableCell>
+            <TableCell className="px-6 py-4 whitespace-nowrap">
+              <p className="text-sm text-gray-900">MAINTENANCE</p>
+            </TableCell>
+            <TableCell className="px-6 py-4 whitespace-nowrap">
+              <p className="text-sm text-gray-900">05/01/2025</p>
             </TableCell>
           </TableRow>
         </TableBody>

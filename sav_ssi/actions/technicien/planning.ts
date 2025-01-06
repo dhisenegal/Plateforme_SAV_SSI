@@ -1,6 +1,7 @@
 'use server';
 
 import prisma from "@/lib/prisma";
+import { Main } from "next/document";
 
 
 
@@ -87,21 +88,39 @@ export const getSiteByInstallation = async (installationId: number) => {
   };
   
   // Récupérer la prochaine intervention
-export async function getNextIntervention() {
-    return await prisma.intervention.findFirst({
-      include: {
-        DemandeIntervention: {
-          select: {
-            statut: true,
-            typePanneDeclare: true,
-            Client: { select: { nom: true } },
+
+  export async function getNextIntervention() {
+    try {
+      return await prisma.intervention.findFirst({
+        select: {
+          id: true,
+          statut: true,
+          typePanneDeclare: true,
+          datePlanifiee: true,
+          diagnostics: true,
+          travauxRealises: true,
+          pieceFournies: true,
+          Client: {
+            select: {
+              nom: true, // Récupère uniquement le nom du client
+            },
           },
         },
-      },
-      orderBy: { dateIntervention: "asc" },
-    });
+        where: {
+          datePlanifiee: {
+            not: null, // S'assurer que la date planifiée n'est pas nulle
+          },
+        },
+        orderBy: {
+          datePlanifiee: "asc", // Trier par date planifiée croissante
+        },
+      });
+    } catch (error) {
+      console.error("Erreur lors de la récupération de la prochaine intervention :", error);
+      throw error;
+    }
   }
-
+  
   
   // Récupérer la prochaine maintenance
 export async function getNextMaintenance() {
@@ -118,36 +137,68 @@ export async function getNextMaintenance() {
   }
   
   // Récupérer toutes les interventions
-  export async function getAllInterventions() {
-    return await prisma.intervention.findMany({
-      include: {
-        DemandeIntervention: {
-          select: { statut: true, Client: { select: { nom: true } } },
+  export async function getAllInterventionsByTechnician(idTechnicien) {
+    try {
+      return await prisma.intervention.findMany({
+        where: {
+          idTechnicien: idTechnicien, // Filtre par ID du technicien
         },
-      },
-    });
+        select: {
+          id: true,
+          statut: true,
+          typePanneDeclare: true,
+          dateDeclaration: true,
+          dateIntervention: true,
+          datePlanifiee: true,
+          idClient: true,
+          diagnostics: true,
+          travauxRealises: true,
+          pieceFournies: true,
+          Client: {
+            select: {
+              nom: true, // Récupère uniquement le nom du client
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error("Erreur lors de la récupération des interventions :", error);
+      throw error;
+    }
   }
   
   // Fonction pour récupérer toutes les interventions et maintenances triées par date
+
+  
   export const getPlanning = async () => {
     try {
       const interventions = await prisma.intervention.findMany({
-        include: {
-          DemandeIntervention: {
+        select: {
+          id: true,
+          statut: true,
+          typePanneDeclare: true,
+          dateDeclaration: true,
+          dateIntervention: true,
+          datePlanifiee: true,
+          diagnostics: true,
+          travauxRealises: true,
+          pieceFournies: true,
+          dureeHeure: true,
+          numero: true,
+          ficheInt: true,
+          prenomContact: true,
+          telephoneContact: true,
+          adresse: true,
+          Client: {
             select: {
-              statut: true,
-              typePanneDeclare: true,
-              Client: {
-                select: {
-                  nom: true,
-                },
-              },
+              nom: true,
             },
           },
         },
         orderBy: {
-          dateIntervention: "asc",
+          datePlanifiee: "asc",
         },
+      
       });
   
       const maintenances = await prisma.maintenance.findMany({
@@ -166,18 +217,21 @@ export async function getNextMaintenance() {
           dateMaintenance: "asc",
         },
       });
-  
+      console.log(maintenances);
+
+      // Fusionner interventions et maintenances, puis trier par date
       const planning = [...interventions, ...maintenances].sort((a, b) => {
-        const dateA = new Date(a.dateIntervention || a.dateMaintenance);
-        const dateB = new Date(b.dateIntervention || b.dateMaintenance);
+        const dateA = new Date(a.datePlanifiee || a.dateMaintenance);
+        const dateB = new Date(b.datePlanifiee || b.dateMaintenance);
         return dateA - dateB;
       });
   
+      // Supprimer les doublons
       const uniquePlanning = [];
       const seen = new Set();
   
       for (const item of planning) {
-        const identifier = `${item.id}-${item.dateIntervention || item.dateMaintenance}`;
+        const identifier = `${item.id}-${item.datePlanifiee || item.dateMaintenance}`;
         if (!seen.has(identifier)) {
           seen.add(identifier);
           uniquePlanning.push(item);
@@ -189,6 +243,7 @@ export async function getNextMaintenance() {
       console.error("Erreur lors de la récupération des données de planning :", error);
       throw error;
     }
+    
   };
   
   // Fonction pour formater la date
@@ -207,39 +262,71 @@ export async function getNextMaintenance() {
   
   // Fonction pour récupérer le client
   export const getClientName = async (item) => {
-    // Simuler un délai asynchrone (par exemple, un appel API)
-    await new Promise((resolve) => setTimeout(resolve, 10)); // Attente de 10 ms pour simuler un traitement
-  
-    return item.DemandeIntervention
-      ? item.DemandeIntervention.Client.nom
-      : item.Installation?.Client.nom || "N/A";
-  };
+    try {
+        await new Promise((resolve) => setTimeout(resolve, 10)); // Simulation d'attente
+
+        if (item.Client?.nom) {
+            return item.Client.nom; // Cas intervention
+        } else if (item.Installation?.Client?.nom) {
+            return item.Installation.Client.nom; // Cas maintenance
+        }
+
+        return "N/A"; // Si aucun nom trouvé
+    } catch (error) {
+        console.error("Erreur lors de la récupération du nom du client :", error);
+        throw error;
+    }
+};
+
   
   // Fonction pour récupérer la description
-  export const getDescription = async (item) => {
+export const getDescription = async (item) => {
+  try {
     // Simuler un délai asynchrone (par exemple, un appel API)
     await new Promise((resolve) => setTimeout(resolve, 10)); // Attente de 10 ms pour simuler un traitement
-  
-    if (item.DemandeIntervention) {
-      // Cas d'une intervention
-      return item.DemandeIntervention.typePanneDeclare;
+
+    if (item.typePanneDeclare) {
+      // Cas d'une intervention avec type de panne déclarée
+      return item.typePanneDeclare;
     } else if (item.description) {
-      // Cas d'une maintenance
+      // Cas d'une maintenance avec description
       return item.description;
     } else {
       // Cas où aucune description n'est trouvée
-      return 'Description non disponible';
+      return "Description non disponible";
     }
-  };
+  } catch (error) {
+    console.error("Erreur lors de la récupération de la description :", error);
+    throw error;
+  }
+};
+
   
   
-  // Fonction pour déterminer le type (intervention ou maintenance)
-  export const getType = async (item) => {
+ // Fonction pour déterminer le type (intervention ou maintenance)
+export const getType = async (item) => {
+  try {
     // Simuler un délai asynchrone si nécessaire
-    await new Promise((resolve) => setTimeout(resolve, 10)); // Attente de 100 ms pour simuler un traitement
-  
-    return item.DemandeIntervention ? "Intervention" : "Maintenance";
-  };
+    await new Promise((resolve) => setTimeout(resolve, 10)); // Attente de 10 ms pour simuler un traitement
+
+    // Vérifie si l'item correspond à une intervention
+    if (item.typePanneDeclare) {
+      return "Intervention";
+    }
+
+    // Sinon, considère que c'est une maintenance
+    if (item.description) {
+      return "Maintenance";
+    }
+
+    // Si aucune information n'est disponible
+    return "Type inconnu";
+  } catch (error) {
+    console.error("Erreur lors de la détermination du type :", error);
+    throw error;
+  }
+};
+
   
   
   // Fonction pour récupérer le statut d'une intervention ou d'une maintenance
@@ -280,32 +367,26 @@ export async function getNextMaintenance() {
     }
   };
   
-  //Fonction pour récupérer le système pour une intervention donnée
-  export const getSystemeForIntervention = async (idIntervention) => {
-    try {
-      const intervention = await prisma.intervention.findUnique({
-        where: { id: idIntervention },
-        include: {
-          DemandeIntervention: {
-            include: {
-              Installation: {
-                select: {
-                  Systeme: { select: { nom: true } }, // Remplacez `nom` par les colonnes nécessaires
-                },
-              },
-            },
-          },
-        },
-      });
-      return (
-        intervention?.DemandeIntervention?.Installation?.Systeme?.nom ||
-        "Système inconnu"
-      );
-    } catch (error) {
-      console.error("Erreur lors de la récupération du système pour l'intervention :", error);
-      return "Erreur";
-    }
-  };
+ 
+// Fonction pour récupérer le système pour une intervention donnée
+export const getSystemeForIntervention = async (idIntervention) => {
+  try {
+    // Recherche de l'intervention et récupération du système directement
+    const intervention = await prisma.intervention.findUnique({
+      where: { id: idIntervention },
+      include: {
+        Systeme: { select: { nom: true } }, // Remplacez `nom` par les colonnes nécessaires
+      },
+    });
+
+    // Retourne le nom du système ou un message par défaut
+    return intervention?.Systeme?.nom || "Système inconnu";
+  } catch (error) {
+    console.error("Erreur lors de la récupération du système pour l'intervention :", error);
+    return "Erreur";
+  }
+};
+
   
   // Fonction pour récupérer les équipements pour une maintenance donnée
   export const getSystemeForMaintenance = async (idMaintenance) => {
@@ -340,35 +421,36 @@ export async function getNextMaintenance() {
     }
   }
   // Fonction pour récupérer la date d'une maintenance ou d'une intervention
-export const getDateMaintenanceOrIntervention = async (id, type) => {
-  try {
-    if (type === 'maintenance') {
-      // Récupère la maintenance avec l'ID donné
-      const maintenance = await prisma.maintenance.findUnique({
-        where: { id: id }, // Recherche par ID
-        select: {
-          dateMaintenance: true, // Sélectionne uniquement la date de maintenance
-        },
-      });
-
-      // Retourne la date ou un message par défaut si elle n'existe pas
-      return maintenance?.dateMaintenance || "Date inconnue";
-    } else if (type === 'intervention') {
-      // Récupère l'intervention avec l'ID donné
-      const intervention = await prisma.intervention.findUnique({
-        where: { id: id }, // Recherche par ID
-        select: {
-          dateIntervention: true, // Sélectionne uniquement la date d'intervention
-        },
-      });
-
-      // Retourne la date ou un message par défaut si elle n'existe pas
-      return intervention?.dateIntervention || "Date inconnue";
-    } else {
-      throw new Error('Type invalide');
+  export const getDateMaintenanceOrIntervention = async (id, type) => {
+    try {
+      if (type === "maintenance") {
+        // Récupère la maintenance avec l'ID donné
+        const maintenance = await prisma.maintenance.findUnique({
+          where: { id: id }, // Recherche par ID
+          select: {
+            dateMaintenance: true, // Sélectionne uniquement la date de maintenance
+          },
+        });
+  
+        // Retourne la date ou un message par défaut si elle n'existe pas
+        return maintenance?.dateMaintenance || "Date inconnue";
+      } else if (type === "intervention") {
+        // Récupère l'intervention avec l'ID donné
+        const intervention = await prisma.intervention.findUnique({
+          where: { id: id }, // Recherche par ID
+          select: {
+            datePlanifiee: true, // Sélectionne uniquement la date planifiée
+          },
+        });
+  
+        // Retourne la date ou un message par défaut si elle n'existe pas
+        return intervention?.datePlanifiee || "Date inconnue";
+      } else {
+        throw new Error("Type invalide");
+      }
+    } catch (error) {
+      console.error("Erreur lors de la récupération de la date :", error);
+      return "Erreur";
     }
-  } catch (error) {
-    console.error("Erreur lors de la récupération de la date :", error);
-    return "Erreur";
-  }
-};
+  };
+  

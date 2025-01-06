@@ -1,5 +1,4 @@
 'use client';
-
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { FaPlus, FaEye, FaEdit, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
@@ -24,23 +23,23 @@ const PlanningTabContent = () => {
     try {
       const planning = await getPlanning(); // Récupération des données du planning depuis la base de données
 
-      // Filtrer pour ne garder que les interventions
-      const interventions = planning.filter(plan => plan.DemandeIntervention);
-
-      // Ajout des informations dynamiques pour chaque intervention
+      // Ajout des informations dynamiques pour chaque élément du planning
       const planningWithDetails = await Promise.all(
-        interventions.map(async (plan) => {
+        planning.map(async (plan) => {
           const clientName = await getClientName(plan); // Récupération du nom du client
           const description = await getDescription(plan); // Récupération de la description
           const type = await getType(plan); // Récupération du type (intervention ou maintenance)
           const date = await getDateMaintenanceOrIntervention(plan.id, type.toLowerCase()); // Récupération de la date
           const formattedDate = await formatDate(date); // Formater la date
           const statut = await getStatut(plan.id, type.toLowerCase()); // Récupération du statut
-          return { ...plan, client: clientName, description, dateMaintenance: formattedDate, type, statut };
+          return { ...plan, client: clientName, description, date: formattedDate, type, statut };
         })
       );
 
-      setCurrentPlanning(planningWithDetails);
+      // Filtrer pour ne garder que les interventions
+      const interventions = planningWithDetails.filter(plan => plan.type === "Intervention");
+
+      setCurrentPlanning(interventions); // Mettre à jour les interventions
       setTotalPages(1); // Exemple de pagination
     } catch (error) {
       console.error("Erreur lors de la récupération du planning :", error);
@@ -79,20 +78,6 @@ const PlanningTabContent = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Interventions</h2>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-500 text-white flex items-center">
-              <FaPlus className="w-5 h-5 mr-2" />
-              Ajouter
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
-            <DialogHeader>
-              <DialogTitle>Ajouter un Nouveau Planning</DialogTitle>
-              <DialogDescription>Sélectionnez un client, une description, et un type pour ajouter un planning.</DialogDescription>
-            </DialogHeader>
-          </DialogContent>
-        </Dialog>
       </div>
 
       <Table>
@@ -108,6 +93,7 @@ const PlanningTabContent = () => {
             <TableHead>Date</TableHead>
             <TableHead>Client</TableHead>
             <TableHead>Description</TableHead>
+           
             <TableHead>Statut</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -127,14 +113,14 @@ const PlanningTabContent = () => {
                   onClick={(e) => e.stopPropagation()}
                 />
               </TableCell>
-              <TableCell>{plan.dateMaintenance || 'Non défini'}</TableCell>
+              <TableCell>{plan.date || 'Non défini'}</TableCell>
               <TableCell>{plan.client}</TableCell>
               <TableCell>{plan.description}</TableCell>
+              
               <TableCell>{plan.statut || 'Non défini'}</TableCell>
               <TableCell className="flex justify-center">
                 <div className="flex space-x-2">
-                  
-                  <Link href={`/technicien/${plan.id}?type=${plan.type.toLowerCase()}`} passHref>
+                  <Link href={`/technicien/Planning/${plan.id}?type=${plan.type.toLowerCase()}`} passHref>
                     <FaEye className="text-blue-500 cursor-pointer" />
                   </Link>
                 </div>

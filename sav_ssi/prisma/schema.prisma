@@ -175,6 +175,7 @@ model Maintenance {
   description       String
   statut            EnumStatut_i @default(NON_PLANIFIE)
   typeMaintenance   String
+  datePlanifiee     DateTime @default(Null)
   idTechnicien      Int
   idInstallation    Int
   Installation      Installation @relation(fields: [idInstallation], references: [id], onDelete: Cascade)

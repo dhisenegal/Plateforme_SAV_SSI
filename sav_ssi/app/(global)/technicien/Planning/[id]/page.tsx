@@ -138,7 +138,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
   const handleSuspendOrResume = async () => {
     setIsSaving(true);
     try {
-      const newStatus = isSuspended ? 'EN_COURS' : 'SUSPENDUE';
+      const newStatus = isSuspended ? 'EN_COURS' : 'SUSPENDU';
       const result = await updateInterventionStatus(parseInt(id), newStatus);
       console.log('Statut mis à jour avec succès', result);
       setIsSuspended(!isSuspended);
@@ -162,7 +162,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
           const fetchedDetails = await fetchDetails(parseInt(id), type);
           setDetails(fetchedDetails);
           // Vérifier et mettre à jour l'état de suspension
-          if (fetchedDetails.statut === 'SUSPENDUE') {
+          if (fetchedDetails.statut === 'SUSPENDU') {
             setIsSuspended(true);
           }
           form.reset({
@@ -224,9 +224,9 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-5">
                 <FormItem>
-                  <FormLabel>Date de la maintenance</FormLabel>
+                  <FormLabel>Date {type === 'maintenance' ? 'de la maintenance' : 'de l\'intervention'}</FormLabel>
                   <FormControl>
-                    <Input value="30/12/2024" readOnly />
+                    <Input value={formatDate(details.datePlanifiee) || 'N/A' } readOnly />
                   </FormControl>
                 </FormItem>
                 <FormItem>

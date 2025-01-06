@@ -33,7 +33,7 @@ const PlanningTabContent = () => {
           const date = await getDateMaintenanceOrIntervention(plan.id, type.toLowerCase()); // Récupération de la date
           const formattedDate = await formatDate(date); // Formater la date
           const statut = await getStatut(plan.id, type.toLowerCase()); // Récupération du statut
-          return { ...plan, client: clientName, description, dateMaintenance: formattedDate, type, statut };
+          return { ...plan, client: clientName, description, date: formattedDate, type, statut };
         })
       );
 
@@ -76,20 +76,7 @@ const PlanningTabContent = () => {
     <div>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-2xl font-bold">Planning</h2>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-500 text-white flex items-center">
-              <FaPlus className="w-5 h-5 mr-2" />
-              Ajouter
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
-            <DialogHeader>
-              <DialogTitle>Ajouter un Nouveau Planning</DialogTitle>
-              <DialogDescription>Sélectionnez un client, une description, et un type pour ajouter un planning.</DialogDescription>
-            </DialogHeader>
-          </DialogContent>
-        </Dialog>
+        
       </div>
 
       <Table>
@@ -113,7 +100,7 @@ const PlanningTabContent = () => {
         <TableBody>
           {currentPlanning.map((plan) => (
             <TableRow
-              key={plan.id}
+              key={(plan.id)*Math.random()*1000}
               className={`cursor-pointer ${selectedRows.includes(plan.id) ? 'bg-blue-100' : 'hover:bg-blue-100'}`}
               onClick={() => console.log(`Row clicked for planning ID: ${plan.id}`)}
             >
@@ -125,7 +112,7 @@ const PlanningTabContent = () => {
                   onClick={(e) => e.stopPropagation()}
                 />
               </TableCell>
-              <TableCell>{plan.dateMaintenance || 'Non défini'}</TableCell>
+              <TableCell>{plan.date || 'Non défini'}</TableCell>
               <TableCell>{plan.client}</TableCell>
               <TableCell>{plan.description}</TableCell>
               <TableCell>{plan.type}</TableCell>
@@ -133,7 +120,7 @@ const PlanningTabContent = () => {
               <TableCell className="flex justify-center">
                 <div className="flex space-x-2">
                   
-                  <Link href={`/technicien/${plan.id}?type=${plan.type.toLowerCase()}`} passHref>
+                  <Link href={`/technicien/Planning/${plan.id}?type=${plan.type.toLowerCase()}`} passHref>
                     <FaEye className="text-blue-500 cursor-pointer" />
                   </Link>
                 </div>

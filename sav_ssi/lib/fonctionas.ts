@@ -14,84 +14,79 @@ import {
 
 
 
-export async function fetchDetails(id: number, type: string) {
-  let clientName = null;
-  let siteName = null;
-  let systeme = null;
-  let date = null;
-  let description = null;
-  let statut = null;
-  let garantieStatus = null;
-  let dateDeclarationPanne = null;
-  let diagnostic = null;
-  let travauxRealises = null;
+export async function fetchDetails(id, type) {
+  if (!id || !type) {
+    throw new Error('ID ou type manquant');
+  }
 
   try {
-    if (!id || !type) {
-      throw new Error('ID ou type manquant');
-    }
+    const parsedId = parseInt(id);
 
     if (type === 'intervention') {
-      systeme = await getSystemeForIntervention(parseInt(id));
-      garantieStatus = await getGarantieStatus(systeme.id);
-
       const intervention = await prisma.intervention.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: parsedId },
         include: {
-          DemandeIntervention: {
-            include: {
-              Client: { select: { nom: true } },
-              Site: { select: { nom: true } },
-            },
-          },
+          Client: { select: { nom: true } },
+          Site: { select: { nom: true } },
+          Systeme: { select: { nom: true } },
         },
       });
 
-      if (intervention) {
-        clientName = getClientName(intervention);
-        siteName = intervention.DemandeIntervention?.Site?.nom || null;
-        date = formatDate(intervention.dateIntervention);
-        description = getDescription(intervention);
-        statut = await getStatut(id, 'intervention');
-        dateDeclarationPanne = formatDate(intervention.DemandeIntervention?.dateDeclaration);
-        diagnostic = intervention.DemandeIntervention?.diagnostic || null;
-        travauxRealises = intervention.DemandeIntervention?.travauxRealises || null;
-      } else {
+      if (!intervention) {
         throw new Error('Intervention non trouvée');
       }
-    } else if (type === 'maintenance') {
-      systeme = await getSystemeForMaintenance(parseInt(id));
-      garantieStatus = await getGarantieStatus(systeme.id);
 
+      // Extraire les champs nécessaires
+      return {
+        id: intervention.id,
+        statut: intervention.statut,
+        description: intervention.typePanneDeclare,
+        dateDeclaration: intervention.dateDeclaration,
+        clientName: intervention.Client?.nom || null,
+        siteName: intervention.Site?.nom || null,
+        systeme: intervention.Systeme?.nom || null,
+        diagnostics: intervention.diagnostics,
+        travauxRealises: intervention.travauxRealises,
+        pieceFournies: intervention.pieceFournies,
+        dateIntervention: intervention.dateIntervention,
+        dureeHeure: intervention.dureeHeure,
+        numero: intervention.numero,
+        ficheInt: intervention.ficheInt,
+        prenomContact: intervention.prenomContact,
+        telephoneContact: intervention.telephoneContact,
+        adresse: intervention.adresse,
+        datePlanifiee: intervention.datePlanifiee,
+      };
+    } else if (type === 'maintenance') {
       const maintenance = await prisma.maintenance.findUnique({
-        where: { id: parseInt(id) },
+        where: { id: parsedId },
         include: {
           Installation: {
             include: {
               Client: { select: { nom: true } },
               Site: { select: { nom: true } },
+              Systeme: { select: { nom: true } },  // Inclure le système ici
             },
           },
         },
       });
 
-      if (maintenance) {
-        clientName = getClientName(maintenance);
-        siteName = maintenance.Installation?.Site?.nom || null;
-        date = formatDate(maintenance.dateMaintenance);
-        description = getDescription(maintenance);
-        statut = await getStatut(id, 'maintenance');
-        dateDeclarationPanne = formatDate(maintenance.Installation?.dateDeclaration);
-        diagnostic = maintenance.Installation?.diagnostic || null;
-        travauxRealises = maintenance.Installation?.travauxRealises || null;
-      } else {
+      if (!maintenance) {
         throw new Error('Maintenance non trouvée');
       }
+
+      return {
+        id: maintenance.id,
+        statut: maintenance.statut,
+        clientName: maintenance.Installation?.Client?.nom || null,
+        siteName: maintenance.Installation?.Site?.nom || null,
+        datePlanifiee: maintenance.dateMaintenance,
+        systeme: maintenance.Installation?.Systeme?.nom || null, // Accéder au système lié à l'installation
+        description:maintenance.description,
+      };
     } else {
       throw new Error('Type invalide');
     }
-
-    return { clientName, siteName, systeme, date, description, statut, garantieStatus, dateDeclarationPanne, diagnostic, travauxRealises };
   } catch (error) {
     console.error('Erreur lors de la récupération des détails :', error);
     throw new Error('Erreur lors de la récupération des détails');

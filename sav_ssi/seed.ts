@@ -109,16 +109,43 @@ async function main() {
       secteurDactivite: "Secteur 2",
     },
   });
+  const Sonatel = await prisma.client.upsert({
+    where: { id: 3 },
+    update: {},
+    create: {
+      id: 3,
+      nom: "SONATEL",
+      secteurDactivite: "TELECOM",
+    },
+  });
+  const Der = await prisma.client.upsert({
+    where: { id: 5 },
+    update: {},
+    create: {
+      id: 5,
+      nom: "DER",
+      secteurDactivite:"ENTREPRENATRIAT",
+    },
+  });
+  const Senelec = await prisma.client.upsert({
+    where: { id: 4 },
+    update: {},
+    create: {
+      id: 4,
+      nom: "SENELEC",
+      secteurDactivite:"ENERGIE",
+    },
+  });
 {
   /* // Créer des sites
-  const site1 = await prisma.site.upsert({
+  const SITE1 = await prisma.site.upsert({
     where: { id: 1 },
     update: {},
     create: {
       id: 1,
-      nom: "Site 1",
-      idClient: client1.id,
-      adresse: "Adresse 1",
+      nom: "SONATEL SIEGE",
+      idClient: Sonatel.id,
+      adresse: "Cité Keur Gorgui",
     },
   });
 
@@ -127,9 +154,9 @@ async function main() {
     update: {},
     create: {
       id: 2,
-      nom: "Site 2",
-      idClient: client2.id,
-      adresse: "Adresse 2",
+      nom: "SENELEC SIEGE",
+      idClient: Senelec.id,
+      adresse: "Cite keur gorgui",
     },
   });
 
