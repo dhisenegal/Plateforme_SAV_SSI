@@ -14,7 +14,7 @@ import { getAllContrats, createContrat, updateContrat, deleteContrat, getAllClie
 
 const contractTypes = ["Préventive", "Curative"];
 
-const ContratTabContent = () => {
+const ContratPage = () => {
   const [contracts, setContracts] = useState([]);
   const [clients, setClients] = useState([]);
   const [sites, setSites] = useState([]);
@@ -22,6 +22,7 @@ const ContratTabContent = () => {
   const [selectedContract, setSelectedContract] = useState(null);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [totalContracts, setTotalContracts] = useState(0);
@@ -33,6 +34,7 @@ const ContratTabContent = () => {
       setTotalContracts(total);
     };
     fetchContracts();
+    setLoading(false);
   }, [currentPage, itemsPerPage]);
 
   useEffect(() => {
@@ -143,7 +145,13 @@ const ContratTabContent = () => {
       setCurrentPage(currentPage + 1);
     }
   };
-
+    if(loading){
+      return (
+        <div className="flex items-center justify-center gap-3">
+          Chargement en cours...
+        </div>
+      );
+    }
   return (
     <>
       <div className="p-6">
@@ -453,4 +461,4 @@ const ContratTabContent = () => {
     </>
     );
     };
-export default ContratTabContent;  
+export default ContratPage;  

@@ -213,6 +213,7 @@ CREATE TABLE `Intervention` (
     `diagnostics` VARCHAR(191) NULL,
     `travauxRealises` VARCHAR(191) NULL,
     `pieceFournies` VARCHAR(191) NULL,
+    `datePlanifiee` DATETIME(3) NULL,
     `dateIntervention` DATETIME(3) NULL,
     `dureeHeure` INTEGER NULL,
     `numero` INTEGER NULL,

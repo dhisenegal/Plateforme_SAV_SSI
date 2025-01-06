@@ -3,7 +3,7 @@
 import { AreaGraph } from './area-graph';
 import { BarGraph } from './bar-graph';
 import { PieGraph } from './pie-graph';
-import {useSession} from "next-auth/react";
+import { useSession } from "next-auth/react";
 import PageContainer from '@/components/layout/page-container';
 import { RecentInterventions } from './recent-interventions';
 import {
@@ -14,10 +14,56 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+<<<<<<< HEAD
 import {getInterventionsActives} from "@/actions/technicien/acceuil";
+=======
+import { useEffect, useState } from 'react';
+import { 
+  getNewInterventionsCount, 
+  getSuspendedInterventionsCount,
+  getOverdueInterventionsCount,
+  getExpiringContractsCount 
+} from '@/actions/sav/analytic';
+
+interface StatisticData {
+  count: number;
+  percentageChange: number;
+}
+>>>>>>> 8d50f79b902f094a305f68eecb5db4bcf73817d7
 
 export default function OverViewPage() {
   const { data: session } = useSession();
+  const [statistics, setStatistics] = useState({
+    newInterventions: { count: 0, percentageChange: 0 },
+    suspendedInterventions: { count: 0, percentageChange: 0 },
+    overdueInterventions: { count: 0, percentageChange: 0 },
+    expiringContracts: { count: 0, percentageChange: 0 }
+  });
+
+  useEffect(() => {
+    const fetchStatistics = async () => {
+      try {
+        const [newInts, suspendedInts, overdueInts, expiringConts] = await Promise.all([
+          getNewInterventionsCount(),
+          getSuspendedInterventionsCount(),
+          getOverdueInterventionsCount(),
+          getExpiringContractsCount()
+        ]);
+
+        setStatistics({
+          newInterventions: newInts,
+          suspendedInterventions: suspendedInts,
+          overdueInterventions: overdueInts,
+          expiringContracts: expiringConts
+        });
+      } catch (error) {
+        console.error("Error fetching statistics:", error);
+      }
+    };
+
+    fetchStatistics();
+  }, []);
+
   return (
     <PageContainer scrollable>
       <div className="space-y-2">
@@ -25,10 +71,6 @@ export default function OverViewPage() {
           <h2 className="text-2xl font-bold tracking-tight">
             Heyyy Bienvenue {session?.user?.prenom}👋
           </h2>
-          {/*<div className="hidden items-center space-x-2 md:flex">
-            <CalendarDateRangePicker />
-            <Button>Download</Button>
-          </div>*/}
         </div>
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
@@ -58,9 +100,10 @@ export default function OverViewPage() {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">23</div>
+                  <div className="text-2xl font-bold text-green-500">{statistics.newInterventions.count}</div>
                   <p className="text-xs text-muted-foreground">
-                    +20.1% par rapport au dernier mois
+                    {statistics.newInterventions.percentageChange > 0 ? "+" : ""}
+                    {statistics.newInterventions.percentageChange}% par rapport au dernier mois
                   </p>
                 </CardContent>
               </Card>
@@ -85,9 +128,10 @@ export default function OverViewPage() {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">8</div>
+                  <div className="text-2xl font-bold text-red-500">{statistics.suspendedInterventions.count}</div>
                   <p className="text-xs text-muted-foreground">
-                    +180.1% par rapport au dernier mois
+                    {statistics.suspendedInterventions.percentageChange > 0 ? "+" : ""}
+                    {statistics.suspendedInterventions.percentageChange}% par rapport au dernier mois
                   </p>
                 </CardContent>
               </Card>
@@ -109,9 +153,10 @@ export default function OverViewPage() {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">4</div>
+                  <div className="text-2xl font-bold text-red-500">{statistics.overdueInterventions.count}</div>
                   <p className="text-xs text-muted-foreground">
-                    +19% par rapport au dernier mois
+                    {statistics.overdueInterventions.percentageChange > 0 ? "+" : ""}
+                    {statistics.overdueInterventions.percentageChange}% par rapport au dernier mois
                   </p>
                 </CardContent>
               </Card>
@@ -134,9 +179,10 @@ export default function OverViewPage() {
                   </svg>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">2</div>
+                  <div className="text-2xl font-bold text-red-500">{statistics.expiringContracts.count}</div>
                   <p className="text-xs text-muted-foreground">
-                    +30% par rapport au dernier mois
+                    {statistics.expiringContracts.percentageChange > 0 ? "+" : ""}
+                    {statistics.expiringContracts.percentageChange}% par rapport au dernier mois
                   </p>
                 </CardContent>
               </Card>
@@ -149,7 +195,7 @@ export default function OverViewPage() {
                 <CardHeader>
                   <CardTitle>Derniéres interventions</CardTitle>
                   <CardDescription>
-                    Vous avez effectué 25 interventions ce mois.
+                    Vous avez effectué {statistics.newInterventions.count} interventions ce mois.
                   </CardDescription>
                 </CardHeader>
                 <CardContent>

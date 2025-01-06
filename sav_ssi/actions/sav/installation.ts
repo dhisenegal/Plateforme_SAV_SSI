@@ -1,14 +1,18 @@
-import { prisma } from "@/prisma";
+"use server";
 
+import { prisma } from "@/prisma";
 // Fonction pour récupérer les installations par site
+// actions/sav/installation.ts
+
 export const getInstallationsBySite = async (siteId: number) => {
-  try {
-    const installations = await prisma.installation.findMany({
-      where: { idSite: siteId },
-    });
-    return installations;
-  } catch (error) {
-    console.error("Erreur lors de la récupération des installations:", error);
-    throw new Error("Failed to fetch installations");
-  }
+  const installations = await prisma.installation.findMany({
+    where: {
+      idSite: siteId
+    },
+    include: {
+      Systeme: true
+    }
+  });
+  
+  return installations;
 };

@@ -12,7 +12,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { getAllEquipements, getEquipementsBySiteId, createInstallationEquipement, updateInstallationEquipement, deleteInstallationEquipement } from "@/actions/sav/equipement";
 import { getAllSystemes } from "@/actions/admin/equipement"; // Assurez-vous d'avoir cette fonction pour récupérer les systèmes
 
-const EquipementTab = ({ siteId }) => {
+const EquipementTab = ({ id }) => {
   const [equipments, setEquipments] = useState([]);
   const [availableEquipments, setAvailableEquipments] = useState([]);
   const [systemes, setSystemes] = useState([]);
@@ -33,7 +33,7 @@ const EquipementTab = ({ siteId }) => {
   useEffect(() => {
     const fetchEquipments = async () => {
       try {
-        const data = await getEquipementsBySiteId(parseInt(siteId));
+        const data = await getEquipementsBySiteId(parseInt(id));
         setEquipments(data);
       } catch (error) {
         console.error("Erreur lors de la récupération des équipements associés au site:", error);
@@ -64,7 +64,7 @@ const EquipementTab = ({ siteId }) => {
     fetchEquipments();
     fetchAvailableEquipments();
     fetchSystemes();
-  }, [siteId]);
+  }, [id]);
 
   const isValidDate = (dateString: string): boolean => {
     const date = new Date(dateString);
@@ -85,7 +85,7 @@ const EquipementTab = ({ siteId }) => {
       
       const newEquip = await createInstallationEquipement({
         ...newEquipment,
-        idSite: parseInt(siteId),
+        idSite: parseInt(id),
         idSysteme: parseInt(selectedSysteme)
       });
       

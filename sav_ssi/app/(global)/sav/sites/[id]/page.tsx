@@ -3,99 +3,94 @@
 import React, { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { FaCalendarAlt, FaClock, FaFileAlt, FaArrowLeft, FaPlus } from "react-icons/fa";
-import EquipementTab from "@/components/sav/EquipementTab";
-import MaintenanceTab from "@/components/sav/MaintenanceTab";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import DetailSiteTab from "@/components/sav/ContactSiteTab";
-import { planifierMaintenance } from "@/actions/sav/maintenance";
-import { getAllTechniciens } from "@/actions/sav/technicien";
-import { getContactsBySite } from "@/actions/sav/contact";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { planifierMaintenance } from '@/actions/sav/maintenance';
+import { getAllTechniciens } from '@/actions/sav/technicien';
+import { getContactsBySite } from '@/actions/sav/contact';
+import { getInstallationsBySite } from '@/actions/sav/installation';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-
+import dynamic from 'next/dynamic';
 const SiteDetailsPage = () => {
   const router = useRouter();
   const params = useParams();
   const id = Number(params?.id);
   const [activeTab, setActiveTab] = useState("interventions");
-  const [numero, setNumero] = useState("");
-  const [dateMaintenance, setDateMaintenance] = useState("");
-  const [description, setDescription] = useState("");
-  const [statut, setStatut] = useState("planifiée");
-  const [typeMaintenance, setTypeMaintenance] = useState("curative");
-  const [idTechnicien, setIdTechnicien] = useState(0);
-  const [idContact, setIdContact] = useState(0);
-  const [techniciens, setTechniciens] = useState([]);
-  const [contacts, setContacts] = useState([]);
-  const [associerContact, setAssocierContact] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+  const [installations, setInstallations] = useState<any[]>([]);
+  const [selectedInstallation, setSelectedInstallation] = useState<any>(null);
+  const [techniciens, setTechniciens] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<any[]>([]);
+  const [formData, setFormData] = useState({
+    numero: '',
+    dateMaintenance: '',
+    description: '',
+    typeMaintenance: '',
+    idTechnicien: 0,
+    idContact: 0,
+    idInstallation: 0
+  });
+  const MaintenanceTab = dynamic(() => import('@/components/sav/MaintenanceTab'),
+   { ssr: false });
+  const EquipementTab = dynamic(() => import('@/components/sav/EquipementTab'), { ssr: false });
+  const DetailSiteTab = dynamic(() => import('@/components/sav/ContactSiteTab'), { ssr: false });
 
   useEffect(() => {
-    const fetchTechniciens = async () => {
+    const loadInitialData = async () => {
       try {
-        const techniciens = await getAllTechniciens();
-        setTechniciens(techniciens);
+        const [installationsData, techniciensData, contactsData] = await Promise.all([
+          getInstallationsBySite(id),
+          getAllTechniciens(),
+          getContactsBySite(id)
+        ]);
+
+        setInstallations(installationsData);
+        setTechniciens(techniciensData);
+        setContacts(contactsData);
       } catch (error) {
-        console.error("Erreur lors de la récupération des techniciens:", error);
+        console.error("Erreur lors du chargement des données:", error);
       }
     };
 
-    const fetchContacts = async () => {
-      try {
-        const contacts = await getContactsBySite(id);
-        setContacts(contacts);
-      } catch (error) {
-        console.error("Erreur lors de la récupération des contacts:", error);
-      }
-    };
+    if (isOpen) {
+      loadInitialData();
+    }
+  }, [id, isOpen]);
 
-    fetchTechniciens();
-    fetchContacts();
-  }, [id]);
+  const handleInstallationSelect = (installationId: string) => {
+    const installation = installations.find(i => i.id === parseInt(installationId));
+    setSelectedInstallation(installation);
+    setFormData(prev => ({ ...prev, idInstallation: parseInt(installationId) }));
+  };
+
+  const handleSubmit = async () => {
+    try {
+      await planifierMaintenance({
+        ...formData,
+        idSite: id,
+        statut: 'PLANIFIE',
+        dateMaintenance: new Date(formData.dateMaintenance).toISOString()
+      });
+      toast.success("Maintenance planifiée avec succès");
+      setIsOpen(false);
+      // Vous pouvez ajouter ici un callback pour rafraîchir la liste des maintenances
+    } catch (error) {
+      console.error("Erreur lors de la planification:", error);
+    }
+  };
+
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
   };
 
   const handleBackClick = () => {
-    router.push("/sav/maintenances");
-  };
-
-  const handlePlanifierMaintenance = async (e) => {
-    e.preventDefault();
-
-    const maintenanceData = {
-      numero,
-      dateMaintenance,
-      description,
-      statut,
-      typeMaintenance,
-      idSite: id,
-      idTechnicien,
-      idContact,
-    };
-
-    console.log("Données envoyées pour la planification de la maintenance:", JSON.stringify(maintenanceData, null, 2));
-
-    try {
-      await planifierMaintenance(maintenanceData);
-
-      toast.success("Maintenance planifiée avec succès !");
-      setNumero("");
-      setDateMaintenance("");
-      setDescription("");
-      setStatut("planifiée");
-      setTypeMaintenance("curative");
-      setIdTechnicien(0);
-      setIdContact(0);
-      setAssocierContact(false);
-    } catch (error) {
-      toast.error("Erreur lors de la planification de la maintenance.");
-      console.error("Erreur lors de la planification de la maintenance:", error);
-    }
+    router.push("/sav/sites");
   };
 
   return (
@@ -109,129 +104,139 @@ const SiteDetailsPage = () => {
             <FaArrowLeft className="mr-2" />
             Retour
           </button>
-          <Dialog>
-            <DialogTrigger asChild>
-              <button className="flex items-center mb-4 bg-blue-500 text-white hover:bg-blue-600 p-3 rounded-lg">
-                <FaPlus className="mr-2" />
-                Planifier Maintenance
-              </button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[425px]">
-              <DialogHeader>
-                <DialogTitle>Planifier une maintenance</DialogTitle>
-                <DialogDescription>Remplissez les détails pour planifier une maintenance</DialogDescription>
-              </DialogHeader>
-              <form onSubmit={handlePlanifierMaintenance}>
-                <div className="grid gap-4 py-4">
-                  <div className="grid grid-cols-1 gap-4">
-                    <Label htmlFor="numero">Numéro</Label>
-                    <Input
-                      id="numero"
-                      value={numero}
-                      onChange={(e) => setNumero(e.target.value)}
-                      placeholder="Numéro de maintenance"
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    <Label htmlFor="dateMaintenance">Date</Label>
-                    <Input
-                      id="dateMaintenance"
-                      type="date"
-                      value={dateMaintenance}
-                      onChange={(e) => setDateMaintenance(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    <Label htmlFor="description">Description</Label>
-                    <Input
-                      id="description"
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder="Description de la maintenance"
-                      required
-                    />
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    <Label htmlFor="typeMaintenance">Type</Label>
-                    <Select
-                      id="typeMaintenance"
-                      value={typeMaintenance}
-                      onValueChange={(value) => setTypeMaintenance(value)}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choisir un type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="curative">Curative</SelectItem>
-                        <SelectItem value="preventive">Préventive</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    <Label htmlFor="idTechnicien">Technicien</Label>
-                    <Select
-                      id="idTechnicien"
-                      value={idTechnicien}
-                      onValueChange={(value) => setIdTechnicien(Number(value))}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Choisir un technicien" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={0} disabled>Choisir un technicien</SelectItem>
-                        {techniciens.map((technicien) => (
-                          <SelectItem key={technicien.id} value={technicien.id}>
-                            {technicien.prenom} {technicien.nom}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4">
-                    <Label htmlFor="associerContact">Associer un contact</Label>
-                    <Input
-                      id="associerContact"
-                      type="checkbox"
-                      checked={associerContact}
-                      onChange={(e) => setAssocierContact(e.target.checked)}
-                    />
-                  </div>
-                  {associerContact && (
-                    <div className="grid grid-cols-1 gap-4">
-                      <Label htmlFor="idContact">Contact</Label>
-                      <Select
-                        id="idContact"
-                        value={idContact}
-                        onValueChange={(value) => setIdContact(Number(value))}
-                        required
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Choisir un contact" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={0} disabled>Choisir un contact</SelectItem>
-                          {contacts.map((contact) => (
-                            <SelectItem key={contact.id} value={contact.id}>
-                              {contact.prenom} {contact.nom}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+          <Button onClick={() => setIsOpen(true)} 
+          className="mb-4 bg-blue-500 text-white hover:bg-blue-600">
+            Planifier une maintenance
+          </Button>
+          <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Planifier une nouvelle maintenance</DialogTitle>
+          </DialogHeader>
+
+          <div className="grid gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-2">Installation</label>
+                <Select onValueChange={handleInstallationSelect}>
+                  <SelectTrigger>
+                    Sélectionner une installation
+                  </SelectTrigger>
+                  <SelectContent>
+                    {installations.map((installation) => (
+                      <SelectItem key={installation.id} value={installation.id.toString()}>
+                        {`${installation.Systeme.nom} - Installé le ${new Date(installation.dateInstallation).toLocaleDateString()}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {selectedInstallation && (
+                <div>
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Détails de l'installation</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p>Système: {selectedInstallation.Systeme.nom}</p>
+                      <p>Date d'installation: {new Date(selectedInstallation.dateInstallation).toLocaleDateString()}</p>
+                      {selectedInstallation.dateMaintenance && (
+                        <p>Dernière maintenance: {new Date(selectedInstallation.dateMaintenance).toLocaleDateString()}</p>
+                      )}
+                    </CardContent>
+                  </Card>
                 </div>
-                <DialogFooter>
-                  <Button type="submit" className="bg-blue-700 hover:bg-blue-600 text-white">
-                    Planifier
-                  </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
+              )}
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block mb-2">Numéro</label>
+                <Input
+                  value={formData.numero}
+                  onChange={(e) => setFormData(prev => ({ ...prev, numero: e.target.value }))}
+                  placeholder="Numéro de maintenance"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2">Date prévue</label>
+                <Input
+                  type="date"
+                  value={formData.dateMaintenance}
+                  onChange={(e) => setFormData(prev => ({ ...prev, dateMaintenance: e.target.value }))}
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block mb-2">Description</label>
+              <Input
+                value={formData.description}
+                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                placeholder="Description des travaux à effectuer"
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block mb-2">Type de maintenance</label>
+                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, typeMaintenance: value }))}>
+                  <SelectTrigger>
+                    Sélectionner un type
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="preventive">Préventive</SelectItem>
+                    <SelectItem value="curative">Curative</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block mb-2">Technicien</label>
+                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, idTechnicien: parseInt(value) }))}>
+                  <SelectTrigger>
+                    Sélectionner un technicien
+                  </SelectTrigger>
+                  <SelectContent>
+                    {techniciens.map((tech) => (
+                      <SelectItem key={tech.id} value={tech.id.toString()}>
+                        {`${tech.prenom} ${tech.nom}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <label className="block mb-2">Contact sur site</label>
+                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, idContact: parseInt(value) }))}>
+                  <SelectTrigger>
+                    Sélectionner un contact
+                  </SelectTrigger>
+                  <SelectContent>
+                    {contacts.map((contact) => (
+                      <SelectItem key={contact.id} value={contact.id.toString()}>
+                        {`${contact.prenom} ${contact.nom}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
+              Annuler
+            </Button>
+            <Button onClick={handleSubmit}>
+              Planifier
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="flex flex-col items-center p-4 bg-white shadow rounded-lg">
@@ -279,17 +284,17 @@ const SiteDetailsPage = () => {
         </div>
 
         {activeTab === "interventions" && (
-          <MaintenanceTab siteId={id} />
+          <MaintenanceTab id={id} />
         )}
 
         {activeTab === "equipments" && (
-          <EquipementTab siteId={id} />
+          <EquipementTab id={id} />
         )}
 
         {activeTab === "details" && (
           <div>
             {/* Contenu du tab "Détails" */}
-            <DetailSiteTab siteId={id} />
+            <DetailSiteTab id={id} />
           </div>
         )}
       </div>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { fr } from "date-fns/locale";
-import { FaPlus, FaEdit, FaTrash, FaPause, FaPlay, FaCalendarAlt } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaPause, FaPlay, FaCalendarAlt, FaSpinner } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
@@ -22,6 +22,7 @@ const InterventionsList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [loading, setLoading] = useState(true);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [planningModalOpen, setPlanningModalOpen] = useState(false);
@@ -65,6 +66,8 @@ const InterventionsList = () => {
       setTotalInterventions(total);
     } catch (error) {
       toast.error("Erreur lors du chargement des interventions");
+    }finally {
+      setLoading(false);
     }
   }, [currentPage, searchQuery, statusFilter, startDate, endDate]);
 
@@ -122,6 +125,15 @@ const InterventionsList = () => {
     }
   }, [fetchInterventions]);
 
+  if (loading) {
+      return (
+        <div className="flex items-center justify-center gap-3">
+          <FaSpinner className="animate-spin" />
+          Chargement en cours...
+        </div>
+      );
+    }
+
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -171,7 +183,7 @@ const InterventionsList = () => {
         <TableHeader>
           <TableRow>
             <TableHead>N°</TableHead>
-            <TableHead>Date Déclaration</TableHead>
+            <TableHead>Client</TableHead>
             <TableHead>Date Planifiée</TableHead>
             <TableHead>Contact</TableHead>
             <TableHead>Technicien</TableHead>
@@ -184,7 +196,7 @@ const InterventionsList = () => {
             <TableRow key={intervention.id}>
               <TableCell>{intervention.numero}</TableCell>
               <TableCell>
-                {format(new Date(intervention.dateDeclaration), "dd/MM/yyyy", { locale: fr })}
+                {intervention.Client.nom}
               </TableCell>
               <TableCell>
                 {intervention.datePlanifiee && 

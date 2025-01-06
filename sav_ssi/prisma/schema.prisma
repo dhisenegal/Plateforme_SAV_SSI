@@ -66,6 +66,7 @@ model Site {
   Installations     Installation[]
   Contrats          Contrat[]
   Interventions     Intervention[]
+  Maintenances      Maintenance[]
 }
 
 model Contact {
@@ -75,6 +76,7 @@ model Contact {
   Client            Client      @relation(fields: [idClient], references: [id], onDelete: Cascade)
   Utilisateur       Utilisateur @relation(fields: [idUtilisateur], references: [id], onDelete: Cascade)
   ContactSites      ContactSite[]
+  Maintenances      Maintenance[]
 }
 
 model ContactSite {
@@ -177,7 +179,11 @@ model Maintenance {
   typeMaintenance   String
   datePlanifiee     DateTime @default(Null)
   idTechnicien      Int
+  idSite            Int
   idInstallation    Int
+  idContact         Int
+  Site              Site     @relation(fields: [idSite], references: [id], onDelete: Cascade)
+  Contact           Contact  @relation(fields: [idContact], references: [id], onDelete: Cascade)
   Installation      Installation @relation(fields: [idInstallation], references: [id], onDelete: Cascade)
   Technicien        Utilisateur  @relation("TechnicienMaintenance", fields: [idTechnicien], references: [id])
   Actions           MaintenanceAction[]
