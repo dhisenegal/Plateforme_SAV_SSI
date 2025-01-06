@@ -80,18 +80,6 @@ export const planifierMaintenance = async (data: {
   return maintenance;
 };
 
-// Récupérer les maintenances par site
-export const getMaintenancesBySite = async (siteId: number): Promise<Maintenance[]> => {
-  const maintenances = await prisma.maintenance.findMany({
-    where: { idSite: siteId },
-    include: {
-      Technicien: true,
-      Contact: true,
-    },
-  });
-
-  return maintenances;
-};
 
 // Mettre à jour le statut de la maintenance
 export const updateMaintenanceStatus = async (id: number, statut: string): Promise<Maintenance> => {
@@ -265,4 +253,22 @@ export const planifierMaintenanceGlobal = async (data: {
   console.log("Maintenance créée:", JSON.stringify(maintenance, null, 2));
 
   return maintenance;
+};
+
+// Récupérer les maintenances par site
+export const getMaintenancesBySite = async (siteId: number): Promise<Maintenance[]> => {
+  const maintenances = await prisma.maintenance.findMany({
+    where: { idSite: siteId },
+    include: {
+      Technicien: true,
+      Contact: true,
+      Installation: {
+        include: {
+          Systeme: true,
+        },
+      },
+    },
+  });
+
+  return maintenances;
 };

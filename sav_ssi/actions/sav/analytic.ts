@@ -1,6 +1,7 @@
 "use server";
 
 import { prisma } from "@/prisma";
+import { endOfMonth, startOfMonth, subMonths } from "date-fns";
 
 export async function getRecentInterventions() {
   try {
@@ -208,4 +209,197 @@ export async function getInterventionDelayAnalytics(
     console.error("Error analyzing intervention delays:", error);
     throw new Error("Failed to analyze intervention delays");
   }
+}
+
+export async function getNewInterventionsCount() {
+  const currentCount = await prisma.intervention.count({
+      where: {
+          statut: "NON_PLANIFIE"
+      }
+  });
+
+  // Get last month's count for comparison
+  const lastMonth = {
+      start: startOfMonth(subMonths(new Date(), 1)),
+      end: endOfMonth(subMonths(new Date(), 1))
+  };
+
+  const lastMonthCount = await prisma.intervention.count({
+      where: {
+          statut: "NON_PLANIFIE",
+          dateDeclaration: {
+              gte: lastMonth.start,
+              lte: lastMonth.end
+          }
+      }
+  });
+
+  const percentageChange = lastMonthCount > 0 
+      ? ((currentCount - lastMonthCount) / lastMonthCount) * 100 
+      : 0;
+
+  return {
+      count: currentCount,
+      percentageChange: Number(percentageChange.toFixed(1))
+  };
+}
+
+export async function getSuspendedInterventionsCount() {
+  const currentCount = await prisma.intervention.count({
+      where: {
+          statut: "SUSPENDU"
+      }
+  });
+
+  const lastMonth = {
+      start: startOfMonth(subMonths(new Date(), 1)),
+      end: endOfMonth(subMonths(new Date(), 1))
+  };
+
+  const lastMonthCount = await prisma.intervention.count({
+      where: {
+          statut: "SUSPENDU",
+          dateDeclaration: {
+              gte: lastMonth.start,
+              lte: lastMonth.end
+          }
+      }
+  });
+
+  const percentageChange = lastMonthCount > 0 
+      ? ((currentCount - lastMonthCount) / lastMonthCount) * 100 
+      : 0;
+
+  return {
+      count: currentCount,
+      percentageChange: Number(percentageChange.toFixed(1))
+  };
+}
+
+export async function getOverdueInterventionsCount() {
+  const now = new Date();
+  
+  // Get current overdue interventions
+  const currentCount = await prisma.intervention.count({
+      where: {
+          AND: [
+              {
+                  OR: [
+                      // Case 1: Intervention has occurred but was done after 48h
+                      {
+                          dateIntervention: {
+                              not: null
+                          },
+                          dateDeclaration: {
+                              lt: new Date(now.getTime() - 48 * 60 * 60 * 1000)
+                          }
+                      },
+                      // Case 2: No intervention yet and 48h have passed since declaration
+                      {
+                          dateIntervention: null,
+                          dateDeclaration: {
+                              lt: new Date(now.getTime() - 48 * 60 * 60 * 1000)
+                          }
+                      }
+                  ]
+              },
+              {
+                  NOT: {
+                      statut: "TERMINE"
+                  }
+              }
+          ]
+      }
+  });
+
+  // Calculate last month's date range
+  const lastMonth = {
+      start: startOfMonth(subMonths(now, 1)),
+      end: endOfMonth(subMonths(now, 1))
+  };
+
+  // Get last month's overdue interventions
+  const lastMonthCount = await prisma.intervention.count({
+      where: {
+          AND: [
+              {
+                  dateDeclaration: {
+                      gte: lastMonth.start,
+                      lte: lastMonth.end
+                  }
+              },
+              {
+                  OR: [
+                      // Case 1: Intervention occurred but was done after 48h
+                      {
+                          dateIntervention: {
+                              not: null
+                          },
+                          dateDeclaration: {
+                              lt: new Date(lastMonth.end.getTime() - 48 * 60 * 60 * 1000)
+                          }
+                      },
+                      // Case 2: No intervention and 48h passed
+                      {
+                          dateIntervention: null,
+                          dateDeclaration: {
+                              lt: new Date(lastMonth.end.getTime() - 48 * 60 * 60 * 1000)
+                          }
+                      }
+                  ]
+              },
+              {
+                  NOT: {
+                      statut: "TERMINE"
+                  }
+              }
+          ]
+      }
+  });
+
+  // Calculate percentage change
+  const percentageChange = lastMonthCount > 0
+      ? ((currentCount - lastMonthCount) / lastMonthCount) * 100
+      : 0;
+
+  return {
+      count: currentCount,
+      percentageChange: Number(percentageChange.toFixed(1))
+  };
+}
+
+export async function getExpiringContractsCount() {
+  const thirtyDaysFromNow = new Date();
+  thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+
+  const currentCount = await prisma.contrat.count({
+      where: {
+          dateFin: {
+              lte: thirtyDaysFromNow
+          }
+      }
+  });
+
+  const lastMonth = {
+      start: startOfMonth(subMonths(new Date(), 1)),
+      end: endOfMonth(subMonths(new Date(), 1))
+  };
+
+  const lastMonthCount = await prisma.contrat.count({
+      where: {
+          dateFin: {
+              gte: lastMonth.start,
+              lte: lastMonth.end
+          }
+      }
+  });
+
+  const percentageChange = lastMonthCount > 0 
+      ? ((currentCount - lastMonthCount) / lastMonthCount) * 100 
+      : 0;
+
+  return {
+      count: currentCount,
+      percentageChange: Number(percentageChange.toFixed(1))
+  };
 }

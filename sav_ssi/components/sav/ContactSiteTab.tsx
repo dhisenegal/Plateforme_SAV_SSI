@@ -11,7 +11,7 @@ import "react-toastify/dist/ReactToastify.css";
 import { getSiteContacts, createContact, updateContact, deleteContact } from "@/actions/sav/contact";
 import { ContactSite } from "@/types";
 
-const ContactSiteTab = ({ siteId }: { siteId: number }) => {
+const ContactSiteTab = ({ id }: { id: number }) => {
   const [contacts, setContacts] = useState<ContactSite[]>([]);
   const [newContact, setNewContact] = useState({
     nom: "",
@@ -28,7 +28,7 @@ const ContactSiteTab = ({ siteId }: { siteId: number }) => {
   useEffect(() => {
     const fetchSiteContacts = async () => {
       try {
-        const data = await getSiteContacts(siteId);
+        const data = await getSiteContacts(id);
         console.log("Contacts récupérés:", JSON.stringify(data, null, 2));
         setContacts(data);
       } catch (error) {
@@ -38,11 +38,11 @@ const ContactSiteTab = ({ siteId }: { siteId: number }) => {
     };
 
     fetchSiteContacts();
-  }, [siteId]);
+  }, [id]);
 
   const handleAddContact = async () => {
     try {
-      const newContactData = await createContact({ ...newContact, idSite: siteId });
+      const newContactData = await createContact({ ...newContact, idSite: id });
       console.log("Nouveau contact ajouté:", newContactData);
       setContacts([...contacts, newContactData]);
       setNewContact({
