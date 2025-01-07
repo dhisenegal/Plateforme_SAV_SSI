@@ -83,6 +83,7 @@ export async function fetchDetails(id, type) {
         datePlanifiee: maintenance.dateMaintenance,
         systeme: maintenance.Installation?.Systeme?.nom || null, // Accéder au système lié à l'installation
         description:maintenance.description,
+        idInstallation: maintenance?.idInstallation,
       };
     } else {
       throw new Error('Type invalide');

@@ -21,7 +21,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { updateIntervention, updateInterventionStatus } from '@/actions/technicien/planning';
 import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogOverlay, DialogClose } from '@radix-ui/react-dialog';
-import InterventionSection from '@/actions/technicien/InterventionSection'; // Import the new component
+import InterventionSection from '@/actions/technicien/InterventionSection';
 
 const formSchema = z.object({
   diagnostic: z.string().min(1, {
@@ -43,6 +43,12 @@ const DialogHeader: React.FC<{ title: string; description: string }> = ({ title,
   </div>
 );
 
+interface MaintenanceAction {
+  id: number;
+  libeleAction: string;
+  idSysteme: number;
+}
+
 const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
   const params = useParams();
   const searchParams = useSearchParams();
@@ -53,11 +59,11 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
   const [isSuspended, setIsSuspended] = useState<boolean>(false);
   const [isOverlayVisible, setIsOverlayVisible] = useState<boolean>(false);
   const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState<boolean>(false);
-  const [selectedStatus, setSelectedStatus] = useState({});
-  const [observations, setObservations] = useState({});
-  const [isObservationDialogOpen, setIsObservationDialogOpen] = useState({});
-  const [maintenanceActions, setMaintenanceActions] = useState<any[]>([]);
-  const [loadingActions, setLoadingActions] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<Record<number, string>>({});
+  const [observations, setObservations] = useState<Record<number, string>>({});
+  const [actions, setActions] = useState<MaintenanceAction[]>([]);
+  const [systemId, setSystemId] = useState<number | null>(null);
+  const [loadingActions, setLoadingActions] = useState<boolean>(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -71,40 +77,44 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
   const type = searchParams?.get('type');
 
   const saveToLocalStorage = (data: z.infer<typeof formSchema>) => {
-    localStorage.setItem(`formData-${id}`, JSON.stringify(data));
+    if (id) {
+      localStorage.setItem(`formData-${id}`, JSON.stringify(data));
+    }
   };
 
   const loadFromLocalStorage = () => {
-    const savedData = localStorage.getItem(`formData-${id}`);
-    if (savedData) {
-      form.reset(JSON.parse(savedData));
+    if (id) {
+      const savedData = localStorage.getItem(`formData-${id}`);
+      if (savedData) {
+        form.reset(JSON.parse(savedData));
+      }
     }
   };
 
   useEffect(() => {
-    const fetchMaintenanceActions = async () => {
-      if (type === 'maintenance' && details?.idInstallation) {
+    const fetchSystemAndActions = async () => {
+      if (details?.idInstallation && type === 'maintenance') {
         setLoadingActions(true);
         try {
-          const idSysteme = await getSystemIdFromInstallation(details.idInstallation);
-          console.log("Fetched system ID:", idSysteme); // Log the fetched system ID
-          if (idSysteme) {
-            const actions = await getActionsBySystem(idSysteme.idSysteme);
-            console.log("Maintenance actions:", actions); // Log the maintenance actions
-            setMaintenanceActions(actions);
-          } else {
-            console.error('idSysteme is null');
+          const systemData = await getSystemIdFromInstallation(details.idInstallation);
+          if (systemData?.idSysteme) {
+            setSystemId(systemData.idSysteme);
+            const fetchedActions = await getActionsBySystem(systemData.idSysteme);
+            setActions(fetchedActions);
           }
-        } catch (err) {
-          console.error('Erreur lors de la récupération des actions de maintenance:', err);
+        } catch (error) {
+          console.error('Error fetching system and actions:', error);
+          setActions([]);
         } finally {
           setLoadingActions(false);
         }
       }
     };
 
-    fetchMaintenanceActions();
-  }, [details?.idInstallation, type]);
+    if (details) {
+      fetchSystemAndActions();
+    }
+  }, [details, type]);
 
   const handleSave = async (data: z.infer<typeof formSchema>) => {
     setIsSaving(true);
@@ -127,19 +137,21 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
 
       await handleSave(data);
 
-      const result = await updateIntervention(parseInt(id), data.diagnostic, data.travauxRealises);
-
-      console.log('Données validées avec succès', result);
+      if (id) {
+        const result = await updateIntervention(parseInt(id), data.diagnostic, data.travauxRealises);
+        console.log('Données validées avec succès', result);
+      }
 
       setIsOverlayVisible(true);
 
-      const updatedDetails = await fetchDetails(parseInt(id), type);
-      setDetails(updatedDetails);
-      form.reset({
-        diagnostic: updatedDetails.diagnostic || data.diagnostic,
-        travauxRealises: updatedDetails.travauxRealises || data.travauxRealises
-      });
-
+      if (id && type) {
+        const updatedDetails = await fetchDetails(parseInt(id), type);
+        setDetails(updatedDetails);
+        form.reset({
+          diagnostic: updatedDetails.diagnostic || data.diagnostic,
+          travauxRealises: updatedDetails.travauxRealises || data.travauxRealises
+        });
+      }
     } catch (err) {
       console.error('Erreur lors de la validation', err);
     } finally {
@@ -151,14 +163,16 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
   const handleSuspendOrResume = async () => {
     setIsSaving(true);
     try {
-      const newStatus = isSuspended ? 'EN_COURS' : 'SUSPENDU';
-      const result = await updateInterventionStatus(parseInt(id), newStatus);
-      console.log('Statut mis à jour avec succès', result);
-      setIsSuspended(!isSuspended);
-      setDetails((prevDetails: any) => ({
-        ...prevDetails,
-        statut: newStatus
-      }));
+      if (id) {
+        const newStatus = isSuspended ? 'EN_COURS' : 'SUSPENDU';
+        const result = await updateInterventionStatus(parseInt(id), newStatus);
+        console.log('Statut mis à jour avec succès', result);
+        setIsSuspended(!isSuspended);
+        setDetails((prevDetails: any) => ({
+          ...prevDetails,
+          statut: newStatus
+        }));
+      }
     } catch (err) {
       console.error('Erreur lors de la mise à jour du statut', err);
     } finally {
@@ -187,13 +201,19 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         }
       };
       fetchData();
-
+      loadFromLocalStorage();
     } else {
       setLoading(false);
     }
+  }, [id, type, form]);
 
-    loadFromLocalStorage();
-  }, [id, type]);
+  const handleStatusChange = (taskIdx: number, status: string) => {
+    setSelectedStatus((prev) => ({ ...prev, [taskIdx]: status }));
+  };
+
+  const handleObservationChange = (taskIdx: number, observation: string) => {
+    setObservations((prev) => ({ ...prev, [taskIdx]: observation }));
+  };
 
   if (loading) {
     return <div>Chargement...</div>;
@@ -207,16 +227,99 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     );
   }
 
-  const handleStatusChange = (taskIdx, status) => {
-    setSelectedStatus((prev) => ({ ...prev, [taskIdx]: status }));
-  };
+  const renderMaintenanceSection = () => {
+    if (type !== 'maintenance') return null;
 
-  const handleObservationChange = (taskIdx, observation) => {
-    setObservations((prev) => ({ ...prev, [taskIdx]: observation }));
+    return (
+      <div className="mt-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          {details.systeme}
+        </h2>
+        
+        <Table className="min-w-full bg-white border border-gray-200">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-2/5">
+                Tâche
+              </TableHead>
+              <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-1/5">
+                Statut
+              </TableHead>
+              <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-2/5">
+                Observations
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loadingActions ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-4">
+                  Chargement des actions...
+                </TableCell>
+              </TableRow>
+            ) : actions.length > 0 ? (
+              actions.map((action, idx) => (
+                <TableRow key={idx} className="border-b hover:bg-blue-100">
+                  <TableCell className="p-3">{action.libeleAction}</TableCell>
+                  <TableCell className="p-3">
+                    <div className="flex space-x-4">
+                      <label className="inline-flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`statut-${idx}`}
+                          value="valide"
+                          className="hidden"
+                          onChange={() => handleStatusChange(idx, 'valide')}
+                        />
+                        <FaCheckCircle
+                          className={`cursor-pointer ${
+                            selectedStatus[idx] === 'valide' ? 'text-green-600' : 'text-gray-400'
+                          }`}
+                          onClick={() => handleStatusChange(idx, 'valide')}
+                        />
+                      </label>
+                      <label className="inline-flex items-center cursor-pointer">
+                        <input
+                          type="radio"
+                          name={`statut-${idx}`}
+                          value="non-valide"
+                          className="hidden"
+                          onChange={() => handleStatusChange(idx, 'non-valide')}
+                        />
+                        <FaTimesCircle
+                          className={`cursor-pointer ${
+                            selectedStatus[idx] === 'non-valide' ? 'text-red-600' : 'text-gray-400'
+                          }`}
+                          onClick={() => handleStatusChange(idx, 'non-valide')}
+                        />
+                      </label>
+                    </div>
+                  </TableCell>
+                  <TableCell className="p-3">
+                    <textarea
+                      className="w-full max-w-xs p-2 border border-gray-300 rounded-md"
+                      rows={2}
+                      placeholder="Veuillez remplir vos observations ici"
+                      value={observations[idx] || ''}
+                      onChange={(e) => handleObservationChange(idx, e.target.value)}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-4">
+                  {systemId ? 'Aucune action de maintenance trouvée pour ce système' : 'Chargement des actions...'}
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    );
   };
 
   return (
-    <>
     <Card className="mx-auto w-full max-w-4xl relative">
       {isOverlayVisible && (
         <div className="absolute inset-0 bg-gray-800 bg-opacity-50 z-10 flex justify-center items-center">
@@ -299,102 +402,31 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
             {type === 'intervention' && (
               <InterventionSection form={form} isEditable={isEditable} />
             )}
-            {type === 'maintenance' && (
-  <div className="mt-6">
-    <h2 className="text-lg font-semibold text-gray-900 mb-4">
-      {details.systeme}
-    </h2>
-    {loadingActions ? (
-      <div className="text-center py-4">Chargement des actions...</div>
-    ) : (
-      <Table className="min-w-full bg-white border border-gray-200">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-2/5">
-              Tâche
-            </TableHead>
-            <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-1/5">
-              Statut
-            </TableHead>
-            <TableHead className="p-3 text-left text-sm font-semibold text-gray-700 border-b w-2/5">
-              Observations
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {maintenanceActions.length > 0 ? (
-            maintenanceActions.map((action, idx) => (
-              <TableRow key={idx} className="border-b hover:bg-blue-100">
-                <TableCell className="p-3">{action.libeleAction}</TableCell>
-                <TableCell className="p-3">
-                  <div className="flex space-x-4">
-                    <label className="inline-flex items-center cursor-pointer">
-                      <input
-                        type="radio"
-                        name={`statut-${idx}`}
-                        value="valide"
-                        className="hidden"
-                        onChange={() => handleStatusChange(idx, 'valide')}
-                      />
-                      <FaCheckCircle
-                        className={`cursor-pointer ${
-                          selectedStatus[idx] === 'valide' ? 'text-green-600' : 'text-gray-400'
-                        }`}
-                        onClick={() => handleStatusChange(idx, 'valide')}
-                      />
-                    </label>
-                    <label className="inline-flex items-center cursor-pointer">
-                      <input
-                        type="radio"
-                        name={`statut-${idx}`}
-                        value="non-valide"
-                        className="hidden"
-                        onChange={() => handleStatusChange(idx, 'non-valide')}
-                      />
-                      <FaTimesCircle
-                        className={`cursor-pointer ${
-                          selectedStatus[idx] === 'non-valide' ? 'text-red-600' : 'text-gray-400'
-                        }`}
-                        onClick={() => handleStatusChange(idx, 'non-valide')}
-                      />
-                    </label>
-                  </div>
-                </TableCell>
-                <TableCell className="p-3">
-                  <textarea
-                    className="w-full max-w-xs p-2 border border-gray-300 rounded-md"
-                    rows={2}
-                    placeholder="Veuillez remplir vos observations ici"
-                    value={observations[idx] || ''}
-                    onChange={(e) => handleObservationChange(idx, e.target.value)}
-                  />
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={3} className="text-center py-4">
-                Aucune action de maintenance trouvée pour ce système
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    )}
-  </div>
-)}
+            
+            {renderMaintenanceSection()}
+
             <div className="flex justify-end space-x-4 mt-6">
               <Button
+                type="button"
                 onClick={handleSuspendOrResume}
                 disabled={isSaving}
                 className={isSuspended ? 'bg-orange-500 hover:bg-orange-600' : 'bg-red-500 hover:bg-red-600'}
               >
                 {isSuspended ? 'Reprendre' : 'Suspendre'}
               </Button>
-              <Button type="submit" disabled={isSaving} className="bg-blue-500 hover:bg-blue-600">
+              <Button 
+                type="submit" 
+                disabled={isSaving} 
+                className="bg-blue-500 hover:bg-blue-600"
+              >
                 {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
               </Button>
-              <Button onClick={() => setIsConfirmDialogOpen(true)} disabled={isSaving} className="bg-green-500 hover:bg-green-600">
+              <Button 
+                type="button"
+                onClick={() => setIsConfirmDialogOpen(true)} 
+                disabled={isSaving} 
+                className="bg-green-500 hover:bg-green-600"
+              >
                 {isSaving ? 'Validation...' : 'Valider'}
               </Button>
             </div>
@@ -404,24 +436,27 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
 
       <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
         <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
-          <DialogHeader title="Confirmation de Validation" description="Êtes-vous sûr de vouloir valider les informations ?" />
+          <DialogHeader 
+            title="Confirmation de Validation" 
+            description="Êtes-vous sûr de vouloir valider les informations ?" 
+          />
           <div className="flex justify-between">
             <Button
-              onClick={() => {
-                handleValidate();
-              }}
+              onClick={handleValidate}
               className="bg-green-500 text-white hover:bg-green-600"
             >
               Oui
             </Button>
-            <Button onClick={() => setIsConfirmDialogOpen(false)} className="bg-gray-500 text-white hover:bg-gray-600">
+            <Button 
+              onClick={() => setIsConfirmDialogOpen(false)} 
+              className="bg-gray-500 text-white hover:bg-gray-600"
+            >
               Annuler
             </Button>
           </div>
         </DialogContent>
       </Dialog>
     </Card>
-    </>
   );
 };
 
