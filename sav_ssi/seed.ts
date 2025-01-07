@@ -163,7 +163,7 @@ async function main() {
     create: {
       id: 3,
       libeleAction: "Test alimentation et batterie de la centrale",
-      idSysteme: 1,
+      idSysteme: 3,
     },
   });
   
