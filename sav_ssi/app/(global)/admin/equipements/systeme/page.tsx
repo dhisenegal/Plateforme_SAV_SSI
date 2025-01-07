@@ -5,22 +5,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@/components/ui/table";
-import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus, FaEdit, FaHammer } from "react-icons/fa";
+
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { getAllSystemes, addSysteme, updateSysteme, deleteSysteme } from "@/actions/admin/equipement";
+import { getAllSystemes, addSysteme, updateSysteme } from "@/actions/admin/equipement";
+import { addAction } from "@/actions/admin/maintenanceAction";
 import { Systeme } from "@/types";
+import { useRouter } from 'next/navigation';
 
 const SystemePage = () => {
   const [systemes, setSystemes] = useState<Systeme[]>([]);
   const [filteredSystemes, setFilteredSystemes] = useState<Systeme[]>([]);
   const [newSysteme, setNewSysteme] = useState<string>("");
   const [selectedSysteme, setSelectedSysteme] = useState<Systeme | null>(null);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [systemeToDelete, setSystemeToDelete] = useState<number | null>(null);
+  const [newAction, setNewAction] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
+  const router = useRouter();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,25 +75,23 @@ const SystemePage = () => {
     }
   };
 
-  const handleDeleteSysteme = (id: number) => {
-    setIsDeleteDialogOpen(true);
-    setSystemeToDelete(id);
-  };
-
-  const confirmDeleteSysteme = async () => {
-    if (systemeToDelete !== null) {
-      await deleteSysteme(systemeToDelete);
-      setSystemes(systemes.filter(s => s.id !== systemeToDelete));
-      setFilteredSystemes(systemes.filter(s => s.id !== systemeToDelete));
-      setIsDeleteDialogOpen(false);
-      setSystemeToDelete(null);
-      toast.success("Système supprimé avec succès");
+  const handleAddAction = async () => {
+    if (selectedSysteme) {
+      const createdAction = await addAction(selectedSysteme.id, newAction);
+      setNewAction("");
+      toast.success("Action ajoutée avec succès");
     }
   };
 
-  const cancelDeleteSysteme = () => {
-    setIsDeleteDialogOpen(false);
-    setSystemeToDelete(null);
+  const handleHammerClick = (id: number) => {
+    const systeme = systemes.find(s => s.id === id);
+    if (systeme) {
+      setSelectedSysteme(systeme);
+    }
+  };
+
+  const handleSystemeClick = (id: number) => {
+    router.push(`/admin/equipements/systeme/${id}`);
   };
 
   const handlePageChange = (page: number) => {
@@ -150,12 +151,12 @@ const SystemePage = () => {
           </TableHeader>
           <TableBody>
             {paginatedSystemes.map((systeme) => (
-              <TableRow key={systeme.id}>
+              <TableRow key={systeme.id} onClick={() => handleSystemeClick(systeme.id)} className="cursor-pointer">
                 <TableCell>{systeme.nom}</TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
-                    <FaEdit className="text-blue-500 cursor-pointer" onClick={() => handleEditSysteme(systeme.id)} />
-                    <FaTrash className="text-red-500 cursor-pointer" onClick={() => handleDeleteSysteme(systeme.id)} />
+                    <FaEdit className="text-blue-500 cursor-pointer" onClick={(e) => { e.stopPropagation(); handleEditSysteme(systeme.id); }} />
+                    <FaHammer className="cursor-pointer" onClick={(e) => { e.stopPropagation(); handleHammerClick(systeme.id); }} />
                   </div>
                 </TableCell>
               </TableRow>
@@ -194,26 +195,23 @@ const SystemePage = () => {
                   Modifier
                 </Button>
               </div>
+              <div className="mt-6">
+                <h3 className="text-lg font-bold mb-2">Ajouter une Action de Maintenance</h3>
+                <div className="flex space-x-4 mb-4">
+                  <Input
+                    placeholder="Nouvelle action"
+                    value={newAction}
+                    onChange={(e) => setNewAction(e.target.value)}
+                    className="w-full"
+                  />
+                  <Button onClick={handleAddAction} className="bg-blue-500 text-white hover:bg-blue-600">
+                    Ajouter
+                  </Button>
+                </div>
+              </div>
             </DialogContent>
           </Dialog>
         )}
-
-        <Dialog open={isDeleteDialogOpen} onOpenChange={cancelDeleteSysteme}>
-          <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
-            <DialogHeader>
-              <DialogTitle>Confirmation de Suppression</DialogTitle>
-              <DialogDescription>Êtes-vous sûr de vouloir supprimer ce système ?</DialogDescription>
-            </DialogHeader>
-            <div className="flex justify-between">
-              <Button onClick={confirmDeleteSysteme} className="bg-red-500 text-white hover:bg-red-600">
-                Supprimer
-              </Button>
-              <Button onClick={cancelDeleteSysteme} className="bg-gray-500 text-white hover:bg-gray-600">
-                Annuler
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
 
       <ToastContainer />

@@ -14,9 +14,6 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-<<<<<<< HEAD
-import {getInterventionsActives} from "@/actions/technicien/acceuil";
-=======
 import { useEffect, useState } from 'react';
 import { 
   getNewInterventionsCount, 
@@ -29,7 +26,6 @@ interface StatisticData {
   count: number;
   percentageChange: number;
 }
->>>>>>> 8d50f79b902f094a305f68eecb5db4bcf73817d7
 
 export default function OverViewPage() {
   const { data: session } = useSession();

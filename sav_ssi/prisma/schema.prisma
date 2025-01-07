@@ -173,11 +173,11 @@ model Garantie {
 model Maintenance {
   id                Int      @id @default(autoincrement())
   numero            String
-  dateMaintenance   DateTime
+  dateMaintenance   DateTime?
   description       String
   statut            EnumStatut_i @default(NON_PLANIFIE)
   typeMaintenance   String
-  datePlanifiee     DateTime @default(Null)
+  datePlanifiee     DateTime?
   idTechnicien      Int
   idSite            Int
   idInstallation    Int

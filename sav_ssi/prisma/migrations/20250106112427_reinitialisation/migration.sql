@@ -171,12 +171,15 @@ CREATE TABLE `Garantie` (
 CREATE TABLE `Maintenance` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `numero` VARCHAR(191) NOT NULL,
-    `dateMaintenance` DATETIME(3) NOT NULL,
+    `dateMaintenance` DATETIME(3) NULL,
     `description` VARCHAR(191) NOT NULL,
     `statut` ENUM('EN_COURS', 'SUSPENDU', 'TERMINE', 'NON_PLANIFIE', 'PLANIFIE') NOT NULL DEFAULT 'NON_PLANIFIE',
     `typeMaintenance` VARCHAR(191) NOT NULL,
+    `datePlanifiee` DATETIME(3) NULL,
     `idTechnicien` INTEGER NOT NULL,
+    `idSite` INTEGER NOT NULL,
     `idInstallation` INTEGER NOT NULL,
+    `idContact` INTEGER NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -276,6 +279,12 @@ ALTER TABLE `Contrat` ADD CONSTRAINT `Contrat_idSite_fkey` FOREIGN KEY (`idSite`
 
 -- AddForeignKey
 ALTER TABLE `Garantie` ADD CONSTRAINT `Garantie_idInstallationEq_fkey` FOREIGN KEY (`idInstallationEq`) REFERENCES `InstallationEquipement`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Maintenance` ADD CONSTRAINT `Maintenance_idSite_fkey` FOREIGN KEY (`idSite`) REFERENCES `Site`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Maintenance` ADD CONSTRAINT `Maintenance_idContact_fkey` FOREIGN KEY (`idContact`) REFERENCES `Contact`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Maintenance` ADD CONSTRAINT `Maintenance_idInstallation_fkey` FOREIGN KEY (`idInstallation`) REFERENCES `Installation`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
