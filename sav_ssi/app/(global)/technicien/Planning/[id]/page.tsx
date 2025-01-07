@@ -215,6 +215,8 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     setObservations((prev) => ({ ...prev, [taskIdx]: observation }));
   };
 
+  console.log("Rendering maintenance actions:", maintenanceActions); // Log the actions before rendering
+
   return (
     <>
     <Card className="mx-auto w-full max-w-4xl relative">
@@ -421,7 +423,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         </DialogContent>
       </Dialog>
     </Card>
-    </>
+   </>
   );
 };
 
