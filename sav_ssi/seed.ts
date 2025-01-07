@@ -136,6 +136,37 @@ async function main() {
       secteurDactivite:"ENERGIE",
     },
   });
+
+  const TestFonctionnalitéDuSystème = await prisma.actionMaintenance.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      id: 1,
+      libeleAction: "Test fonctionnalité du système*",
+      idSysteme: 1,
+    },
+  });
+  
+  const VérificationCarteElectroniqueDeLaCentrale = await prisma.actionMaintenance.upsert({
+    where: { id: 2 },
+    update: {},
+    create: {
+      id: 2,
+      libeleAction: "Vérification carte électronique de la centrale",
+      idSysteme: 1,
+    },
+  });
+  
+  const TestAlimentationEtBatterieDeLaCentrale = await prisma.actionMaintenance.upsert({
+    where: { id: 3 },
+    update: {},
+    create: {
+      id: 3,
+      libeleAction: "Test alimentation et batterie de la centrale",
+      idSysteme: 1,
+    },
+  });
+  
 {
   /* // Créer des sites
   const SITE1 = await prisma.site.upsert({

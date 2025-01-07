@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { getRecentInterventions } from '@/actions/sav/analytic';
 import { toast } from 'react-toastify';
+import {getInterventionsEtMaintenancesDuMois} from '@/actions/technicien/acceuil';
+
 
 export function RecentInterventions() {
   const [interventions, setInterventions] = useState([]);

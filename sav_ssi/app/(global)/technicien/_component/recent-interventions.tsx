@@ -1,6 +1,12 @@
 import { Table, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
 
-export function RecentInterventions() {
+export function RecentInterventions({ plans = [] }) { // Default to an empty array if plans is undefined
+  console.log("Plans in RecentInterventions:", plans); // Log plans for debugging
+
+  if (plans.length === 0) {
+    return <p>Aucune intervention ou maintenance à venir</p>;
+  }
+
   return (
     <div className="overflow-x-auto">
       <Table className="min-w-full divide-y divide-gray-200">
@@ -18,61 +24,19 @@ export function RecentInterventions() {
           </TableRow>
         </TableHeader>
         <TableBody className="bg-white divide-y divide-gray-200">
-          <TableRow>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm font-medium text-gray-900">SONATEL</p>
-            </TableCell>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">INTERVENTION</p>
-            </TableCell>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">01/01/2025</p>
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm font-medium text-gray-900">SENELEC</p>
-            </TableCell>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">MAINTENANCE</p>
-            </TableCell>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">02/01/2025</p>
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm font-medium text-gray-900">DER</p>
-            </TableCell>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">INTERVENTION</p>
-            </TableCell>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">03/01/2025</p>
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm font-medium text-gray-900">SONATEL</p>
-            </TableCell>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">MAINTENANCE</p>
-            </TableCell>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">03/01/2025</p>
-            </TableCell>
-          </TableRow>
-          <TableRow>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm font-medium text-gray-900">SENELEC</p>
-            </TableCell>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">MAINTENANCE</p>
-            </TableCell>
-            <TableCell className="px-6 py-4 whitespace-nowrap">
-              <p className="text-sm text-gray-900">05/01/2025</p>
-            </TableCell>
-          </TableRow>
+          {plans.map((plan) => (
+            <TableRow key={plan.id}>
+              <TableCell className="px-6 py-4 whitespace-nowrap">
+                <p className="text-sm font-medium text-gray-900">{plan.client}</p>
+              </TableCell>
+              <TableCell className="px-6 py-4 whitespace-nowrap">
+                <p className="text-sm text-gray-900">{plan.type}</p>
+              </TableCell>
+              <TableCell className="px-6 py-4 whitespace-nowrap">
+                <p className="text-sm text-gray-900">{plan.date}</p>
+              </TableCell>
+            </TableRow>
+          ))}
         </TableBody>
       </Table>
     </div>

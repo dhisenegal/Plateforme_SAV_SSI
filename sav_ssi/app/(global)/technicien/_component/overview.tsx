@@ -14,32 +14,39 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getInterventionsActives, getMaintenancesActives, getInterventionsHorsDelai } from '@/actions/technicien/acceuil';
+import { getInterventionsActives, getMaintenancesActives, getInterventionsHorsDelai,getNextInterventionsAndMaintenances } from '@/actions/technicien/acceuil';
+
 
 export default function OverViewPage() {
-    const { data: session } = useSession();
-    const [interventionsCount, setInterventionsCount] = useState(0);
-    const [maintenancesCount, setMaintenancesCount] = useState(0);
-    const [interventionsHorsDelaiCount, setInterventionsHorsDelaiCount] = useState<number>(0);
-    const technicienId = Number(session?.user?.id);
-  
-    useEffect(() => {
-      async function fetchData() {
-        try {
-          const [interventions, maintenances, interventionsHorsDelai] = await Promise.all([
-            getInterventionsActives(technicienId),
-            getMaintenancesActives(technicienId),
-            getInterventionsHorsDelai(technicienId)
-          ]);
-          setInterventionsCount(interventions);
-          setMaintenancesCount(maintenances);
-          setInterventionsHorsDelaiCount(interventionsHorsDelai);
-        } catch (error) {
-          console.error("Erreur lors de la récupération des données:", error);
-        }
+  const { data: session } = useSession();
+  const [interventionsCount, setInterventionsCount] = useState(0);
+  const [maintenancesCount, setMaintenancesCount] = useState(0);
+  const [interventionsHorsDelaiCount, setInterventionsHorsDelaiCount] = useState<number>(0);
+  const [upcomingPlans, setUpcomingPlans] = useState<Plan[]>([]); // Initialize with an empty array
+
+  const technicienId = Number(session?.user?.id);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const [interventions, maintenances, interventionsHorsDelai, nextPlans] = await Promise.all([
+          getInterventionsActives(technicienId),
+          getMaintenancesActives(technicienId),
+          getInterventionsHorsDelai(technicienId),
+          getNextInterventionsAndMaintenances(technicienId),
+        ]);
+
+        setInterventionsCount(interventions);
+        setMaintenancesCount(maintenances);
+        setInterventionsHorsDelaiCount(interventionsHorsDelai);
+        setUpcomingPlans(nextPlans || []); // Ensure nextPlans is not undefined
+      } catch (error) {
+        console.error("Erreur lors de la récupération des données:", error);
       }
-      fetchData();
-    }, []);
+    }
+    fetchData();
+  }, [technicienId]);
+
   
   return (
     <PageContainer scrollable>
@@ -102,7 +109,7 @@ export default function OverViewPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">2</div>
+                  <div className="text-2xl font-bold">0</div> {/* Affichage des maintenances hors délai */}
                   <p className="text-xs text-muted-foreground">
                     +30% par rapport au dernier mois
                   </p>
@@ -115,13 +122,11 @@ export default function OverViewPage() {
               </div>
               <Card className="col-span-4 md:col-span-3">
                 <CardHeader>
-                  <CardTitle>Derniéres interventions / maintenances</CardTitle>
-                  <CardDescription>
-                    Vous avez effectué 25 interventions ce mois.
-                  </CardDescription>
+                  <CardTitle>Prochaine interventions / maintenances</CardTitle>
+                 
                 </CardHeader>
                 <CardContent>
-                  <RecentInterventions />
+                  <RecentInterventions plans={upcomingPlans}/>
                 </CardContent>
               </Card>
               <div className="col-span-4">

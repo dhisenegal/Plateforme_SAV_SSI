@@ -14,9 +14,6 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-<<<<<<< HEAD
-import {getInterventionsActives} from "@/actions/technicien/acceuil";
-=======
 import { useEffect, useState } from 'react';
 import { 
   getNewInterventionsCount, 
@@ -29,7 +26,6 @@ interface StatisticData {
   count: number;
   percentageChange: number;
 }
->>>>>>> 8d50f79b902f094a305f68eecb5db4bcf73817d7
 
 export default function OverViewPage() {
   const { data: session } = useSession();
@@ -193,7 +189,7 @@ export default function OverViewPage() {
               </div>
               <Card className="col-span-4 md:col-span-3">
                 <CardHeader>
-                  <CardTitle>Derniéres interventions</CardTitle>
+                  <CardTitle>interventions</CardTitle>
                   <CardDescription>
                     Vous avez effectué {statistics.newInterventions.count} interventions ce mois.
                   </CardDescription>

@@ -177,7 +177,7 @@ model Maintenance {
   description       String
   statut            EnumStatut_i @default(NON_PLANIFIE)
   typeMaintenance   String
-  datePlanifiee     DateTime @default(Null)
+  datePlanifiee     DateTime?
   idTechnicien      Int
   idSite            Int
   idInstallation    Int
