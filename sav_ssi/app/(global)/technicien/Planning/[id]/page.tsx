@@ -319,6 +319,8 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     );
   };
 
+  console.log("Rendering maintenance actions:", maintenanceActions); // Log the actions before rendering
+
   return (
     <Card className="mx-auto w-full max-w-4xl relative">
       {isOverlayVisible && (
@@ -457,6 +459,10 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         </DialogContent>
       </Dialog>
     </Card>
+<<<<<<< HEAD
+   </>
+=======
+>>>>>>> 56c50e95fbbaeca2a0caa83ae6e9a121a957db23
   );
 };
 
