@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
+import {useSearchParams} from "next/navigation";
 import { fr } from "date-fns/locale";
 import { FaPlus, FaEdit, FaTrash, FaPause, FaPlay, FaCalendarAlt, FaSpinner } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,7 @@ const InterventionsList = () => {
     idTechnicien: "",
   });
   const itemsPerPage = 10;
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     const fetchTechniciens = async () => {
@@ -71,6 +73,14 @@ const InterventionsList = () => {
     }
   }, [currentPage, searchQuery, statusFilter, startDate, endDate]);
 
+  useEffect(() => {
+    // Récupérer le status depuis l'URL si présent
+    const statusFromUrl = searchParams.get("status");
+    if (statusFromUrl) {
+      setStatusFilter(statusFromUrl);
+    }
+  }, [searchParams]);
+  
   const getStatusBadge = useCallback((status) => {
     const statusStyles = {
       NON_PLANIFIE: "bg-gray-500",

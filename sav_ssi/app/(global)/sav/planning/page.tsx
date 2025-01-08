@@ -5,19 +5,39 @@ import { Calendar, dateFnsLocalizer } from "react-big-calendar";
 import { format, parse, startOfWeek, getDay } from "date-fns";
 import { fr } from "date-fns/locale";
 import "react-big-calendar/lib/css/react-big-calendar.css";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { getAllMaintenances } from "@/actions/sav/maintenance";
-import Modal from "react-modal";
 
-type EventData = {
-  title: string;
-  start: Date;
-  end: Date;
-  id: string;
-  status: string;
-  clientName: string;
+// Type pour les données de maintenance basé sur votre schéma Prisma
+type MaintenanceData = {
+  id: number;
+  numero: string;
+  dateMaintenance: Date;
   description: string;
+  statut: "PLANIFIE" | "EN_COURS" | "SUSPENDU" | "TERMINE" | "NON_PLANIFIE";
   typeMaintenance: string;
-  technicienName: string;
+  Site: {
+    nom: string;
+    Client: {
+      nom: string;
+    };
+  };
+  Installation: {
+    Systeme: {
+      nom: string;
+    };
+  };
+  Contact: {
+    Client: {
+      nom: string;
+    };
+  };
+  Technicien: {
+    nom: string;
+    prenom: string;
+  };
 };
 
 const locales = {
@@ -32,27 +52,16 @@ const localizer = dateFnsLocalizer({
   locales,
 });
 
-const PlanningPage = () => {
-  const [events, setEvents] = useState<EventData[]>([]);
-  const [modalOpen, setModalOpen] = useState(false);
-  const [selectedEvent, setSelectedEvent] = useState<EventData | null>(null);
+export default function PlanningPage() {
+  const [maintenances, setMaintenances] = useState<MaintenanceData[]>([]);
+  const [selectedMaintenance, setSelectedMaintenance] = useState<MaintenanceData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchMaintenances = async () => {
       try {
         const { maintenances } = await getAllMaintenances();
-        const formattedEvents = maintenances.map((maintenance) => ({
-          title: maintenance.Site.Client.nom,
-          start: new Date(maintenance.dateMaintenance),
-          end: new Date(maintenance.dateMaintenance),
-          id: maintenance.id.toString(),
-          status: maintenance.statut,
-          clientName: maintenance.Site.Client.nom,
-          description: maintenance.description,
-          typeMaintenance: maintenance.typeMaintenance,
-          technicienName: `${maintenance.Technicien.prenom} ${maintenance.Technicien.nom}`,
-        }));
-        setEvents(formattedEvents);
+        setMaintenances(maintenances);
       } catch (error) {
         console.error("Erreur lors de la récupération des maintenances:", error);
       }
@@ -61,36 +70,54 @@ const PlanningPage = () => {
     fetchMaintenances();
   }, []);
 
-  const eventStyleGetter = (event: EventData) => {
-    let backgroundColor = "";
-    switch (event.status) {
-      case "PLANIFIE":
-        backgroundColor = "blue";
-        break;
-      case "SUSPENDU":
-        backgroundColor = "red";
-        break;
-      case "TERMINE":
-        backgroundColor = "green";
-        break;
-      default:
-        backgroundColor = "gray";
-    }
+  const events = maintenances.map((maintenance) => ({
+    id: maintenance.id,
+    title: `${maintenance.Contact.Client.nom} - ${maintenance.typeMaintenance}`,
+    start: new Date(maintenance.dateMaintenance),
+    end: new Date(maintenance.dateMaintenance),
+    resource: maintenance, // Stocke toutes les données de maintenance pour le modal
+  }));
+
+  const getEventStyle = (event: any) => {
+    const colors = {
+      PLANIFIE: "bg-blue-500",
+      SUSPENDU: "bg-red-500",
+      TERMINE: "bg-green-500",
+      EN_COURS: "bg-yellow-500",
+      NON_PLANIFIE: "bg-gray-500"
+    };
+
+    const status = event.resource.statut;
     return {
-      style: {
-        backgroundColor,
-      },
+      className: `${colors[status] || "bg-gray-500"} text-white rounded-md p-1`
     };
   };
 
-  const handleSelectEvent = (event: EventData) => {
-    setSelectedEvent(event);
-    setModalOpen(true);
+  const handleEventSelect = (event: any) => {
+    setSelectedMaintenance(event.resource);
+    setIsModalOpen(true);
   };
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">Gestion du Planning</h1>
+    <div className="p-6 space-y-6">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Planning des Maintenances</h1>
+        
+        <div className="flex gap-2">
+          {Object.entries({
+            PLANIFIE: "Planifié",
+            EN_COURS: "En cours",
+            SUSPENDU: "Suspendu",
+            TERMINE: "Terminé",
+            NON_PLANIFIE: "Non planifié"
+          }).map(([status, label]) => (
+            <Badge key={status} variant="outline" className={`${getEventStyle({ resource: { statut: status } }).className}`}>
+              {label}
+            </Badge>
+          ))}
+        </div>
+      </div>
+
       <Calendar
         localizer={localizer}
         events={events}
@@ -98,35 +125,76 @@ const PlanningPage = () => {
         endAccessor="end"
         style={{ height: "80vh" }}
         culture="fr"
-        eventPropGetter={eventStyleGetter}
-        onSelectEvent={handleSelectEvent}
+        eventPropGetter={getEventStyle}
+        onSelectEvent={handleEventSelect}
+        views={["month", "week", "day"]}
+        messages={{
+          next: "Suivant",
+          previous: "Précédent",
+          today: "Aujourd'hui",
+          month: "Mois",
+          week: "Semaine",
+          day: "Jour"
+        }}
       />
 
-      {selectedEvent && (
-        <Modal
-          isOpen={modalOpen}
-          onRequestClose={() => setModalOpen(false)}
-          contentLabel="Détails de l'événement"
-          ariaHideApp={false}
-          className="bg-white rounded-lg p-6 max-w-lg mx-auto"
-          overlayClassName="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center"
-        >
-          <h2 className="text-xl font-bold mb-4">{selectedEvent.clientName}</h2>
-          <p><strong>Description:</strong> {selectedEvent.description}</p>
-          <p><strong>Type de maintenance:</strong> {selectedEvent.typeMaintenance}</p>
-          <p><strong>Technicien:</strong> {selectedEvent.technicienName}</p>
-          <p><strong>Date:</strong> {selectedEvent.start.toLocaleDateString()}</p>
-          <p><strong>Statut:</strong> {selectedEvent.status}</p>
-          <button
-            onClick={() => setModalOpen(false)}
-            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
-          >
-            Fermer
-          </button>
-        </Modal>
-      )}
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        {selectedMaintenance && (
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle className="text-xl font-bold">
+                {selectedMaintenance.Contact.Client.nom}
+              </DialogTitle>
+            </DialogHeader>
+            
+            <div className="space-y-4">
+              <Card>
+                <CardContent className="pt-6">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="font-semibold">Numéro</p>
+                      <p>{selectedMaintenance.numero}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold">Type de maintenance</p>
+                      <p>{selectedMaintenance.typeMaintenance}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold">Site</p>
+                      <p>{selectedMaintenance.Site.nom}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold">Système</p>
+                      <p>{selectedMaintenance.Installation.Systeme.nom}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold">Technicien</p>
+                      <p>{`${selectedMaintenance.Technicien.prenom} ${selectedMaintenance.Technicien.nom}`}</p>
+                    </div>
+                    <div>
+                      <p className="font-semibold">Date</p>
+                      <p>{format(new Date(selectedMaintenance.dateMaintenance), 'dd/MM/yyyy')}</p>
+                    </div>
+                    <div className="col-span-2">
+                      <p className="font-semibold">Statut</p>
+                      <Badge className={getEventStyle({ resource: selectedMaintenance }).className}>
+                        {selectedMaintenance.statut}
+                      </Badge>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="pt-6">
+                  <h3 className="font-semibold mb-4">Description</h3>
+                  <p>{selectedMaintenance.description}</p>
+                </CardContent>
+              </Card>
+            </div>
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   );
-};
-
-export default PlanningPage;
+}
