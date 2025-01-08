@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import {useSearchParams} from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@/components/ui/table";
@@ -26,13 +27,35 @@ const ContratPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [totalContracts, setTotalContracts] = useState(0);
-
+  const [filter, setFilter] = useState("");
+  
+  const params = useSearchParams();
   useEffect(() => {
     const fetchContracts = async () => {
-      const { contrats, total } = await getAllContrats(currentPage, itemsPerPage);
+      // Récupérer le filtre depuis l'URL
+      const urlFilter = params.get('filter')?.toString();
+      setFilter(urlFilter || "");
+
+      // Modifier la requête en fonction du filtre
+      let whereClause = {};
+      
+      if (urlFilter === "expiring") {
+        const thirtyDaysFromNow = new Date();
+        thirtyDaysFromNow.setDate(thirtyDaysFromNow.getDate() + 30);
+        
+        whereClause = {
+          dateFin: {
+            lte: thirtyDaysFromNow,
+            gte: new Date() // Pour exclure les contrats déjà expirés
+          }
+        };
+      }
+
+      const { contrats, total } = await getAllContrats(currentPage, itemsPerPage, whereClause);
       setContracts(contrats);
       setTotalContracts(total);
     };
+
     fetchContracts();
     setLoading(false);
   }, [currentPage, itemsPerPage]);

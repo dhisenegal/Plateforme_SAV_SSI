@@ -1,5 +1,6 @@
 "use client";
 
+import {useRouter} from "next/navigation";
 import { AreaGraph } from './area-graph';
 import { BarGraph } from './bar-graph';
 import { PieGraph } from './pie-graph';
@@ -59,6 +60,7 @@ export default function OverViewPage() {
 
     fetchStatistics();
   }, []);
+  const router = useRouter();
 
   return (
     <PageContainer scrollable>
@@ -77,7 +79,9 @@ export default function OverViewPage() {
           </TabsList>
           <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Card>
+              <Card 
+              className="cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => router.push("/sav/interventions?status=NON_PLANIFIE")}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
                     Demandes intervention
@@ -156,7 +160,8 @@ export default function OverViewPage() {
                   </p>
                 </CardContent>
               </Card>
-              <Card>
+              <Card  className="cursor-pointer hover:opacity-90 transition-opacity"
+              onClick={() => router.push("/sav/contrats?filter=expiring")}>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
                     Contrats bientot expirés

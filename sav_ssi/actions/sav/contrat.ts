@@ -4,11 +4,16 @@ import { prisma } from "@/prisma";
 import { Contrat, Client, Site } from "@prisma/client";
 
 // Récupérer tous les contrats avec pagination
-export const getAllContrats = async (page: number, pageSize: number): Promise<{ contrats: Contrat[], total: number }> => {
+export const getAllContrats = async (
+  page: number, 
+  pageSize: number,
+  whereClause: Record<string> = {}
+): Promise<{ contrats: Contrat[], total: number }> => {
   const [contrats, total] = await prisma.$transaction([
     prisma.contrat.findMany({
       skip: (page - 1) * pageSize,
       take: pageSize,
+      where: whereClause,
       include: {
         Site: {
           include: {
@@ -17,7 +22,9 @@ export const getAllContrats = async (page: number, pageSize: number): Promise<{ 
         },
       },
     }),
-    prisma.contrat.count(),
+    prisma.contrat.count({
+      where: whereClause
+    }),
   ]);
 
   return { contrats, total };
