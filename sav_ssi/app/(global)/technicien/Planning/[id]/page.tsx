@@ -9,19 +9,14 @@ import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { FaCheckCircle, FaTimesCircle, FaEdit } from 'react-icons/fa';
+import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { getSystemIdFromInstallation, getActionsBySystem } from '@/actions/admin/maintenanceAction';
-import {
-  Form,
-  FormControl,
-  FormItem,
-  FormLabel,
-  FormMessage
-} from '@/components/ui/form';
+import { Form, FormControl, FormItem, FormLabel } from '@/components/ui/form';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { updateIntervention, updateInterventionStatus } from '@/actions/technicien/planning';
-import { Dialog, DialogContent, DialogTitle, DialogDescription, DialogOverlay, DialogClose } from '@radix-ui/react-dialog';
-import InterventionSection from '@/actions/technicien/InterventionSection';
+import { updateIntervention, updateInterventionStatus, updateMaintenanceAction } from '@/actions/technicien/planning';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@radix-ui/react-dialog';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 const formSchema = z.object({
   diagnostic: z.string().min(1, {
@@ -142,6 +137,15 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         console.log('Données validées avec succès', result);
       }
 
+      if (id && type === 'maintenance') {
+        const updates = actions.map((action, idx) => ({
+          idAction: action.id,
+          statut: selectedStatus[idx] === 'valide',
+          observation: observations[idx] || ''
+        }));
+        await updateMaintenanceAction(parseInt(id), updates);
+      }
+
       setIsOverlayVisible(true);
 
       if (id && type) {
@@ -213,6 +217,21 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
 
   const handleObservationChange = (taskIdx: number, observation: string) => {
     setObservations((prev) => ({ ...prev, [taskIdx]: observation }));
+  };
+
+  const exportToPDF = () => {
+    const input = document.getElementById('pdf-content');
+    if (input) {
+      html2canvas(input).then((canvas) => {
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF();
+        const imgProps = pdf.getImageProperties(imgData);
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.save('export.pdf');
+      });
+    }
   };
 
   if (loading) {
@@ -319,150 +338,151 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     );
   };
 
-  console.log("Rendering maintenance actions:", maintenanceActions); // Log the actions before rendering
-
   return (
-    <Card className="mx-auto w-full max-w-4xl relative">
-      {isOverlayVisible && (
-        <div className="absolute inset-0 bg-gray-800 bg-opacity-50 z-10 flex justify-center items-center">
-          <div className="text-white text-xl">Les informations ont été validées avec succès</div>
-        </div>
-      )}
-      <CardHeader>
-        <CardTitle className="text-left text-2xl font-bold">
-          Détails {type === 'maintenance' ? 'de la maintenance' : 'de l\'intervention'}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSave)} className="space-y-8 relative">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="space-y-5">
-                <FormItem>
-                  <FormLabel>Date {type === 'maintenance' ? 'de la maintenance' : 'de l\'intervention'}</FormLabel>
-                  <FormControl>
-                    <Input value={formatDate(details.datePlanifiee) || 'N/A' } readOnly />
-                  </FormControl>
-                </FormItem>
-                <FormItem>
-                  <FormLabel>Nom du client</FormLabel>
-                  <FormControl>
-                    <Input value={details.clientName || 'N/A'} readOnly />
-                  </FormControl>
-                </FormItem>
-                <FormItem>
-                  <FormLabel>Site</FormLabel>
-                  <FormControl>
-                    <Input value={details.siteName || 'N/A'} readOnly />
-                  </FormControl>
-                </FormItem>
-                <FormItem>
-                  <FormLabel>Date de déclaration de la panne</FormLabel>
-                  <FormControl>
-                    <Input value={formatDate(details.dateDeclaration) || 'N/A'} readOnly />
-                  </FormControl>
-                </FormItem>
-              </div>
-              <div className="space-y-5">
-                <FormItem>
-                  <FormLabel>Système</FormLabel>
-                  <FormControl>
-                    <Input value={details.systeme || 'N/A'} readOnly />
-                  </FormControl>
-                </FormItem>
-                <FormItem>
-                  <FormLabel>Type de panne déclarée</FormLabel>
-                  <FormControl>
-                    <Input value={details.description || 'Aucune description disponible'} readOnly />
-                  </FormControl>
-                </FormItem>
-                <FormItem>
-                  <FormLabel>Statut</FormLabel>
-                  <FormControl>
-                    <Input
-                      value={details.statut ? details.statut : 'Non défini'}
-                      readOnly
-                      className={
-                        details.statut === 'SUSPENDUE'
-                          ? 'text-red-500 font-bold'
-                          : details.statut === 'EN_COURS'
-                          ? 'text-green-500 font-bold'
-                          : ''
-                      }
-                    />
-                  </FormControl>
-                </FormItem>
-                <FormItem>
-                  <FormLabel>Matériel sous garantie</FormLabel>
-                  <FormControl>
-                    <Input value="Oui" readOnly className="text-blue-400" />
-                  </FormControl>
-                </FormItem>
-              </div>
-            </div>
-
-            {type === 'intervention' && (
-              <InterventionSection form={form} isEditable={isEditable} />
-            )}
-            
-            {renderMaintenanceSection()}
-
-            <div className="flex justify-end space-x-4 mt-6">
-              <Button
-                type="button"
-                onClick={handleSuspendOrResume}
-                disabled={isSaving}
-                className={isSuspended ? 'bg-orange-500 hover:bg-orange-600' : 'bg-red-500 hover:bg-red-600'}
-              >
-                {isSuspended ? 'Reprendre' : 'Suspendre'}
-              </Button>
-              <Button 
-                type="submit" 
-                disabled={isSaving} 
-                className="bg-blue-500 hover:bg-blue-600"
-              >
-                {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
-              </Button>
-              <Button 
-                type="button"
-                onClick={() => setIsConfirmDialogOpen(true)} 
-                disabled={isSaving} 
-                className="bg-green-500 hover:bg-green-600"
-              >
-                {isSaving ? 'Validation...' : 'Valider'}
-              </Button>
-            </div>
-          </form>
-        </Form>
-      </CardContent>
-
-      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
-          <DialogHeader 
-            title="Confirmation de Validation" 
-            description="Êtes-vous sûr de vouloir valider les informations ?" 
-          />
-          <div className="flex justify-between">
-            <Button
-              onClick={handleValidate}
-              className="bg-green-500 text-white hover:bg-green-600"
-            >
-              Oui
-            </Button>
-            <Button 
-              onClick={() => setIsConfirmDialogOpen(false)} 
-              className="bg-gray-500 text-white hover:bg-gray-600"
-            >
-              Annuler
-            </Button>
+    <>
+      <div className="flex justify-end mb-4">
+        <Button onClick={exportToPDF} className="bg-blue-500 hover:bg-blue-600 text-white">
+          Exporter
+        </Button>
+      </div>
+      <Card id="pdf-content" className="mx-auto w-full max-w-4xl relative">
+        {isOverlayVisible && (
+          <div className="absolute inset-0 bg-gray-800 bg-opacity-50 z-10 flex justify-center items-center">
+            <div className="text-white text-xl">Les informations ont été validées avec succès</div>
           </div>
-        </DialogContent>
-      </Dialog>
-    </Card>
-<<<<<<< HEAD
-   </>
-=======
->>>>>>> 56c50e95fbbaeca2a0caa83ae6e9a121a957db23
+        )}
+        <CardHeader>
+          <CardTitle className="text-left text-2xl font-bold">
+            Détails {type === 'maintenance' ? 'de la maintenance' : 'de l\'intervention'}
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSave)} className="space-y-8 relative">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-5">
+                  <FormItem>
+                    <FormLabel>Date {type === 'maintenance' ? 'de la maintenance' : 'de l\'intervention'}</FormLabel>
+                    <FormControl>
+                      <Input value={formatDate(details.datePlanifiee) || 'N/A'} readOnly />
+                    </FormControl>
+                  </FormItem>
+                  <FormItem>
+                    <FormLabel>Nom du client</FormLabel>
+                    <FormControl>
+                      <Input value={details.clientName || 'N/A'} readOnly />
+                    </FormControl>
+                  </FormItem>
+                  <FormItem>
+                    <FormLabel>Site</FormLabel>
+                    <FormControl>
+                      <Input value={details.siteName || 'N/A'} readOnly />
+                    </FormControl>
+                  </FormItem>
+                  <FormItem>
+                    <FormLabel>Date de déclaration de la panne</FormLabel>
+                    <FormControl>
+                      <Input value={formatDate(details.dateDeclaration) || 'N/A'} readOnly />
+                    </FormControl>
+                  </FormItem>
+                </div>
+                <div className="space-y-5">
+                  <FormItem>
+                    <FormLabel>Système</FormLabel>
+                    <FormControl>
+                      <Input value={details.systeme || 'N/A'} readOnly />
+                    </FormControl>
+                  </FormItem>
+                  <FormItem>
+                    <FormLabel>Type de panne déclarée</FormLabel>
+                    <FormControl>
+                      <Input value={details.description || 'Aucune description disponible'} readOnly />
+                    </FormControl>
+                  </FormItem>
+                  <FormItem>
+                    <FormLabel>Statut</FormLabel>
+                    <FormControl>
+                      <Input
+                        value={details.statut ? details.statut : 'Non défini'}
+                        readOnly
+                        className={
+                          details.statut === 'SUSPENDUE'
+                            ? 'text-red-500 font-bold'
+                            : details.statut === 'EN_COURS'
+                            ? 'text-green-500 font-bold'
+                            : ''
+                        }
+                      />
+                    </FormControl>
+                  </FormItem>
+                  <FormItem>
+                    <FormLabel>Matériel sous garantie</FormLabel>
+                    <FormControl>
+                      <Input value="Oui" readOnly className="text-blue-400" />
+                    </FormControl>
+                  </FormItem>
+                </div>
+              </div>
+
+              {type === 'intervention' && (
+                <InterventionSection form={form} isEditable={isEditable} />
+              )}
+
+              {renderMaintenanceSection()}
+
+              <div className="flex justify-end space-x-4 mt-6">
+                <Button
+                  type="button"
+                  onClick={handleSuspendOrResume}
+                  disabled={isSaving}
+                  className={isSuspended ? 'bg-orange-500 hover:bg-orange-600' : 'bg-red-500 hover:bg-red-600'}
+                >
+                  {isSuspended ? 'Reprendre' : 'Suspendre'}
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isSaving}
+                  className="bg-blue-500 hover:bg-blue-600"
+                >
+                  {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
+                </Button>
+                <Button
+                  type="button"
+                  onClick={() => setIsConfirmDialogOpen(true)}
+                  disabled={isSaving}
+                  className="bg-green-500 hover:bg-green-600"
+                >
+                  {isSaving ? 'Validation...' : 'Valider'}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </CardContent>
+
+        <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
+          <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
+            <DialogHeader
+              title="Confirmation de Validation"
+              description="Êtes-vous sûr de vouloir valider les informations ?"
+            />
+            <div className="flex justify-between">
+              <Button
+                onClick={handleValidate}
+                className="bg-green-500 text-white hover:bg-green-600"
+              >
+                Oui
+              </Button>
+              <Button
+                onClick={() => setIsConfirmDialogOpen(false)}
+                className="bg-gray-500 text-white hover:bg-gray-600"
+              >
+                Annuler
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      </Card>
+    </>
   );
 };
 

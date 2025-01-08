@@ -21,6 +21,40 @@ export const updateInterventionStatus = async (id: number, statut: string) => {
     throw new Error('Erreur lors de la mise à jour du statut de l\'intervention');
   }
 };
+
+export const updateMaintenanceAction = async (idMaintenance, actions) => {
+  try {
+    // Validation des données
+    if (!Array.isArray(actions) || actions.length === 0) {
+      throw new Error('Les actions sont requises');
+    }
+
+    // Vérifier que toutes les actions ont les propriétés requises
+    actions.forEach(action => {
+      if (!action.idAction || typeof action.statut !== 'boolean' || typeof action.observation !== 'string') {
+        throw new Error('Format d\'action invalide');
+      }
+    });
+
+    const result = await prisma.$transaction(
+      actions.map((action) =>
+        prisma.maintenanceaction.create({
+          data: {
+            statut: action.statut,
+            observation: action.observation || '',
+            idMaintenance: idMaintenance,
+            idAction: action.idAction,
+          },
+        })
+      )
+    );
+
+    return result;
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour des actions de maintenance :', error);
+    throw error; // Propager l'erreur avec plus de détails
+  }
+};
 // Fonction pour mettre à jour une intervention
 export const updateIntervention = async (id: number, diagnostics: string, travauxRealises: string) => {
   try {
