@@ -170,14 +170,23 @@ model Garantie {
   InstallationEquipement InstallationEquipement @relation(fields: [idInstallationEq], references: [id])
 }
 
+model Planification {
+  id            Int       @id @default(autoincrement())
+  date          DateTime
+  previsionnel  Boolean   @default(false)
+  effectif      Boolean   @default(false)
+  idMaintenance Int
+  createdAt     DateTime  @default(now())
+  Maintenance   Maintenance @relation(fields: [idMaintenance], references: [id])
+}
+
+// Modification du modèle Maintenance
 model Maintenance {
   id                Int      @id @default(autoincrement())
   numero            String
-  dateMaintenance   DateTime?
   description       String
   statut            EnumStatut_i @default(NON_PLANIFIE)
-  typeMaintenance   String
-  datePlanifiee     DateTime?
+  typeMaintenance   String?
   idTechnicien      Int
   idSite            Int
   idInstallation    Int
@@ -187,6 +196,7 @@ model Maintenance {
   Installation      Installation @relation(fields: [idInstallation], references: [id], onDelete: Cascade)
   Technicien        Utilisateur  @relation("TechnicienMaintenance", fields: [idTechnicien], references: [id])
   Actions           MaintenanceAction[]
+  Planifications    Planification[] // Nouvelle relation
 }
 
 model ActionMaintenance {
@@ -210,6 +220,8 @@ model Intervention {
   id                Int      @id @default(autoincrement())
   statut            EnumStatut_i @default(NON_PLANIFIE)
   typePanneDeclare  String
+  commentaire       String?
+  horsDelai             Boolean @default(false)
   dateDeclaration   DateTime
   idClient          Int?
   idSite            Int?

@@ -168,14 +168,24 @@ CREATE TABLE `Garantie` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `Planification` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `date` DATETIME(3) NOT NULL,
+    `previsionnel` BOOLEAN NOT NULL DEFAULT false,
+    `effectif` BOOLEAN NOT NULL DEFAULT false,
+    `idMaintenance` INTEGER NOT NULL,
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `Maintenance` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `numero` VARCHAR(191) NOT NULL,
-    `dateMaintenance` DATETIME(3) NULL,
     `description` VARCHAR(191) NOT NULL,
     `statut` ENUM('EN_COURS', 'SUSPENDU', 'TERMINE', 'NON_PLANIFIE', 'PLANIFIE') NOT NULL DEFAULT 'NON_PLANIFIE',
     `typeMaintenance` VARCHAR(191) NOT NULL,
-    `datePlanifiee` DATETIME(3) NULL,
     `idTechnicien` INTEGER NOT NULL,
     `idSite` INTEGER NOT NULL,
     `idInstallation` INTEGER NOT NULL,
@@ -279,6 +289,9 @@ ALTER TABLE `Contrat` ADD CONSTRAINT `Contrat_idSite_fkey` FOREIGN KEY (`idSite`
 
 -- AddForeignKey
 ALTER TABLE `Garantie` ADD CONSTRAINT `Garantie_idInstallationEq_fkey` FOREIGN KEY (`idInstallationEq`) REFERENCES `InstallationEquipement`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Planification` ADD CONSTRAINT `Planification_idMaintenance_fkey` FOREIGN KEY (`idMaintenance`) REFERENCES `Maintenance`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Maintenance` ADD CONSTRAINT `Maintenance_idSite_fkey` FOREIGN KEY (`idSite`) REFERENCES `Site`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
