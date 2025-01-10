@@ -175,9 +175,11 @@ model Maintenance {
   numero            String
   dateMaintenance   DateTime?
   description       String
-  statut            EnumStatut_i @default(NON_PLANIFIE)
+  statut            EnumStatut_m @default(PLANIFIE)
   typeMaintenance   String
   datePlanifiee     DateTime?
+  Heuredebut        DateTime?
+  Heuredefin        DateTime?
   idTechnicien      Int
   idSite            Int
   idInstallation    Int
@@ -222,9 +224,11 @@ model Intervention {
   pieceFournies     String?
   datePlanifiee     DateTime?
   dateIntervention  DateTime?
-  dureeHeure        Int?
+  dureeHeure        DateTime?
+  Heureint          DateTime?
   numero            Int?
   ficheInt          String?
+  delai             Boolean @default(false)
   idTechnicien      Int?
   prenomContact     String?
   telephoneContact  String?
@@ -237,5 +241,13 @@ enum EnumStatut_i {
   SUSPENDU
   TERMINE
   NON_PLANIFIE
+  PLANIFIE
+}
+
+
+enum EnumStatut_m {
+  EN_COURS
+  SUSPENDU
+  TERMINE
   PLANIFIE
 }

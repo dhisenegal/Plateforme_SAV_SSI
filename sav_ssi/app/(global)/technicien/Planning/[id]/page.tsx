@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchDetails } from '@/lib/fonctionas';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import { formatDate } from '@/lib/fonction';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
@@ -15,6 +15,7 @@ import { Form, FormControl, FormItem, FormLabel } from '@/components/ui/form';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { updateIntervention, updateInterventionStatus, updateMaintenanceAction } from '@/actions/technicien/planning';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@radix-ui/react-dialog';
+import InterventionSection from '@/actions/technicien/InterventionSection';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
@@ -24,6 +25,9 @@ const formSchema = z.object({
   }),
   travauxRealises: z.string().min(1, {
     message: 'Travaux réalisés are required.'
+  }),
+  dureeHeure: z.string().min(1, {
+    message: 'La durée de l\'intervention est requise.'
   })
 });
 
@@ -47,6 +51,8 @@ interface MaintenanceAction {
 const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
   const params = useParams();
   const searchParams = useSearchParams();
+  console.log("Params:", params); // Debugging line
+
   const [details, setDetails] = useState<any | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -64,16 +70,28 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       diagnostic: '',
-      travauxRealises: ''
+      travauxRealises: '',
+      dureeHeure:'',
     }
   });
 
-  const id = params?.id;
+  const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
+  console.log("ID:", id); // Debugging line
+  const router = useRouter();
+
   const type = searchParams?.get('type');
+  console.log("Type:", type); // Debugging line
 
   const saveToLocalStorage = (data: z.infer<typeof formSchema>) => {
     if (id) {
       localStorage.setItem(`formData-${id}`, JSON.stringify(data));
+    }
+  };
+  const handleValidateClick = (id, type) => {
+    if (type === 'maintenance') {
+      router.push(`/technicien/Maintenances/${id}`);
+    } else if (type === 'intervention') {
+      router.push(`/technicien/Interventions/${id}`);
     }
   };
 
@@ -129,31 +147,36 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     try {
       const data = form.getValues();
       console.log('Validation de l\'état', data);
-
+  
+      // Inclure la date du jour
+      const dateIntervention = new Date();
+  
       await handleSave(data);
-
-      if (id) {
-        const result = await updateIntervention(parseInt(id), data.diagnostic, data.travauxRealises);
+  
+      if (id && type === 'intervention') {
+        const result = await updateIntervention(parseInt(id), data.diagnostic, data.travauxRealises, dateIntervention, data.dureeHeure);
         console.log('Données validées avec succès', result);
       }
-
+  
       if (id && type === 'maintenance') {
         const updates = actions.map((action, idx) => ({
           idAction: action.id,
+          idMaintenance: parseInt(id as string),
           statut: selectedStatus[idx] === 'valide',
           observation: observations[idx] || ''
         }));
-        await updateMaintenanceAction(parseInt(id), updates);
+        await updateMaintenanceAction(parseInt(id as string), updates);
       }
-
+  
       setIsOverlayVisible(true);
-
+  
       if (id && type) {
         const updatedDetails = await fetchDetails(parseInt(id), type);
         setDetails(updatedDetails);
         form.reset({
           diagnostic: updatedDetails.diagnostic || data.diagnostic,
-          travauxRealises: updatedDetails.travauxRealises || data.travauxRealises
+          travauxRealises: updatedDetails.travauxRealises || data.travauxRealises,
+          dureeHeure: updatedDetails.dureeHeure || data.dureeHeure
         });
       }
     } catch (err) {
@@ -163,7 +186,6 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
       setIsConfirmDialogOpen(false);
     }
   };
-
   const handleSuspendOrResume = async () => {
     setIsSaving(true);
     try {
@@ -375,9 +397,8 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                   </FormItem>
                   <FormItem>
                     <FormLabel>Site</FormLabel>
-                    <FormControl>
                       <Input value={details.siteName || 'N/A'} readOnly />
-                    </FormControl>
+                    
                   </FormItem>
                   <FormItem>
                     <FormLabel>Date de déclaration de la panne</FormLabel>
@@ -385,6 +406,15 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                       <Input value={formatDate(details.dateDeclaration) || 'N/A'} readOnly />
                     </FormControl>
                   </FormItem>
+                  <FormItem>
+                             <FormLabel>Durée de l'intervention</FormLabel>
+                 <FormControl>
+                     <Input
+                  {...form.register('dureeIntervention')}
+                 placeholder="Durée de l'intervention"
+    />
+  </FormControl>
+</FormItem>
                 </div>
                 <div className="space-y-5">
                   <FormItem>
@@ -453,6 +483,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                   className="bg-green-500 hover:bg-green-600"
                 >
                   {isSaving ? 'Validation...' : 'Valider'}
+                
                 </Button>
               </div>
             </form>
@@ -467,7 +498,10 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
             />
             <div className="flex justify-between">
               <Button
-                onClick={handleValidate}
+                onClick={() => {
+                  handleValidate();
+                  handleValidateClick(id,type);
+                }}
                 className="bg-green-500 text-white hover:bg-green-600"
               >
                 Oui

@@ -22,7 +22,13 @@ export const updateInterventionStatus = async (id: number, statut: string) => {
   }
 };
 
-export const updateMaintenanceAction = async (idMaintenance, actions) => {
+interface Action {
+  idAction: number;
+  statut: boolean;
+  observation: string;
+}
+
+export const updateMaintenanceAction = async (MaintenanceId: number, actions: Action[]): Promise<any> => {
   try {
     // Validation des données
     if (!Array.isArray(actions) || actions.length === 0) {
@@ -30,39 +36,44 @@ export const updateMaintenanceAction = async (idMaintenance, actions) => {
     }
 
     // Vérifier que toutes les actions ont les propriétés requises
-    actions.forEach(action => {
+    actions.forEach((action: Action) => {
       if (!action.idAction || typeof action.statut !== 'boolean' || typeof action.observation !== 'string') {
         throw new Error('Format d\'action invalide');
       }
     });
 
+    console.log('Actions to insert:', actions); // Debugging line
+
     const result = await prisma.$transaction(
-      actions.map((action) =>
-        prisma.maintenanceaction.create({
+      actions.map((action: Action) =>
+        prisma.maintenanceAction.create({
           data: {
             statut: action.statut,
             observation: action.observation || '',
-            idMaintenance: idMaintenance,
+            idMaintenance: MaintenanceId,
             idAction: action.idAction,
           },
         })
       )
     );
 
+    console.log('Insertion result:', result); // Debugging line
     return result;
   } catch (error) {
-    console.error('Erreur lors de la mise à jour des actions de maintenance :', error);
+    console.log('Erreur lors de la mise à jour des actions de maintenance :', error);
     throw error; // Propager l'erreur avec plus de détails
   }
 };
 // Fonction pour mettre à jour une intervention
-export const updateIntervention = async (id: number, diagnostics: string, travauxRealises: string) => {
+export const updateIntervention = async (id: number, diagnostics: string, travauxRealises: string, dateIntervention: Date, dureeHeure: number ) => {
   try {
     const result = await prisma.intervention.update({
       where: { id: id },
       data: {
         diagnostics: diagnostics,
         travauxRealises: travauxRealises,
+        dateIntervention:dateIntervention,
+        dureeHeure: dureeHeure,
       },
     });
     return result;
