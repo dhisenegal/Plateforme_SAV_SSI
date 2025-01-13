@@ -6,6 +6,7 @@ import { FaCalendarAlt, FaClock, FaFileAlt, FaArrowLeft, FaPlus } from "react-ic
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { planifierMaintenance } from '@/actions/sav/maintenance';
 import { getAllTechniciens } from '@/actions/sav/technicien';
 import { getContactsBySite } from '@/actions/sav/contact';
 import { getInstallationsBySite } from '@/actions/sav/installation';
@@ -103,7 +104,6 @@ const SiteDetailsPage = () => {
             <FaArrowLeft className="mr-2" />
             Retour
           </button>
-          {/*
           <Button onClick={() => setIsOpen(true)} 
           className="mb-4 bg-blue-500 text-white hover:bg-blue-600">
             Planifier une maintenance
@@ -236,7 +236,7 @@ const SiteDetailsPage = () => {
             </Button>
           </DialogFooter>
         </DialogContent>
-      </Dialog>*/}
+      </Dialog>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <div className="flex flex-col items-center p-4 bg-white shadow rounded-lg">

@@ -19,9 +19,10 @@ import { useEffect, useState } from 'react';
 import { 
   getNewInterventionsCount, 
   getSuspendedInterventionsCount,
+  getOverdueInterventionsCount,
   getExpiringContractsCount 
 } from '@/actions/sav/analytic';
-import {  getOverdueInterventionsCount} from '@/actions/sav/intervention';
+
 interface StatisticData {
   count: number;
   percentageChange: number;
@@ -106,9 +107,7 @@ export default function OverViewPage() {
                   </p>
                 </CardContent>
               </Card>
-              <Card 
-              className="cursor-pointer hover:opacity-90 transition-opacity"
-              onClick={() => router.push("/sav/interventions?status=SUSPENDU")}>
+              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">
                     Interventions suspendues
@@ -136,9 +135,7 @@ export default function OverViewPage() {
                   </p>
                 </CardContent>
               </Card>
-              <Card className="cursor-pointer hover:opacity-90 transition-opacity"
-                
-                onClick={() => router.push("/sav/interventions?horsDelai=true")}>
+              <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Interventions hors délai</CardTitle>
                   <svg

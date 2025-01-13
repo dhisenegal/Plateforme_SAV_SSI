@@ -22,6 +22,7 @@ model Utilisateur {
   Interventions Intervention[] @relation("TechnicienIntervention")
   Maintenances Maintenance[]   @relation("TechnicienMaintenance")
   Sessions   Session[]
+  Commentaires Commentaire[]
 }
 
 model Role {
@@ -170,23 +171,16 @@ model Garantie {
   InstallationEquipement InstallationEquipement @relation(fields: [idInstallationEq], references: [id])
 }
 
-model Planification {
-  id            Int       @id @default(autoincrement())
-  date          DateTime
-  previsionnel  Boolean   @default(false)
-  effectif      Boolean   @default(false)
-  idMaintenance Int
-  createdAt     DateTime  @default(now())
-  Maintenance   Maintenance @relation(fields: [idMaintenance], references: [id])
-}
-
-// Modification du modèle Maintenance
 model Maintenance {
   id                Int      @id @default(autoincrement())
   numero            String
+  dateMaintenance   DateTime?
   description       String
-  statut            EnumStatut_i @default(NON_PLANIFIE)
-  typeMaintenance   String?
+  statut            EnumStatut_m @default(PLANIFIE)
+  typeMaintenance   String
+  datePlanifiee     DateTime?
+  Heuredebut        DateTime?
+  Heuredefin        DateTime?
   idTechnicien      Int
   idSite            Int
   idInstallation    Int
@@ -196,7 +190,6 @@ model Maintenance {
   Installation      Installation @relation(fields: [idInstallation], references: [id], onDelete: Cascade)
   Technicien        Utilisateur  @relation("TechnicienMaintenance", fields: [idTechnicien], references: [id])
   Actions           MaintenanceAction[]
-  Planifications    Planification[] // Nouvelle relation
 }
 
 model ActionMaintenance {
@@ -220,8 +213,6 @@ model Intervention {
   id                Int      @id @default(autoincrement())
   statut            EnumStatut_i @default(NON_PLANIFIE)
   typePanneDeclare  String
-  commentaire       String?
-  horsDelai             Boolean @default(false)
   dateDeclaration   DateTime
   idClient          Int?
   idSite            Int?
@@ -234,20 +225,39 @@ model Intervention {
   pieceFournies     String?
   datePlanifiee     DateTime?
   dateIntervention  DateTime?
-  dureeHeure        Int?
+  dureeHeure        DateTime?
+  Heureint          DateTime?
   numero            Int?
   ficheInt          String?
+  delai             Boolean @default(false)
   idTechnicien      Int?
   prenomContact     String?
   telephoneContact  String?
   adresse           String?
   Technicien        Utilisateur? @relation("TechnicienIntervention", fields: [idTechnicien], references: [id])
+  Commentaires      Commentaire[]
 }
-
+model Commentaire {
+  id                Int      @id @default(autoincrement())
+  idIntervention    Int
+  idUtilisateur     Int
+  commentaire       String
+  dateCommentaire   DateTime @default(now())
+  Utilisateur       Utilisateur @relation(fields: [idUtilisateur], references: [id])
+  Intervention      Intervention @relation(fields: [idIntervention], references: [id])
+}
 enum EnumStatut_i {
   EN_COURS
   SUSPENDU
   TERMINE
   NON_PLANIFIE
+  PLANIFIE
+}
+
+
+enum EnumStatut_m {
+  EN_COURS
+  SUSPENDU
+  TERMINE
   PLANIFIE
 }

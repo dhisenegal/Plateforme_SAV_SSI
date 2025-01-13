@@ -29,6 +29,7 @@ export async function fetchDetails(id, type) {
           Client: { select: { nom: true } },
           Site: { select: { nom: true } },
           Systeme: { select: { nom: true } },
+          Technicien: { select: { prenom: true } },
         },
       });
 
@@ -56,6 +57,7 @@ export async function fetchDetails(id, type) {
         telephoneContact: intervention.telephoneContact,
         adresse: intervention.adresse,
         datePlanifiee: intervention.datePlanifiee,
+        technicienName: intervention.Technicien?.prenom || null,
       };
     } else if (type === 'maintenance') {
       const maintenance = await prisma.maintenance.findUnique({

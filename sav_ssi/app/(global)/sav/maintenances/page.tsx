@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FaSpinner, FaPause, FaEdit, FaPlus, FaHistory, FaCheck } from "react-icons/fa";
-import { getAllMaintenances, updateMaintenanceStatus, planifierMaintenanceGlobal, replanifierMaintenance, marquerMaintenanceEffectuee } from "@/actions/sav/maintenance";
+import { FaSpinner, FaPause, FaEdit, FaPlus } from "react-icons/fa";
+import { getAllMaintenances, updateMaintenanceStatus, planifierMaintenanceGlobal } from "@/actions/sav/maintenance";
 import { getClients } from "@/actions/sav/client";
 import { getSitesByClient } from "@/actions/sav/site";
 import { getAllTechniciens } from "@/actions/sav/technicien";
@@ -22,10 +22,6 @@ const MaintenancesPage = () => {
   const [pageSize] = useState(10);
   const [total, setTotal] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [selectedMaintenance, setSelectedMaintenance] = useState(null);
-  const [isReplanifierOpen, setIsReplanifierOpen] = useState(false);
-  const [nouvelleDateMaintenance, setNouvelleDateMaintenance] = useState("");
   const [clients, setClients] = useState<any[]>([]);
   const [sites, setSites] = useState<any[]>([]);
   const [installations, setInstallations] = useState<any[]>([]);
@@ -35,7 +31,7 @@ const MaintenancesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     numero: '',
-    dateMaintenance: '',
+    datePlanifiee: '',
     description: '',
     typeMaintenance: '',
     idClient: 0,
@@ -52,8 +48,8 @@ const MaintenancesPage = () => {
     setLoading(true);
     try {
       const { maintenances: maintenancesData, total: totalMaintenances } = await getAllMaintenances(
-        page,
-        pageSize,
+        page, 
+        pageSize, 
         searchQuery,
         dateDebut,
         dateFin,
@@ -79,6 +75,7 @@ const MaintenancesPage = () => {
           getClients(),
           getAllTechniciens()
         ]);
+
         setClients(clientsData);
         setTechniciens(techniciensData);
       } catch (error) {
@@ -107,6 +104,7 @@ const MaintenancesPage = () => {
         getInstallationsBySite(parseInt(siteId)),
         getContactsBySite(parseInt(siteId))
       ]);
+
       setInstallations(installationsData);
       setContacts(contactsData);
       setFormData(prev => ({ ...prev, idSite: parseInt(siteId) }));
@@ -121,57 +119,34 @@ const MaintenancesPage = () => {
     setFormData(prev => ({ ...prev, idInstallation: parseInt(installationId) }));
   };
 
+  const handleSubmit = async () => {
+    try {
+      await planifierMaintenanceGlobal({
+        ...formData,
+        statut: 'PLANIFIE',
+        datePlanifiee: new Date(formData.datePlanifiee).toISOString()
+      });
+      setIsOpen(false);
+      // Refresh the list of maintenances
+      fetchMaintenances();
+    } catch (error) {
+      console.error("Erreur lors de la planification:", error);
+    }
+  };
+
   const handlePause = async (id: number, currentStatus: string) => {
     try {
       const newStatus = currentStatus === 'SUSPENDU' ? 'PLANIFIE' : 'SUSPENDU';
       await updateMaintenanceStatus(id, newStatus);
+      // Refresh the list of maintenances
       fetchMaintenances();
     } catch (error) {
       console.error("Erreur lors de la mise à jour du statut:", error);
     }
   };
 
-  const handleShowHistory = (maintenance) => {
-    setSelectedMaintenance(maintenance);
-    setIsHistoryOpen(true);
-  };
-
-  const handleReplanifier = (maintenance) => {
-    setSelectedMaintenance(maintenance);
-    setIsReplanifierOpen(true);
-  };
-
-  const handleConfirmReplanification = async () => {
-    try {
-      await replanifierMaintenance(selectedMaintenance.id, new Date(nouvelleDateMaintenance));
-      setIsReplanifierOpen(false);
-      fetchMaintenances();
-    } catch (error) {
-      console.error("Erreur lors de la replanification:", error);
-    }
-  };
-
-  const handleMarquerEffectuee = async (planificationId) => {
-    try {
-      await marquerMaintenanceEffectuee(planificationId);
-      fetchMaintenances();
-    } catch (error) {
-      console.error("Erreur lors du marquage comme effectuée:", error);
-    }
-  };
-
-  const handleSubmit = async () => {
-    try {
-      await planifierMaintenanceGlobal({
-        ...formData,
-        statut: 'PLANIFIE',
-        dateMaintenance: new Date(formData.dateMaintenance).toISOString()
-      });
-      setIsOpen(false);
-      fetchMaintenances();
-    } catch (error) {
-      console.error("Erreur lors de la planification:", error);
-    }
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
   };
 
   if (loading) {
@@ -216,7 +191,6 @@ const MaintenancesPage = () => {
           </SelectContent>
         </Select>
       </div>
-
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-2xl font-bold">Gestion Maintenances</h1>
         <Button className="flex items-center bg-blue-500 text-white hover:bg-blue-600" onClick={() => setIsOpen(true)}>
@@ -224,7 +198,6 @@ const MaintenancesPage = () => {
           Planifier Maintenance
         </Button>
       </div>
-
       <Table>
         <TableHeader>
           <TableRow>
@@ -243,37 +216,12 @@ const MaintenancesPage = () => {
               <TableCell>{maintenance.Contact.Client.nom}</TableCell>
               <TableCell>{maintenance.Site.nom}</TableCell>
               <TableCell>{maintenance.Installation.Systeme.nom}</TableCell>
-              <TableCell>
-                {maintenance.Planifications[0]?.date 
-                  ? new Date(maintenance.Planifications[0].date).toLocaleDateString()
-                  : "Non planifiée"}
+              <TableCell>{new Date(maintenance.datePlanifiee).toLocaleDateString()}</TableCell>
+              <TableCell className={maintenance.statut === 'PLANIFIE' ? 'text-green-500' : maintenance.statut === 'TERMINE' ? 'text-red-500' : ''}>
+                {maintenance.statut}
               </TableCell>
-              <TableCell>{maintenance.statut}</TableCell>
               <TableCell>{`${maintenance.Technicien.prenom} ${maintenance.Technicien.nom}`}</TableCell>
               <TableCell className="flex space-x-2">
-                <Button
-                  variant="outline"
-                  className="text-blue-500"
-                  onClick={() => handleShowHistory(maintenance)}
-                >
-                  <FaHistory />
-                </Button>
-                <Button
-                  variant="outline"
-                  className="text-green-500"
-                  onClick={() => handleReplanifier(maintenance)}
-                >
-                  <FaPlus />
-                </Button>
-                {maintenance.Planifications[0] && !maintenance.Planifications[0].effectif && (
-                  <Button
-                    variant="outline"
-                    className="text-orange-500"
-                    onClick={() => handleMarquerEffectuee(maintenance.Planifications[0].id)}
-                  >
-                    <FaCheck />
-                  </Button>
-                )}
                 <Button
                   variant="outline"
                   className={maintenance.statut === 'SUSPENDU' ? 'text-red-500' : 'text-green-500'}
@@ -281,18 +229,20 @@ const MaintenancesPage = () => {
                 >
                   <FaPause />
                 </Button>
+                <Button variant="outline" className="text-blue-500" onClick={() => {/* Add logic to handle edit */}}>
+                  <FaEdit />
+                </Button>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
-
       <div className="flex justify-end items-center mt-4">
-        <div className="text-white p-2 rounded-lg flex space-x-2">
+        <div className=" text-white p-2 rounded-lg flex space-x-2">
           {Array.from({ length: totalPages }, (_, index) => (
             <button
               key={index + 1}
-              onClick={() => setPage(index + 1)}
+              onClick={() => handlePageChange(index + 1)}
               className={`px-3 py-1 rounded ${page === index + 1 ? 'bg-blue-500' : 'bg-blue-500 hover:bg-blue-600'}`}
             >
               {index + 1}
@@ -379,8 +329,7 @@ const MaintenancesPage = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block mb-2">Numéro
-                </label>
+                <label className="block mb-2">Numéro</label>
                 <Input
                   value={formData.numero}
                   onChange={(e) => setFormData(prev => ({ ...prev, numero: e.target.value }))}
@@ -392,8 +341,8 @@ const MaintenancesPage = () => {
                 <label className="block mb-2">Date prévue</label>
                 <Input
                   type="date"
-                  value={formData.dateMaintenance}
-                  onChange={(e) => setFormData(prev => ({ ...prev, dateMaintenance: e.target.value }))}
+                  value={formData.datePlanifiee}
+                  onChange={(e) => setFormData(prev => ({ ...prev, datePlanifiee: e.target.value }))}
                 />
               </div>
             </div>
@@ -461,49 +410,6 @@ const MaintenancesPage = () => {
             </Button>
             <Button onClick={handleSubmit}>
               Planifier
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Historique des planifications</DialogTitle>
-          </DialogHeader>
-          <div className="mt-4">
-            {selectedMaintenance?.Planifications.map((planif, index) => (
-              <div key={planif.id} className="mb-4 p-4 border rounded">
-                <p className="font-bold">
-                  {index === 0 ? "Dernière planification" : `Planification #${selectedMaintenance.Planifications.length - index}`}
-                </p>
-                <p>Date: {new Date(planif.date).toLocaleDateString()}</p>
-                <p>Type: {planif.previsionnel ? "Prévisionnelle" : "Replanification"}</p>
-                <p>Statut: {planif.effectif ? "Effectuée" : "Non effectuée"}</p>
-              </div>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isReplanifierOpen} onOpenChange={setIsReplanifierOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Replanifier la maintenance</DialogTitle>
-          </DialogHeader>
-          <div className="mt-4">
-            <Input
-              type="date"
-              value={nouvelleDateMaintenance}
-              onChange={(e) => setNouvelleDateMaintenance(e.target.value)}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsReplanifierOpen(false)}>
-              Annuler
-            </Button>
-            <Button onClick={handleConfirmReplanification}>
-              Confirmer
             </Button>
           </DialogFooter>
         </DialogContent>

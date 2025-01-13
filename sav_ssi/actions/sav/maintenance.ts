@@ -3,83 +3,109 @@
 import { prisma } from "@/prisma";
 import { Maintenance } from "@prisma/client";
 
-// Planifier une nouvelle maintenance avec sa première planification
-export const planifierMaintenanceGlobal = async (data: {
+// Planifier une nouvelle maintenance
+export const planifierMaintenance = async (data: {
   numero: string;
   dateMaintenance: string;
   description: string;
+  statut: string;
   typeMaintenance: string;
-  idClient: number;
   idSite: number;
   idTechnicien: number;
   idContact: number;
-  idInstallation: number;
+  idInstallation: number; // Ajouter l'ID de l'installation
 }): Promise<Maintenance> => {
-  return await prisma.$transaction(async (prisma) => {
-    // Créer la maintenance
-    const maintenance = await prisma.maintenance.create({
-      data: {
-        numero: data.numero,
-        description: data.description,
-        statut: "PLANIFIE",
-        typeMaintenance: data.typeMaintenance,
-        idSite: data.idSite,
-        idTechnicien: data.idTechnicien,
-        idContact: data.idContact,
-        idInstallation: data.idInstallation,
-      },
-    });
+  console.log("Données reçues pour la planification de la maintenance:", JSON.stringify(data, null, 2));
 
-    // Créer la planification prévisionnelle initiale
-    await prisma.planification.create({
-      data: {
-        date: new Date(data.dateMaintenance),
-        previsionnel: true,
-        effectif: false,
-        idMaintenance: maintenance.id,
-      },
-    });
-
-    return maintenance;
+  // Vérifier si le site existe
+  const site = await prisma.site.findUnique({
+    where: { id: data.idSite },
   });
-};
 
-// Replanifier une maintenance
-export const replanifierMaintenance = async (
-  maintenanceId: number,
-  nouvelleDate: Date
-): Promise<Planification> => {
-  return await prisma.planification.create({
+  console.log("Site trouvé:", JSON.stringify(site, null, 2));
+
+  if (!site) {
+    throw new Error(`Site with ID ${data.idSite} does not exist.`);
+  }
+
+  // Vérifier si le technicien existe
+  const technicien = await prisma.utilisateur.findUnique({
+    where: { id: data.idTechnicien },
+  });
+
+  console.log("Technicien trouvé:", JSON.stringify(technicien, null, 2));
+
+  if (!technicien) {
+    throw new Error(`Technicien with ID ${data.idTechnicien} does not exist.`);
+  }
+
+  // Vérifier si le contact existe
+  const contact = await prisma.contact.findUnique({
+    where: { id: data.idContact },
+  });
+
+  console.log("Contact trouvé:", JSON.stringify(contact, null, 2));
+
+  if (!contact) {
+    throw new Error(`Contact with ID ${data.idContact} does not exist.`);
+  }
+
+  // Vérifier si l'installation existe
+  const installation = await prisma.installation.findUnique({
+    where: { id: data.idInstallation },
+  });
+
+  console.log("Installation trouvée:", JSON.stringify(installation, null, 2));
+
+  if (!installation) {
+    throw new Error(`Installation with ID ${data.idInstallation} does not exist.`);
+  }
+
+  const maintenance = await prisma.maintenance.create({
     data: {
-      date: nouvelleDate,
-      previsionnel: false,
-      effectif: false,
-      idMaintenance: maintenanceId,
+      numero: data.numero,
+      dateMaintenance: new Date(data.dateMaintenance),
+      description: data.description,
+      statut: "PLANIFIE",
+      typeMaintenance: data.typeMaintenance,
+      idSite: data.idSite,
+      idTechnicien: data.idTechnicien,
+      idContact: data.idContact,
+      idInstallation: data.idInstallation, // Inclure l'ID de l'installation
     },
   });
+
+  console.log("Maintenance créée:", JSON.stringify(maintenance, null, 2));
+
+  return maintenance;
 };
 
-// Marquer une planification comme effectuée
-export const marquerMaintenanceEffectuee = async (
-  planificationId: number
-): Promise<Planification> => {
-  return await prisma.planification.update({
-    where: { id: planificationId },
-    data: { effectif: true },
+
+// Mettre à jour le statut de la maintenance
+export const updateMaintenanceStatus = async (id: number, statut: string): Promise<Maintenance> => {
+  const maintenance = await prisma.maintenance.update({
+    where: { id },
+    data: { statut },
+  });
+
+  return maintenance;
+};
+
+// Mettre à jour une maintenance
+export const updateMaintenance = async (id: number, data: {
+  numero?: string;
+  description?: string;
+  dateMaintenance?: Date;
+  statut?: string;
+  typeMaintenance?: string;
+  idTechnicien?: number;
+}): Promise<Maintenance> => {
+  return await prisma.maintenance.update({
+    where: { id },
+    data,
   });
 };
 
-// Obtenir l'historique des planifications d'une maintenance
-export const getPlanificationsParMaintenance = async (
-  maintenanceId: number
-): Promise<Planification[]> => {
-  return await prisma.planification.findMany({
-    where: { idMaintenance: maintenanceId },
-    orderBy: { createdAt: 'desc' },
-  });
-};
-
-// Obtenir toutes les maintenances avec leur dernière planification
 export const getAllMaintenances = async (
   page: number = 1,
   pageSize: number = 10,
@@ -87,7 +113,7 @@ export const getAllMaintenances = async (
   dateDebut?: string,
   dateFin?: string,
   statut?: string
-): Promise<{ maintenances: any[], total: number }> => {
+): Promise<{ maintenances: Maintenance[], total: number }> => {
   const skip = (page - 1) * pageSize;
 
   const where = {
@@ -99,7 +125,19 @@ export const getAllMaintenances = async (
           { Installation: { Systeme: { nom: { contains: searchQuery } } } },
         ]
       },
-      ...(statut && statut !== 'all' ? [{ statut: statut }] : [])
+      ...(dateDebut ? [{
+        dateMaintenance: {
+          gte: new Date(dateDebut)
+        }
+      }] : []),
+      ...(dateFin ? [{
+        dateMaintenance: {
+          lte: new Date(dateFin)
+        }
+      }] : []),
+      ...(statut && statut !== 'all' ? [{
+        statut: statut
+      }] : [])
     ]
   };
 
@@ -122,49 +160,100 @@ export const getAllMaintenances = async (
             Systeme: true,
           },
         },
-        Planifications: {
-          orderBy: { createdAt: 'desc' },
-          take: 1,
-        },
       },
-      orderBy: {
-        Planifications: {
-          _count: 'desc'
-        }
-      }
     })
   ]);
 
-  // Filtrage par date après récupération des données
-  const filteredMaintenances = maintenances.filter(maintenance => {
-    const lastPlanification = maintenance.Planifications[0];
-    if (!lastPlanification) return true;
-    
-    const planificationDate = new Date(lastPlanification.date);
-    const debutDate = dateDebut ? new Date(dateDebut) : null;
-    const finDate = dateFin ? new Date(dateFin) : null;
-
-    return (!debutDate || planificationDate >= debutDate) &&
-           (!finDate || planificationDate <= finDate);
-  });
-
-  return {
-    maintenances: filteredMaintenances,
-    total: dateDebut || dateFin ? filteredMaintenances.length : total
-  };
+  return { maintenances, total };
 };
 
+export const planifierMaintenanceGlobal = async (data: {
+  numero: string;
+  datePlanifiee: string;
+  description: string;
+  statut: string;
+  typeMaintenance: string;
+  idClient: number;
+  idSite: number;
+  idTechnicien: number;
+  idContact: number;
+  idInstallation: number;
+}): Promise<Maintenance> => {
+  console.log("Données reçues pour la planification de la maintenance:", JSON.stringify(data, null, 2));
 
-// Mettre à jour le statut de la maintenance
-export const updateMaintenanceStatus = async (id: number, statut: string): Promise<Maintenance> => {
-  const maintenance = await prisma.maintenance.update({
-    where: { id },
-    data: { statut },
+  // Vérifier si le client existe
+  const client = await prisma.client.findUnique({
+    where: { id: data.idClient },
   });
+
+  console.log("Client trouvé:", JSON.stringify(client, null, 2));
+
+  if (!client) {
+    throw new Error(`Client with ID ${data.idClient} does not exist.`);
+  }
+
+  // Vérifier si le site existe
+  const site = await prisma.site.findUnique({
+    where: { id: data.idSite },
+  });
+
+  console.log("Site trouvé:", JSON.stringify(site, null, 2));
+
+  if (!site) {
+    throw new Error(`Site with ID ${data.idSite} does not exist.`);
+  }
+
+  // Vérifier si le technicien existe
+  const technicien = await prisma.utilisateur.findUnique({
+    where: { id: data.idTechnicien },
+  });
+
+  console.log("Technicien trouvé:", JSON.stringify(technicien, null, 2));
+
+  if (!technicien) {
+    throw new Error(`Technicien with ID ${data.idTechnicien} does not exist.`);
+  }
+
+  // Vérifier si le contact existe
+  const contact = await prisma.contact.findUnique({
+    where: { id: data.idContact },
+  });
+
+  console.log("Contact trouvé:", JSON.stringify(contact, null, 2));
+
+  if (!contact) {
+    throw new Error(`Contact with ID ${data.idContact} does not exist.`);
+  }
+
+  // Vérifier si l'installation existe
+  const installation = await prisma.installation.findUnique({
+    where: { id: data.idInstallation },
+  });
+
+  console.log("Installation trouvée:", JSON.stringify(installation, null, 2));
+
+  if (!installation) {
+    throw new Error(`Installation with ID ${data.idInstallation} does not exist.`);
+  }
+
+  const maintenance = await prisma.maintenance.create({
+    data: {
+        numero: data.numero,
+        datePlanifiee: new Date(data.datePlanifiee), // Utiliser datePlanifiee ici
+        description: data.description,
+        statut: "PLANIFIE",
+        typeMaintenance: data.typeMaintenance,
+        idSite: data.idSite,
+        idTechnicien: data.idTechnicien,
+        idContact: data.idContact,
+        idInstallation: data.idInstallation,
+    },
+});
+
+  console.log("Maintenance créée:", JSON.stringify(maintenance, null, 2));
 
   return maintenance;
 };
-
 
 // Récupérer les maintenances par site
 export const getMaintenancesBySite = async (siteId: number): Promise<Maintenance[]> => {

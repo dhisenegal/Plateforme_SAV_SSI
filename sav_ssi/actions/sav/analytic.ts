@@ -34,21 +34,18 @@ interface ChartDataPoint {
 
 export async function getAnalyticsData(startDate: Date, endDate: Date) {
   try {
-    // Fetch maintenance counts grouped by date using Planification table
-    const maintenanceCounts = await prisma.planification.groupBy({
-      by: ['date'],
+    // Fetch maintenance counts grouped by date
+    const maintenanceCounts = await prisma.maintenance.groupBy({
+      by: ['dateMaintenance'],
       _count: {
         id: true
       },
       where: {
-        date: {
+        dateMaintenance: {
           gte: startDate,
           lte: endDate
         },
-        effectif: true, // On ne compte que les maintenances effectuées
-        Maintenance: {
-          statut: 'TERMINE'
-        }
+        statut: 'TERMINE'
       }
     });
 
@@ -83,7 +80,7 @@ export async function getAnalyticsData(startDate: Date, endDate: Date) {
 
     // Fill in maintenance counts
     maintenanceCounts.forEach((count) => {
-      const dateStr = count.date.toISOString().split('T')[0];
+      const dateStr = count.dateMaintenance.toISOString().split('T')[0];
       if (dateMap.has(dateStr)) {
         const data = dateMap.get(dateStr)!;
         data.maintenance = count._count.id;
@@ -92,12 +89,10 @@ export async function getAnalyticsData(startDate: Date, endDate: Date) {
 
     // Fill in intervention counts
     interventionCounts.forEach((count) => {
-      if (count.dateIntervention) {
-        const dateStr = count.dateIntervention.toISOString().split('T')[0];
-        if (dateMap.has(dateStr)) {
-          const data = dateMap.get(dateStr)!;
-          data.intervention = count._count.id;
-        }
+      const dateStr = count.dateIntervention!.toISOString().split('T')[0];
+      if (dateMap.has(dateStr)) {
+        const data = dateMap.get(dateStr)!;
+        data.intervention = count._count.id;
       }
     });
 
@@ -110,12 +105,6 @@ export async function getAnalyticsData(startDate: Date, endDate: Date) {
     console.error("Error fetching analytics data:", error);
     throw new Error("Failed to fetch analytics data");
   }
-}
-
-interface ChartDataPoint {
-  date: string;
-  maintenance: number;
-  intervention: number;
 }
 //Fonction pour analyser les délais des interventions
 export interface DelayAnalytics {
