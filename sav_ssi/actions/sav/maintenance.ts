@@ -64,7 +64,7 @@ export const planifierMaintenance = async (data: {
   const maintenance = await prisma.maintenance.create({
     data: {
       numero: data.numero,
-      dateMaintenance: new Date(data.dateMaintenance),
+      dateMaintenance: data.dateMaintenance,
       description: data.description,
       statut: "PLANIFIE",
       typeMaintenance: data.typeMaintenance,

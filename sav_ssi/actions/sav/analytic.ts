@@ -80,11 +80,13 @@ export async function getAnalyticsData(startDate: Date, endDate: Date) {
 
     // Fill in maintenance counts
     maintenanceCounts.forEach((count) => {
+      if(count.dateMaintenance) {
       const dateStr = count.dateMaintenance.toISOString().split('T')[0];
       if (dateMap.has(dateStr)) {
         const data = dateMap.get(dateStr)!;
         data.maintenance = count._count.id;
       }
+    }
     });
 
     // Fill in intervention counts

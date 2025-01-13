@@ -229,7 +229,7 @@ model Intervention {
   Heureint          DateTime?
   numero            Int?
   ficheInt          String?
-  delai             Boolean @default(false)
+  horsDelai             Boolean @default(false)
   idTechnicien      Int?
   prenomContact     String?
   telephoneContact  String?
