@@ -169,7 +169,7 @@ export const getAllMaintenances = async (
 
 export const planifierMaintenanceGlobal = async (data: {
   numero: string;
-  dateMaintenance: string;
+  datePlanifiee: string;
   description: string;
   statut: string;
   typeMaintenance: string;
@@ -238,17 +238,17 @@ export const planifierMaintenanceGlobal = async (data: {
 
   const maintenance = await prisma.maintenance.create({
     data: {
-      numero: data.numero,
-      dateMaintenance: new Date(data.dateMaintenance),
-      description: data.description,
-      statut: "PLANIFIE",
-      typeMaintenance: data.typeMaintenance,
-      idSite: data.idSite,
-      idTechnicien: data.idTechnicien,
-      idContact: data.idContact,
-      idInstallation: data.idInstallation,
+        numero: data.numero,
+        datePlanifiee: new Date(data.datePlanifiee), // Utiliser datePlanifiee ici
+        description: data.description,
+        statut: "PLANIFIE",
+        typeMaintenance: data.typeMaintenance,
+        idSite: data.idSite,
+        idTechnicien: data.idTechnicien,
+        idContact: data.idContact,
+        idInstallation: data.idInstallation,
     },
-  });
+});
 
   console.log("Maintenance créée:", JSON.stringify(maintenance, null, 2));
 

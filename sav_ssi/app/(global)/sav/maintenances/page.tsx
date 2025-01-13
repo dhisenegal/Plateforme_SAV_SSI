@@ -31,7 +31,7 @@ const MaintenancesPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [formData, setFormData] = useState({
     numero: '',
-    dateMaintenance: '',
+    datePlanifiee: '',
     description: '',
     typeMaintenance: '',
     idClient: 0,
@@ -124,7 +124,7 @@ const MaintenancesPage = () => {
       await planifierMaintenanceGlobal({
         ...formData,
         statut: 'PLANIFIE',
-        dateMaintenance: new Date(formData.dateMaintenance).toISOString()
+        datePlanifiee: new Date(formData.datePlanifiee).toISOString()
       });
       setIsOpen(false);
       // Refresh the list of maintenances
@@ -216,7 +216,7 @@ const MaintenancesPage = () => {
               <TableCell>{maintenance.Contact.Client.nom}</TableCell>
               <TableCell>{maintenance.Site.nom}</TableCell>
               <TableCell>{maintenance.Installation.Systeme.nom}</TableCell>
-              <TableCell>{new Date(maintenance.dateMaintenance).toLocaleDateString()}</TableCell>
+              <TableCell>{new Date(maintenance.datePlanifiee).toLocaleDateString()}</TableCell>
               <TableCell className={maintenance.statut === 'PLANIFIE' ? 'text-green-500' : maintenance.statut === 'TERMINE' ? 'text-red-500' : ''}>
                 {maintenance.statut}
               </TableCell>
@@ -341,8 +341,8 @@ const MaintenancesPage = () => {
                 <label className="block mb-2">Date prévue</label>
                 <Input
                   type="date"
-                  value={formData.dateMaintenance}
-                  onChange={(e) => setFormData(prev => ({ ...prev, dateMaintenance: e.target.value }))}
+                  value={formData.datePlanifiee}
+                  onChange={(e) => setFormData(prev => ({ ...prev, datePlanifiee: e.target.value }))}
                 />
               </div>
             </div>

@@ -1,14 +1,18 @@
+'use client';
+
 import { fetchDetails } from '@/lib/fonctionas';
 import MaintenancePage from '@/components/MaintenancePage';
+import { useParams } from 'next/navigation';
 
-export default async function Maintenance({ params }) {
-  const { ID } = params;
+export default function Maintenance() {
+  const params = useParams();
+  const ID = Array.isArray(params.id) ? params.id[0] : params.id;
   let data = null;
   let error = null;
 
   try {
     // Appel de la fonction fetchDetails pour récupérer les détails de l'intervention
-    data = await fetchDetails(ID, "maintenance");
+    data = fetchDetails(ID, "maintenance");
 
     // Convertir les objets de date en chaînes de caractères
     if (data.dateMaintenance) {
@@ -19,5 +23,5 @@ export default async function Maintenance({ params }) {
     error = err.message;
   }
 
-  return <MaintenancePage id={ID} data={data} error={error} />;
+  return <MaintenancePage  />;
 }
