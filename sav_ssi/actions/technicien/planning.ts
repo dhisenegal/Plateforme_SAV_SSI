@@ -473,12 +473,12 @@ export const getSystemeForIntervention = async (idIntervention) => {
         const maintenance = await prisma.maintenance.findUnique({
           where: { id: id }, // Recherche par ID
           select: {
-            dateMaintenance: true, // Sélectionne uniquement la date de maintenance
+            datePlanifiee: true, // Sélectionne uniquement la date de maintenance
           },
         });
   
         // Retourne la date ou un message par défaut si elle n'existe pas
-        return maintenance?.dateMaintenance || "Date inconnue";
+        return maintenance?.datePlanifiee || "Date inconnue";
       } else if (type === "intervention") {
         // Récupère l'intervention avec l'ID donné
         const intervention = await prisma.intervention.findUnique({
@@ -499,3 +499,15 @@ export const getSystemeForIntervention = async (idIntervention) => {
     }
   };
   
+
+
+
+export const formatStatut = async (statut) => {
+  // Simuler une opération asynchrone comme un appel API avec un délai
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      // Remplace les underscores par des espaces et met tout en majuscules
+      resolve(statut.replace('_', ' ').toUpperCase());
+    }, 1000);
+  });
+}

@@ -87,6 +87,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
       localStorage.setItem(`formData-${id}`, JSON.stringify(data));
     }
   };
+
   const handleValidateClick = (id, type) => {
     if (type === 'maintenance') {
       router.push(`/technicien/Maintenances/${id}`);
@@ -147,17 +148,17 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     try {
       const data = form.getValues();
       console.log('Validation de l\'état', data);
-  
+
       // Inclure la date du jour
       const dateIntervention = new Date();
-  
+
       await handleSave(data);
-  
+
       if (id && type === 'intervention') {
         const result = await updateIntervention(parseInt(id), data.diagnostic, data.travauxRealises, dateIntervention, data.dureeHeure);
         console.log('Données validées avec succès', result);
       }
-  
+
       if (id && type === 'maintenance') {
         const updates = actions.map((action, idx) => ({
           idAction: action.id,
@@ -167,9 +168,9 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         }));
         await updateMaintenanceAction(parseInt(id as string), updates);
       }
-  
+
       setIsOverlayVisible(true);
-  
+
       if (id && type) {
         const updatedDetails = await fetchDetails(parseInt(id), type);
         setDetails(updatedDetails);
@@ -186,6 +187,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
       setIsConfirmDialogOpen(false);
     }
   };
+
   const handleSuspendOrResume = async () => {
     setIsSaving(true);
     try {
@@ -276,7 +278,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           {details.systeme}
         </h2>
-        
+
         <Table className="min-w-full bg-white border border-gray-200">
           <TableHeader>
             <TableRow>
@@ -311,12 +313,13 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                           value="valide"
                           className="hidden"
                           onChange={() => handleStatusChange(idx, 'valide')}
+                          disabled={isSuspended}
                         />
                         <FaCheckCircle
                           className={`cursor-pointer ${
                             selectedStatus[idx] === 'valide' ? 'text-green-600' : 'text-gray-400'
                           }`}
-                          onClick={() => handleStatusChange(idx, 'valide')}
+                          onClick={() => !isSuspended && handleStatusChange(idx, 'valide')}
                         />
                       </label>
                       <label className="inline-flex items-center cursor-pointer">
@@ -326,12 +329,13 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                           value="non-valide"
                           className="hidden"
                           onChange={() => handleStatusChange(idx, 'non-valide')}
+                          disabled={isSuspended}
                         />
                         <FaTimesCircle
                           className={`cursor-pointer ${
                             selectedStatus[idx] === 'non-valide' ? 'text-red-600' : 'text-gray-400'
                           }`}
-                          onClick={() => handleStatusChange(idx, 'non-valide')}
+                          onClick={() => !isSuspended && handleStatusChange(idx, 'non-valide')}
                         />
                       </label>
                     </div>
@@ -343,6 +347,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                       placeholder="Veuillez remplir vos observations ici"
                       value={observations[idx] || ''}
                       onChange={(e) => handleObservationChange(idx, e.target.value)}
+                      disabled={isSuspended}
                     />
                   </TableCell>
                 </TableRow>
@@ -407,14 +412,14 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                     </FormControl>
                   </FormItem>
                   <FormItem>
-                             <FormLabel>Durée de l'intervention</FormLabel>
-                 <FormControl>
-                     <Input
-                  {...form.register('dureeIntervention')}
-                 placeholder="Durée de l'intervention"
-    />
-  </FormControl>
-</FormItem>
+                    <FormLabel>Durée de l'intervention</FormLabel>
+                    <FormControl>
+                      <Input
+                        {...form.register('dureeIntervention')}
+                        placeholder="Durée de l'intervention"
+                      />
+                    </FormControl>
+                  </FormItem>
                 </div>
                 <div className="space-y-5">
                   <FormItem>
@@ -465,13 +470,13 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                   type="button"
                   onClick={handleSuspendOrResume}
                   disabled={isSaving}
-                  className={isSuspended ? 'bg-orange-500 hover:bg-orange-600' : 'bg-red-500 hover:bg-red-600'}
-                >
+                  className={isSuspended ? 'bg-orange-500 hover:bg-orange-600' : 'bg-red-500 hover hover:bg-red-600'}
+                  >
                   {isSuspended ? 'Reprendre' : 'Suspendre'}
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isSaving}
+                  disabled={isSaving || isSuspended}
                   className="bg-blue-500 hover:bg-blue-600"
                 >
                   {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
@@ -479,11 +484,10 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                 <Button
                   type="button"
                   onClick={() => setIsConfirmDialogOpen(true)}
-                  disabled={isSaving}
+                  disabled={isSaving || isSuspended}
                   className="bg-green-500 hover:bg-green-600"
                 >
                   {isSaving ? 'Validation...' : 'Valider'}
-                
                 </Button>
               </div>
             </form>
@@ -500,7 +504,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
               <Button
                 onClick={() => {
                   handleValidate();
-                  handleValidateClick(id,type);
+                  handleValidateClick(id, type);
                 }}
                 className="bg-green-500 text-white hover:bg-green-600"
               >
