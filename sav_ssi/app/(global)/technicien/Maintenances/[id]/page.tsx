@@ -1,27 +1,41 @@
 'use client';
 
-import { fetchDetails } from '@/lib/fonctionas';
-import MaintenancePage from '@/components/MaintenancePage';
+import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import MaintenancePage from '@/components/MaintenancePage';
+import { fetchDetails } from '@/lib/fonctionas';
 
 export default function Maintenance() {
   const params = useParams();
   const ID = Array.isArray(params.id) ? params.id[0] : params.id;
-  let data = null;
-  let error = null;
+  const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  try {
-    // Appel de la fonction fetchDetails pour récupérer les détails de l'intervention
-    data = fetchDetails(ID, "maintenance");
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        if (!ID) {
+          throw new Error('ID manquant');
+        }
 
-    // Convertir les objets de date en chaînes de caractères
-    if (data.dateMaintenance) {
-      data.dateMaintenance = new Date(data.dateMaintenance).toLocaleDateString();
-    }
-   
-  } catch (err) {
-    error = err.message;
-  }
+        const fetchedData = await fetchDetails(ID, "maintenance");
+        if (fetchedData.dateMaintenance) {
+          fetchedData.dateMaintenance = new Date(fetchedData.dateMaintenance).toLocaleDateString();
+        }
+        setData(fetchedData);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  return <MaintenancePage  />;
+    loadData();
+  }, [ID]);
+
+  if (loading) return <div>Chargement...</div>;
+  if (error) return <div>Erreur: {error}</div>;
+
+  return <MaintenancePage data={data} type="maintenance" />;
 }
