@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 
 export async function fetchDetails(id, type) {
   if (!id || !type) {
-    throw new Error('ID ');
+    throw new Error('ID ou type manquant');
   }
 
   try {
@@ -62,7 +62,6 @@ export async function fetchDetails(id, type) {
               prenom: true,
             },
           },
-          
         },
       });
 
@@ -89,7 +88,6 @@ export async function fetchDetails(id, type) {
     throw new Error('Erreur lors de la récupération des détails');
   }
 }
-
 
 export async function fetchCurrentAction(systemId) {
   if (!systemId) {

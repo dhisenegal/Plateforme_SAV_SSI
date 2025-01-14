@@ -1,10 +1,9 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import { useParams, useSearchParams } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import Image from 'next/image';
-import { fetchDetails, fetchCurrentAction, updateMaintenanceActions, fetchMaintenanceActions } from '@/lib/fonctionas';
+import { fetchMaintenanceActions, updateMaintenanceActions } from '@/lib/fonctionas';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 interface Action {
@@ -124,7 +123,13 @@ const MaintenancePage = ({ data, type }) => {
   return (
     <div className="flex flex-col items-center mt-10 mb-10">
       <div className="w-full flex justify-end gap-4 mb-4 px-4">
-       
+        <button 
+          onClick={handleSubmit} 
+          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
+          disabled={saving}
+        >
+          {saving ? 'Enregistrement...' : 'Enregistrer'}
+        </button>
         <button 
           onClick={exportToPDF} 
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
@@ -188,11 +193,11 @@ const MaintenancePage = ({ data, type }) => {
                           </button>
                         </td>
                         <td className="border p-3">
-                          <textarea  disabled
+                          <textarea
                             value={action.observation}
                             onChange={(e) => handleObservationChange(action.action_id, e.target.value)}
                             className="w-full min-h-[80px] p-2 border rounded resize-y"
-                            placeholder=""
+                            placeholder="Ajouter une observation"
                           />
                         </td>
                       </tr>
@@ -209,7 +214,6 @@ const MaintenancePage = ({ data, type }) => {
               </div>
               <div>
                 <p className="font-semibold mb-2">VISA Client :</p>
-                
                 <p className="mt-2 text-sm text-center">{data.clientName}</p>
               </div>
             </div>
