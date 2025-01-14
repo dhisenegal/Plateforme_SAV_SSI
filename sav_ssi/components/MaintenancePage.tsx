@@ -3,7 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { fetchMaintenanceActions, updateMaintenanceActions } from '@/lib/fonctionas';
+import Image from 'next/image';
+import { fetchDetails, fetchMaintenanceActions, updateMaintenanceActions } from '@/lib/fonctionas';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 interface Action {
@@ -29,35 +30,43 @@ interface MaintenanceData {
   telephoneContact: string;
 }
 
-const MaintenancePage = ({ data, type }) => {
+const MaintenancePage = () => {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
 
+  const [data, setData] = useState<MaintenanceData | null>(null);
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [updateKey, setUpdateKey] = useState(0);
 
   useEffect(() => {
-    const loadActions = async () => {
+    const loadInitialData = async () => {
       try {
-        if (!id || !type) {
-          throw new Error('ID ou type manquant');
+        if (!id) {
+          throw new Error('ID manquant');
         }
+        const [fetchedData, actionsData] = await Promise.all([
+          fetchDetails(id, "maintenance"),
+          fetchMaintenanceActions(id)
+        ]);
 
-        if (type === 'maintenance') {
-          const actionsData = await fetchMaintenanceActions(id);
-          setActions(actionsData);
+        if (fetchedData.dateMaintenance) {
+          fetchedData.dateMaintenance = new Date(fetchedData.dateMaintenance).toLocaleDateString();
         }
+        setData(fetchedData);
+        setActions(actionsData);
       } catch (err: any) {
         setError(err.message);
+        console.error('Erreur lors du chargement des données:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    loadActions();
-  }, [id, type]);
+    loadInitialData();
+  }, [id, updateKey]);
 
   const handleStatusChange = (actionId: number) => {
     setActions(prevActions =>
@@ -85,10 +94,11 @@ const MaintenancePage = ({ data, type }) => {
     try {
       setSaving(true);
       await updateMaintenanceActions(id, actions);
+      setUpdateKey(prev => prev + 1);
       alert('Modifications enregistrées avec succès');
     } catch (error) {
       alert('Erreur lors de l\'enregistrement');
-      console.error(error);
+      console.error('Erreur lors de la sauvegarde:', error);
     } finally {
       setSaving(false);
     }
@@ -134,7 +144,7 @@ const MaintenancePage = ({ data, type }) => {
           onClick={exportToPDF} 
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
         >
-          Exporter 
+          Exporter en PDF
         </button>
       </div>
 
@@ -142,7 +152,13 @@ const MaintenancePage = ({ data, type }) => {
         {data && (
           <div id="pdf-content" className="space-y-6">
             <div className="flex justify-center mb-8">
-              <img src="/logo.jpg" alt="Logo" width={200} height={100} priority />
+              <Image
+                src="/logo.jpg"
+                alt="Logo"
+                width={200}
+                height={100}
+                priority
+              />
             </div>
             
             <h1 className="text-2xl font-bold text-center mb-8">
@@ -156,7 +172,7 @@ const MaintenancePage = ({ data, type }) => {
                 <p><strong>Téléphone :</strong> {data.telephoneContact || 'N/A'}</p>
               </div>
               <div className="space-y-2">
-                <p><strong>Date  :</strong> {
+                <p><strong>Date :</strong> {
                   data.dateMaintenance ? new Date(data.dateMaintenance).toLocaleDateString() : 'N/A'
                 }</p>
                 <p><strong>Heure Début :</strong> {data.heureDebut || 'N/A'}</p>

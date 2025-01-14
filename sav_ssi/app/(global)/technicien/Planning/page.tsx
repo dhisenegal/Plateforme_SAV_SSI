@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { FaEye, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
@@ -11,6 +12,8 @@ import 'react-toastify/dist/ReactToastify.css';
 import { formatStatut, getPlanning, formatDate, getClientName, getDescription, getType, getDateMaintenanceOrIntervention, getStatut } from '@/actions/technicien/planning';
 
 const PlanningTabContent = () => {
+  const { data: session } = useSession();
+  const technicienId = session?.user?.id;
   const router = useRouter();
   const [currentPlanning, setCurrentPlanning] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -22,7 +25,7 @@ const PlanningTabContent = () => {
 
   const fetchPlanning = async () => {
     try {
-      const planning = await getPlanning();
+      const planning = await getPlanning(technicienId);
       const planningWithDetails = await Promise.all(
         planning.map(async (plan) => {
           const clientName = await getClientName(plan);

@@ -229,9 +229,13 @@ export async function getNextMaintenance() {
   // Fonction pour récupérer toutes les interventions et maintenances triées par date
 
   
-  export const getPlanning = async () => {
+  export const getPlanning = async (technicienId) => {
     try {
       const interventions = await prisma.intervention.findMany({
+        where: {
+          idTechnicien: technicienId
+        },
+        
         select: {
           id: true,
           statut: true,
@@ -261,6 +265,10 @@ export async function getNextMaintenance() {
       });
   
       const maintenances = await prisma.maintenance.findMany({
+        where: {
+          idTechnicien: technicienId
+        },
+        
         include: {
           Installation: {
             select: {
