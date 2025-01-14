@@ -89,30 +89,6 @@ export async function fetchDetails(id, type) {
   }
 }
 
-export async function fetchCurrentAction(systemId) {
-  if (!systemId) {
-    throw new Error('ID du système manquant');
-  }
-
-  try {
-    const parsedId = parseInt(systemId);
-
-    const actions = await prisma.actionMaintenance.findMany({
-      where: { idSysteme: parsedId },
-    });
-
-    return actions.map(action => ({
-      action_id: action.id,
-      libeleAction: action.libeleAction,
-      statut: false,
-      observation: '',
-    }));
-  } catch (error) {
-    console.error('Erreur lors de la récupération des actions :', error);
-    throw new Error('Erreur lors de la récupération des actions');
-  }
-}
-
 export async function updateMaintenanceActions(maintenanceId: string, actions: any[]) {
   if (!maintenanceId || !actions) {
     throw new Error('Données manquantes pour la mise à jour');
@@ -121,19 +97,67 @@ export async function updateMaintenanceActions(maintenanceId: string, actions: a
   try {
     const parsedId = parseInt(maintenanceId);
 
-    const updatePromises = actions.map(action => 
-      prisma.maintenanceAction.update({
-        where: {
-          id: action.action_id
-        },
-        data: {
-          statut: action.statut,
-          observation: action.observation
-        }
-      })
-    );
+    // Récupérer d'abord toutes les actions existantes pour cette maintenance
+    const existingActions = await prisma.maintenanceAction.findMany({
+      where: { 
+        idMaintenance: parsedId 
+      },
+      orderBy: {
+        id: 'asc'
+      }
+    });
 
-    await Promise.all(updatePromises);
+    // Grouper les actions existantes par idAction pour trouver les doublons
+    const actionsByIdAction = existingActions.reduce((acc, action) => {
+      if (!acc[action.idAction]) {
+        acc[action.idAction] = [];
+      }
+      acc[action.idAction].push(action);
+      return acc;
+    }, {});
+
+    // Utiliser une transaction pour s'assurer que toutes les opérations sont atomiques
+    await prisma.$transaction(async (tx) => {
+      // 1. Supprimer les doublons si ils existent
+      for (const idAction in actionsByIdAction) {
+        const actionsForId = actionsByIdAction[idAction];
+        if (actionsForId.length > 1) {
+          // Garder la première action et supprimer les autres
+          const [keepAction, ...duplicatesToDelete] = actionsForId;
+          await tx.maintenanceAction.deleteMany({
+            where: {
+              id: {
+                in: duplicatesToDelete.map(a => a.id)
+              }
+            }
+          });
+        }
+      }
+
+      // 2. Mettre à jour les actions restantes
+      const updatePromises = actions.map(action => {
+        const existingAction = existingActions.find(ea => 
+          ea.idAction === action.idAction && 
+          ea.idMaintenance === parsedId
+        );
+
+        if (existingAction) {
+          return tx.maintenanceAction.update({
+            where: {
+              id: existingAction.id
+            },
+            data: {
+              statut: action.statut,
+              observation: action.observation
+            }
+          });
+        }
+        return null;
+      });
+
+      await Promise.all(updatePromises.filter(p => p !== null));
+    });
+
     return { success: true };
   } catch (error) {
     console.error('Erreur lors de la mise à jour des actions :', error);
@@ -149,25 +173,43 @@ export async function fetchMaintenanceActions(idMaintenance) {
   try {
     const parsedId = parseInt(idMaintenance);
 
+    // Récupérer toutes les actions pour cette maintenance
     const maintenanceActions = await prisma.maintenanceAction.findMany({
-      where: { idMaintenance: parsedId },
+      where: { 
+        idMaintenance: parsedId 
+      },
       include: {
         Action: {
           select: {
             libeleAction: true,
+            id: true
           },
         },
       },
+      orderBy: {
+        Action: {
+          id: 'asc'
+        }
+      }
     });
 
-    return maintenanceActions.map(action => ({
-      action_id: action.id,
-      libeleAction: action.Action.libeleAction,
-      statut: action.statut,
-      observation: action.observation,
-    }));
+    // Créer un Map pour garder uniquement la dernière action pour chaque idAction
+    const uniqueActions = new Map();
+    maintenanceActions.forEach(action => {
+      uniqueActions.set(action.idAction, {
+        action_id: action.id,
+        libeleAction: action.Action.libeleAction,
+        statut: action.statut,
+        observation: action.observation,
+        idAction: action.idAction
+      });
+    });
+
+    // Convertir le Map en array
+    return Array.from(uniqueActions.values());
   } catch (error) {
     console.error('Erreur lors de la récupération des actions de maintenance :', error);
     throw new Error('Erreur lors de la récupération des actions de maintenance');
   }
 }
+

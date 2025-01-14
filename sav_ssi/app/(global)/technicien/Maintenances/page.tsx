@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { FaEye, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
@@ -15,14 +16,15 @@ const PlanningTabContent = () => {
   const [currentPlanning, setCurrentPlanning] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
-
+  const {data: session} = useSession();
+  const technicienId = session?.user?.id
   useEffect(() => {
     fetchPlanning();
   }, [currentPage]);
 
   const fetchPlanning = async () => {
     try {
-      const planning = await getPlanning();
+      const planning = await getPlanning(technicienId);
 
       const planningWithDetails = await Promise.all(
         planning.map(async (plan) => {
