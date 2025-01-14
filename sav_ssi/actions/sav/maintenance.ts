@@ -3,8 +3,6 @@
 import { prisma } from "@/prisma";
 import { Maintenance } from "@prisma/client";
 
-
-
 // Mettre à jour le statut de la maintenance
 export const updateMaintenanceStatus = async (id: number, statut: string): Promise<Maintenance> => {
   const maintenance = await prisma.maintenance.update({
@@ -102,7 +100,7 @@ export const planifierMaintenanceGlobal = async (data: {
   idTechnicien: number;
   idContact: number;
   idInstallation: number;
-}): Promise<Maintenance> => {
+}): Promise<any> => {
   console.log("Données reçues pour la planification de la maintenance:", JSON.stringify(data, null, 2));
 
   const client = await prisma.client.findUnique({
@@ -155,8 +153,11 @@ export const planifierMaintenanceGlobal = async (data: {
     throw new Error(`Installation with ID ${data.idInstallation} does not exist.`);
   }
 
-  const maintenance = await prisma.maintenance.create({
-    data: {
+  // Créer la maintenance et les actions associées dans une transaction
+  const result = await prisma.$transaction(async (tx) => {
+    // Créer la maintenance
+    const maintenance = await tx.maintenance.create({
+      data: {
         numero: data.numero,
         datePlanifiee: new Date(data.datePlanifiee),
         description: data.description,
@@ -166,12 +167,35 @@ export const planifierMaintenanceGlobal = async (data: {
         idTechnicien: data.idTechnicien,
         idContact: data.idContact,
         idInstallation: data.idInstallation,
-    },
-});
+      },
+    });
+    console.log("Maintenance créée:", JSON.stringify(maintenance, null, 2));
 
-  console.log("Maintenance créée:", JSON.stringify(maintenance, null, 2));
+    // Récupérer les actions de maintenance pour le système associé à l'installation
+    const actions = await tx.actionMaintenance.findMany({
+      where: { idSysteme: installation.idSysteme },
+    });
+    console.log("Actions de maintenance trouvées:", JSON.stringify(actions, null, 2));
 
-  return maintenance;
+    // Créer les MaintenanceAction pour chaque action de maintenance
+    const maintenanceActions = await Promise.all(
+      actions.map((action) =>
+        tx.maintenanceAction.create({
+          data: {
+            statut: false,
+            observation: "",
+            idMaintenance: maintenance.id,
+            idAction: action.id,
+          },
+        })
+      )
+    );
+    console.log("MaintenanceActions créées:", JSON.stringify(maintenanceActions, null, 2));
+
+    return { maintenance, maintenanceActions };
+  });
+
+  return result;
 };
 
 export const getMaintenancesBySite = async (siteId: number): Promise<Maintenance[]> => {
