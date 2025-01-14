@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { getRecentInterventions } from '@/actions/sav/analytic';
 import { toast } from 'react-toastify';
-import {getInterventionsEtMaintenancesDuMois} from '@/actions/technicien/acceuil';
 
 
 export function RecentInterventions() {
@@ -30,9 +29,6 @@ export function RecentInterventions() {
     return <div>Chargement...</div>;
   }
 
-  if (error) {
-    return <div>Erreur: {error.message}</div>;
-  }
 
   return (
     <div className="overflow-x-auto">
@@ -51,6 +47,31 @@ export function RecentInterventions() {
           </TableRow>
         </TableHeader>
         <TableBody className="bg-white divide-y divide-gray-200">
+          {interventions.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={3} className="px-6 py-4 whitespace-nowrap text-center">
+                <h1 className="text-sm font-medium text-gray-900">Aucune intervention récente</h1>
+              </TableCell>
+            </TableRow>
+          ) : (
+            interventions.map((intervention) => (
+              <TableRow key={intervention.id}>
+                <TableCell className="px-6 py-4 whitespace-nowrap">
+                  <p className="text-sm font-medium text-gray-900">
+                    {intervention.Technicien.nom} {intervention.Technicien.prenom}
+                  </p>
+                </TableCell>
+                <TableCell className="px-6 py-4 whitespace-nowrap">
+                  <p className="text-sm text-gray-900">{intervention.Client.nom}</p>
+                </TableCell>
+                <TableCell className="px-6 py-4 whitespace-nowrap">
+                  <p className="text-sm text-gray-900">
+                    {new Date(intervention.dateIntervention).toLocaleDateString()}
+                  </p>
+                </TableCell>
+              </TableRow>
+            ))
+          )}
           {interventions.map((intervention) => (
             <TableRow key={intervention.id}>
               <TableCell className="px-6 py-4 whitespace-nowrap">

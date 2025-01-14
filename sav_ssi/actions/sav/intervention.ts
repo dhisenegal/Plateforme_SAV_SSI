@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/prisma";
-import { Intervention } from "@prisma/client";
+import { Intervention, EnumStatut_i,Commentaire } from "@prisma/client";
 
 // Récupérer toutes les interventions
 export const getInterventions = async (
@@ -59,7 +59,7 @@ export const createIntervention = async (data: {
   telephoneContact: string;
   adresse: string;
   numero: number | null;
-  statut: string;
+  statut: EnumStatut_i;
   datePlanifiee?: Date;
   idTechnicien?: number;
   idClient: number;
@@ -74,7 +74,7 @@ export const createIntervention = async (data: {
     telephoneContact: data.telephoneContact,
     adresse: data.adresse,
     numero: data.numero,
-    statut: data.statut || "NON PLANIFIE",
+    statut: data.statut,
     datePlanifiee: data.datePlanifiee || null,
     Client: { connect: { id: data.idClient } },
     Site: { connect: { id: data.idSite } },
@@ -118,4 +118,91 @@ export const deleteIntervention = async (id: number) => {
   return await prisma.intervention.delete({
     where: { id }
   });
+};
+
+// Ajouter un commentaire simple
+export const addComment = async (
+  interventionId: number,
+  commentaire: string,
+  userId: number
+) => {
+  try {
+    const newComment = await prisma.commentaire.create({
+      data: {
+        commentaire: commentaire,
+        idIntervention: interventionId,
+        idUtilisateur: userId,
+      },
+      include: {
+        Utilisateur: true,
+      },
+    });
+    return newComment;
+  } catch (error) {
+    console.log('Erreur dans addComment:', error);
+    throw error;
+  }
+};
+
+// Mettre à jour l'intervention avec un commentaire
+export const updateInterventionWithComment = async (
+  interventionId: number,
+  newStatus: EnumStatut_i,
+  commentaire: string,
+  userId: number
+) => {
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Mettre à jour l'intervention
+      const updatedIntervention = await tx.intervention.update({
+        where: { id: interventionId },
+        data: { 
+          statut: newStatus,
+        },
+        include: {
+          Technicien: true,
+          Client: true,
+          Site: true,
+          Systeme: true
+        }
+      });
+
+      // 2. Créer le commentaire
+      const newComment = await tx.commentaire.create({
+        data: {
+          commentaire: commentaire,
+          idIntervention: interventionId,
+          idUtilisateur: userId,
+        },
+      });
+
+      return { intervention: updatedIntervention, comment: newComment };
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Erreur dans updateInterventionWithComment:', error);
+    throw error;
+  }
+};
+
+// Récupérer les commentaires
+export const getComments = async (interventionId: number) => {
+  try {
+    const comments = await prisma.commentaire.findMany({
+      where: {
+        idIntervention: interventionId,
+      },
+      include: {
+        Utilisateur: true,
+      },
+      orderBy: {
+        dateCommentaire: 'desc',
+      },
+    });
+    return comments;
+  } catch (error) {
+    console.error('Erreur dans getComments:', error);
+    throw error;
+  }
 };

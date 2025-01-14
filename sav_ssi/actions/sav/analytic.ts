@@ -119,8 +119,10 @@ export interface DelayAnalytics {
     dateDeclaration: Date;
     dateIntervention: Date | null;
     systeme: string | null;
+    horsDelai: boolean;
     isOnTime: boolean;
     delayInHours: number;
+
   }[];
 }
 
@@ -181,7 +183,6 @@ export async function getInterventionDelayAnalytics(
       );
       
       const isOnTime = delayInHours <= 48;
-      
       if (isOnTime) {
         onTime++;
       } else {
@@ -197,6 +198,7 @@ export async function getInterventionDelayAnalytics(
         dateDeclaration: declarationDate,
         dateIntervention: interventionDate,
         systeme: intervention.Systeme?.nom || null,
+        horsDelai:!isOnTime,
         isOnTime,
         delayInHours,
       };
