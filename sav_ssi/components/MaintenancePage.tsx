@@ -4,7 +4,7 @@ import { useParams, useSearchParams } from 'next/navigation';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import Image from 'next/image';
-import { fetchDetails, fetchCurrentAction, updateMaintenanceActions } from '@/lib/fonctionas';
+import { fetchDetails, fetchCurrentAction, updateMaintenanceActions, fetchMaintenanceActions } from '@/lib/fonctionas';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 interface Action {
@@ -30,30 +30,24 @@ interface MaintenanceData {
   telephoneContact: string;
 }
 
-const MaintenancePage = () => {
+const MaintenancePage = ({ data, type }) => {
   const params = useParams();
-  const searchParams = useSearchParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
-  const type = searchParams?.get('type');
 
-  const [data, setData] = useState<MaintenanceData | null>(null);
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const loadData = async () => {
+    const loadActions = async () => {
       try {
         if (!id || !type) {
           throw new Error('ID ou type manquant');
         }
 
-        const maintenanceData = await fetchDetails(id, type) as unknown as MaintenanceData;
-        setData(maintenanceData);
-
         if (type === 'maintenance') {
-          const actionsData = await fetchCurrentAction(maintenanceData.idSysteme);
+          const actionsData = await fetchMaintenanceActions(id);
           setActions(actionsData);
         }
       } catch (err: any) {
@@ -63,7 +57,7 @@ const MaintenancePage = () => {
       }
     };
 
-    loadData();
+    loadActions();
   }, [id, type]);
 
   const handleStatusChange = (actionId: number) => {
@@ -130,18 +124,12 @@ const MaintenancePage = () => {
   return (
     <div className="flex flex-col items-center mt-10 mb-10">
       <div className="w-full flex justify-end gap-4 mb-4 px-4">
-        <button 
-          onClick={handleSubmit}
-          disabled={saving}
-          className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors disabled:opacity-50"
-        >
-          {saving ? 'Enregistrement...' : 'Enregistrer les modifications'}
-        </button>
+       
         <button 
           onClick={exportToPDF} 
           className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
         >
-          Exporter en PDF
+          Exporter 
         </button>
       </div>
 
@@ -149,7 +137,7 @@ const MaintenancePage = () => {
         {data && (
           <div id="pdf-content" className="space-y-6">
             <div className="flex justify-center mb-8">
-              <Image src="/logo.jpg" alt="Logo" width={200} height={100} priority />
+              <img src="/logo.jpg" alt="Logo" width={200} height={100} priority />
             </div>
             
             <h1 className="text-2xl font-bold text-center mb-8">
@@ -159,19 +147,15 @@ const MaintenancePage = () => {
             <div className="grid grid-cols-2 gap-8 mb-8">
               <div className="space-y-2">
                 <p><strong>Client :</strong> {data.clientName || 'N/A'}</p>
-                <p><strong>Site :</strong> {data.siteName || 'N/A'}</p>
-                <p><strong>Adresse :</strong> {data.adresse || 'N/A'}</p>
+                <p><strong>Contact :</strong> {data.siteName || 'N/A'}</p>
                 <p><strong>Téléphone :</strong> {data.telephoneContact || 'N/A'}</p>
-                <p><strong>Système :</strong> {data.systeme || 'N/A'}</p>
-                <p><strong>Description :</strong> {data.description || 'N/A'}</p>
               </div>
               <div className="space-y-2">
-                <p><strong>Date Maintenance :</strong> {
+                <p><strong>Date  :</strong> {
                   data.dateMaintenance ? new Date(data.dateMaintenance).toLocaleDateString() : 'N/A'
                 }</p>
                 <p><strong>Heure Début :</strong> {data.heureDebut || 'N/A'}</p>
                 <p><strong>Heure Fin :</strong> {data.heureFin || 'N/A'}</p>
-                <p><strong>Technicien :</strong> {data.technicienName || 'N/A'}</p>
               </div>
             </div>
 
@@ -181,7 +165,7 @@ const MaintenancePage = () => {
                 <table className="w-full border-collapse">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="border p-3 text-left">Action à effectuer</th>
+                      <th className="border p-3 text-left">Taches</th>
                       <th className="border p-3 text-center w-24">Statut</th>
                       <th className="border p-3 text-left">Observations</th>
                     </tr>
@@ -204,11 +188,11 @@ const MaintenancePage = () => {
                           </button>
                         </td>
                         <td className="border p-3">
-                          <textarea
+                          <textarea  disabled
                             value={action.observation}
                             onChange={(e) => handleObservationChange(action.action_id, e.target.value)}
                             className="w-full min-h-[80px] p-2 border rounded resize-y"
-                            placeholder="Saisir vos observations..."
+                            placeholder=""
                           />
                         </td>
                       </tr>
@@ -220,13 +204,12 @@ const MaintenancePage = () => {
 
             <div className="mt-12 grid grid-cols-2 gap-8 pt-8 border-t">
               <div>
-                <p className="font-semibold mb-2">Signature Technicien :</p>
-                <div className="h-32 border-2 border-dashed rounded-lg"></div>
+                <p className="font-semibold mb-2">VISA Technicien :</p>
                 <p className="mt-2 text-sm text-center">{data.technicienName}</p>
               </div>
               <div>
-                <p className="font-semibold mb-2">Signature Client :</p>
-                <div className="h-32 border-2 border-dashed rounded-lg"></div>
+                <p className="font-semibold mb-2">VISA Client :</p>
+                
                 <p className="mt-2 text-sm text-center">{data.clientName}</p>
               </div>
             </div>

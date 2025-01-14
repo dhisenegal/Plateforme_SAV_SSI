@@ -142,3 +142,34 @@ export async function updateMaintenanceActions(maintenanceId: string, actions: a
     throw new Error('Erreur lors de la mise à jour des actions');
   }
 }
+
+export async function fetchMaintenanceActions(idMaintenance) {
+  if (!idMaintenance) {
+    throw new Error('ID de maintenance manquant');
+  }
+
+  try {
+    const parsedId = parseInt(idMaintenance);
+
+    const maintenanceActions = await prisma.maintenanceAction.findMany({
+      where: { idMaintenance: parsedId },
+      include: {
+        Action: {
+          select: {
+            libeleAction: true,
+          },
+        },
+      },
+    });
+
+    return maintenanceActions.map(action => ({
+      action_id: action.id,
+      libeleAction: action.Action.libeleAction,
+      statut: action.statut,
+      observation: action.observation,
+    }));
+  } catch (error) {
+    console.error('Erreur lors de la récupération des actions de maintenance :', error);
+    throw new Error('Erreur lors de la récupération des actions de maintenance');
+  }
+}
