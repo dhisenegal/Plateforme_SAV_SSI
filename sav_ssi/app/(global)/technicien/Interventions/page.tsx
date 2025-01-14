@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getPlanning, formatDate, getClientName, getDescription, getType, getDateMaintenanceOrIntervention, getStatut } from '@/actions/technicien/planning';
+import { getPlanning, formatDate, getClientName, getDescription, getType, getDateMaintenanceOrIntervention, getStatut, formatStatut } from '@/actions/technicien/planning';
 
 const PlanningTabContent = () => {
   const router = useRouter();
@@ -31,7 +31,9 @@ const PlanningTabContent = () => {
           const type = await getType(plan);
           const date = await getDateMaintenanceOrIntervention(plan.id, type.toLowerCase());
           const formattedDate = await formatDate(date);
-          const statut = await getStatut(plan.id, type.toLowerCase());
+          const rawStatut = await getStatut(plan.id, type.toLowerCase());
+          const statut = formatStatut(rawStatut); // Application de formatStatus
+
           return { ...plan, client: clientName, description, date: formattedDate, type, statut };
         })
       );

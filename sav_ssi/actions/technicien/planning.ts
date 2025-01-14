@@ -21,6 +21,20 @@ export const updateInterventionStatus = async (id: number, statut: string) => {
     throw new Error('Erreur lors de la mise à jour du statut de l\'intervention');
   }
 };
+export const updateMaintenanceStatus = async (id: number, statut: string) => {
+  try {
+    const result = await prisma.maintenance.update({
+      where: { id: id },
+      data: {
+        statut: statut,
+      },
+    });
+    return result;
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du statut de l\'intervention :', error);
+    throw new Error('Erreur lors de la mise à jour du statut de l\'intervention');
+  }
+};
 
 interface Action {
   idAction: number;
