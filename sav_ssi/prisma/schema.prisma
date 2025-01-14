@@ -22,6 +22,7 @@ model Utilisateur {
   Interventions Intervention[] @relation("TechnicienIntervention")
   Maintenances Maintenance[]   @relation("TechnicienMaintenance")
   Sessions   Session[]
+  Commentaires Commentaire[]
 }
 
 model Role {
@@ -228,14 +229,23 @@ model Intervention {
   Heureint          DateTime?
   numero            Int?
   ficheInt          String?
-  delai             Boolean @default(false)
+  horsDelai             Boolean @default(false)
   idTechnicien      Int?
   prenomContact     String?
   telephoneContact  String?
   adresse           String?
   Technicien        Utilisateur? @relation("TechnicienIntervention", fields: [idTechnicien], references: [id])
+  Commentaires      Commentaire[]
 }
-
+model Commentaire {
+  id                Int      @id @default(autoincrement())
+  idIntervention    Int
+  idUtilisateur     Int
+  commentaire       String
+  dateCommentaire   DateTime @default(now())
+  Utilisateur       Utilisateur @relation(fields: [idUtilisateur], references: [id])
+  Intervention      Intervention @relation(fields: [idIntervention], references: [id])
+}
 enum EnumStatut_i {
   EN_COURS
   SUSPENDU

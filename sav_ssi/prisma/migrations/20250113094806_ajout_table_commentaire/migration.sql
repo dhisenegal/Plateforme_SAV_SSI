@@ -233,6 +233,17 @@ CREATE TABLE `Intervention` (
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
+-- CreateTable
+CREATE TABLE `Commentaire` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `idIntervention` INTEGER NOT NULL,
+    `idUtilisateur` INTEGER NOT NULL,
+    `commentaire` VARCHAR(191) NOT NULL,
+    `dateCommentaire` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
 -- AddForeignKey
 ALTER TABLE `Utilisateur` ADD CONSTRAINT `Utilisateur_idRole_fkey` FOREIGN KEY (`idRole`) REFERENCES `Role`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
@@ -316,3 +327,9 @@ ALTER TABLE `Intervention` ADD CONSTRAINT `Intervention_idSite_fkey` FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE `Intervention` ADD CONSTRAINT `Intervention_idTechnicien_fkey` FOREIGN KEY (`idTechnicien`) REFERENCES `Utilisateur`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Commentaire` ADD CONSTRAINT `Commentaire_idUtilisateur_fkey` FOREIGN KEY (`idUtilisateur`) REFERENCES `Utilisateur`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Commentaire` ADD CONSTRAINT `Commentaire_idIntervention_fkey` FOREIGN KEY (`idIntervention`) REFERENCES `Intervention`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

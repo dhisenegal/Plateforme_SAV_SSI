@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import {useSearchParams} from "next/navigation";
 import { fr } from "date-fns/locale";
-import { FaPlus, FaEdit, FaTrash, FaPause, FaPlay, FaCalendarAlt, FaSpinner } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaPause, FaPlay, FaCalendarAlt, FaSpinner, FaComment } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
@@ -15,6 +15,8 @@ import { toast } from "react-toastify";
 import { getAllTechniciens } from "@/actions/sav/technicien";
 import { getInterventions, updateIntervention, deleteIntervention } from "@/actions/sav/intervention";
 import CreateInterventionModal from "@/components/sav/CreateInterventionModal";
+import CommentModal from "@/components/sav/CommentModal";
+import { useSession } from "next-auth/react";
 
 const InterventionsList = () => {
   const [techniciens, setTechniciens] = useState([]);
@@ -34,6 +36,12 @@ const InterventionsList = () => {
   });
   const itemsPerPage = 10;
   const searchParams = useSearchParams();
+  const [commentModalOpen, setCommentModalOpen] = useState(false);
+  const [selectedInterventionForComment, setSelectedInterventionForComment] = useState(null);
+  const [statusChangeModalOpen, setStatusChangeModalOpen] = useState(false);
+  const [newStatus, setNewStatus] = useState(null);
+  const { data: session } = useSession();
+  const currentUser = session?.user?.id;
 
   useEffect(() => {
     const fetchTechniciens = async () => {
@@ -98,14 +106,18 @@ const InterventionsList = () => {
   }, []);
 
   const handleStatusUpdate = useCallback(async (intervention, newStatus) => {
-    try {
-      await updateIntervention(intervention.id, { statut: newStatus });
-      toast.success("Statut mis à jour avec succès");
-      fetchInterventions();
-    } catch (error) {
-      toast.error("Erreur lors de la mise à jour du statut");
-    }
-  }, [fetchInterventions]);
+    setSelectedInterventionForComment(intervention);
+    setNewStatus(newStatus);
+    setStatusChangeModalOpen(true);
+  }, []);
+
+  const handleCommentModalClose = () => {
+    setCommentModalOpen(false);
+    setStatusChangeModalOpen(false);
+    setSelectedInterventionForComment(null);
+    setNewStatus(null);
+    fetchInterventions();
+  };
 
   const handlePlanningSubmit = useCallback(async (e) => {
     e.preventDefault();
@@ -222,32 +234,39 @@ const InterventionsList = () => {
                   : "-"}
               </TableCell>
               <TableCell>{getStatusBadge(intervention.statut)}</TableCell>
-              <TableCell>
-                <div className="flex space-x-2">
-                  <FaCalendarAlt 
-                    className="cursor-pointer text-blue-500"
-                    onClick={() => {
-                      setSelectedIntervention(intervention);
-                      setPlanningModalOpen(true);
-                    }}
-                  />
-                  {intervention.statut !== "SUSPENDU" ? (
-                    <FaPause
-                      className="cursor-pointer text-yellow-500"
-                      onClick={() => handleStatusUpdate(intervention, "SUSPENDU")}
-                    />
-                  ) : (
-                    <FaPlay
-                      className="cursor-pointer text-green-500"
-                      onClick={() => handleStatusUpdate(intervention, "EN_COURS")}
-                    />
-                  )}
-                  <FaTrash
-                    className="cursor-pointer text-red-500"
-                    onClick={() => handleDelete(intervention.id)}
-                  />
-                </div>
-              </TableCell>
+          <TableCell>
+            <div className="flex space-x-2">
+              <FaComment
+                className="cursor-pointer text-blue-500"
+                onClick={() => {
+                  setSelectedInterventionForComment(intervention);
+                  setCommentModalOpen(true);
+                }}
+              />
+              <FaCalendarAlt 
+                className="cursor-pointer text-blue-500"
+                onClick={() => {
+                  setSelectedIntervention(intervention);
+                  setPlanningModalOpen(true);
+                }}
+              />
+              {intervention.statut !== "SUSPENDU" ? (
+                <FaPause
+                  className="cursor-pointer text-yellow-500"
+                  onClick={() => handleStatusUpdate(intervention, "SUSPENDU")}
+                />
+              ) : (
+                <FaPlay
+                  className="cursor-pointer text-green-500"
+                  onClick={() => handleStatusUpdate(intervention, "EN_COURS")}
+                />
+              )}
+              <FaTrash
+                className="cursor-pointer text-red-500"
+                onClick={() => handleDelete(intervention.id)}
+              />
+            </div>
+          </TableCell>
             </TableRow>
           ))}
         </TableBody>
@@ -323,6 +342,24 @@ const InterventionsList = () => {
           </form>
         </DialogContent>
       </Dialog>
+   
+    <CommentModal
+      isOpen={commentModalOpen}
+      onClose={handleCommentModalClose}
+      intervention={selectedInterventionForComment}
+      onCommentAdded={fetchInterventions}
+      currentUser={currentUser}
+    />
+
+    <CommentModal
+      isOpen={statusChangeModalOpen}
+      onClose={handleCommentModalClose}
+      intervention={selectedInterventionForComment}
+      onCommentAdded={fetchInterventions}
+      requiredComment={true}
+      newStatus={newStatus}
+      currentUser={currentUser}
+    />
     </div>
   );
 };
