@@ -59,6 +59,8 @@ export const createIntervention = async (data: {
   telephoneContact: string;
   adresse: string;
   numero: number | null;
+  sousGarantie: boolean;
+  urgent: boolean;
   statut: EnumStatut_i;
   datePlanifiee?: Date;
   idTechnicien?: number;
@@ -74,6 +76,8 @@ export const createIntervention = async (data: {
     telephoneContact: data.telephoneContact,
     adresse: data.adresse,
     numero: data.numero,
+    sousGarantie: data.sousGarantie,
+    urgent: data.urgent,
     statut: data.statut,
     datePlanifiee: data.datePlanifiee || null,
     Client: { connect: { id: data.idClient } },

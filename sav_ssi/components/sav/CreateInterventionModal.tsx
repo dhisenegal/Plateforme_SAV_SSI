@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { FaPlus } from "react-icons/fa";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,8 +14,22 @@ import { getAllTechniciens } from "@/actions/sav/technicien";
 import { createIntervention } from "@/actions/sav/intervention";
 import { toast } from "react-toastify";
 
+interface FormData {
+  typePanneDeclare: string;
+  dateDeclaration: string;
+  idClient: string;
+  idSite: string;
+  idSysteme: string;
+  prenomContact: string;
+  telephoneContact: string;
+  adresse: string;
+  numero: string;
+  sousGarantie: boolean;
+  urgent: boolean;
+}
+
 const CreateInterventionModal = ({ onCreate }) => {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     typePanneDeclare: "",
     dateDeclaration: new Date().toISOString().split('T')[0],
     idClient: "",
@@ -25,13 +39,15 @@ const CreateInterventionModal = ({ onCreate }) => {
     telephoneContact: "",
     adresse: "",
     numero: "",
+    sousGarantie: true,
+    urgent: false
   });
 
   const [planificationData, setPlanificationData] = useState({
     planifierMaintenant: false,
     datePlanifiee: "",
     idTechnicien: "",
-    statut: "",
+    statut: "NON_PLANIFIE"
   });
 
   const [clients, setClients] = useState([]);
@@ -106,6 +122,8 @@ const CreateInterventionModal = ({ onCreate }) => {
       telephoneContact: "",
       adresse: "",
       numero: "",
+      sousGarantie: true,
+      urgent: false
     });
     setPlanificationData({
       planifierMaintenant: false,
@@ -114,7 +132,6 @@ const CreateInterventionModal = ({ onCreate }) => {
       statut: "NON_PLANIFIE",
     });
   };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -125,7 +142,8 @@ const CreateInterventionModal = ({ onCreate }) => {
         idSysteme: parseInt(formData.idSysteme),
         numero: formData.numero ? parseInt(formData.numero) : null,
         dateDeclaration: new Date(formData.dateDeclaration),
-        // Ajouter les données de planification seulement si la case est cochée
+        sousGarantie: formData.sousGarantie,
+        urgent: formData.urgent,
         ...(planificationData.planifierMaintenant && {
           datePlanifiee: new Date(planificationData.datePlanifiee),
           idTechnicien: parseInt(planificationData.idTechnicien),
@@ -145,107 +163,150 @@ const CreateInterventionModal = ({ onCreate }) => {
   };
 
   return (
-    <>
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button className="bg-blue-500 text-white flex items-center">
           <FaPlus className="w-5 h-5 mr-2" />
-          Créer une intervention
+          Nouvelle intervention
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Créer une intervention</DialogTitle>
-          <DialogDescription>
-            Remplissez les informations pour créer une nouvelle intervention.
-          </DialogDescription>
+          <DialogTitle>Créer une nouvelle intervention</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Informations de base */}
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-4">
-            <Select value={formData.idClient} onValueChange={(value) => handleSelectChange("idClient", value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un client" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={client.id.toString()}>
-                    {client.nom}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Label htmlFor="client">Client</Label>
+              <Select 
+                value={formData.idClient} 
+                onValueChange={(value) => handleSelectChange("idClient", value)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id.toString()}>
+                      {client.nom}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select 
-              value={formData.idSite} 
-              onValueChange={(value) => handleSelectChange("idSite", value)}
-              disabled={!formData.idClient}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un site" />
-              </SelectTrigger>
-              <SelectContent>
-                {sites.map((site) => (
-                  <SelectItem key={site.id} value={site.id.toString()}>
-                    {site.nom}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Label htmlFor="site">Site</Label>
+              <Select 
+                value={formData.idSite} 
+                onValueChange={(value) => handleSelectChange("idSite", value)}
+                disabled={!formData.idClient}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un site" />
+                </SelectTrigger>
+                <SelectContent>
+                  {sites.map((site) => (
+                    <SelectItem key={site.id} value={site.id.toString()}>
+                      {site.nom}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select 
-              value={formData.idSysteme} 
-              onValueChange={(value) => handleSelectChange("idSysteme", value)}
-              disabled={!formData.idSite}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Sélectionner un système" />
-              </SelectTrigger>
-              <SelectContent>
-                {systemes.map((systeme) => (
-                  <SelectItem key={systeme.id} value={systeme.id.toString()}>
-                    {systeme.nom}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div className="space-y-2">
+              <Label htmlFor="systeme">Système</Label>
+              <Select 
+                value={formData.idSysteme} 
+                onValueChange={(value) => handleSelectChange("idSysteme", value)}
+                disabled={!formData.idSite}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un système" />
+                </SelectTrigger>
+                <SelectContent>
+                  {systemes.map((systeme) => (
+                    <SelectItem key={systeme.id} value={systeme.id.toString()}>
+                      {systeme.nom}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Input
-              name="typePanneDeclare"
-              placeholder="Type de panne déclarée"
-              value={formData.typePanneDeclare}
-              onChange={handleChange}
-              required
-            />
+            <div className="space-y-2">
+              <Label htmlFor="typePanneDeclare">Type de panne</Label>
+              <Input
+                id="typePanneDeclare"
+                name="typePanneDeclare"
+                value={formData.typePanneDeclare}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-            <Input
-              name="prenomContact"
-              placeholder="Nom du contact"
-              value={formData.prenomContact}
-              onChange={handleChange}
-            />
-
-            <Input
-              name="telephoneContact"
-              placeholder="Téléphone du contact"
-              value={formData.telephoneContact}
-              onChange={handleChange}
-            />
-            <Input
-              name="adresse"
-              placeholder="Adresse du contact"
-              value={formData.adresse}
-              onChange={handleChange}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="prenomContact">Nom du contact</Label>
+                <Input
+                  id="prenomContact"
+                  name="prenomContact"
+                  value={formData.prenomContact}
+                  onChange={handleChange}
                 />
-            {/* Section Planification */}
-            <div className="space-y-4 border p-4 rounded-lg">
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="telephoneContact">Téléphone</Label>
+                <Input
+                  id="telephoneContact"
+                  name="telephoneContact"
+                  value={formData.telephoneContact}
+                  onChange={handleChange}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="adresse">Adresse</Label>
+              <Input
+                id="adresse"
+                name="adresse"
+                value={formData.adresse}
+                onChange={handleChange}
+              />
+            </div>
+
+            <div className="flex space-x-6">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="sousGarantie"
+                  checked={formData.sousGarantie}
+                  onCheckedChange={(checked) => 
+                    setFormData(prev => ({...prev, sousGarantie: checked as boolean}))
+                  }
+                />
+                <Label htmlFor="sousGarantie">Sous garantie</Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="urgent"
+                  checked={formData.urgent}
+                  onCheckedChange={(checked) => 
+                    setFormData(prev => ({...prev, urgent: checked as boolean}))
+                  }
+                />
+                <Label htmlFor="urgent">Urgent</Label>
+              </div>
+            </div>
+
+            <div className="border p-4 rounded-lg space-y-4">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="planifierMaintenant"
-                  name="planifierMaintenant"
                   checked={planificationData.planifierMaintenant}
                   onCheckedChange={(checked) => 
-                    setPlanificationData(prev => ({...prev, planifierMaintenant: checked}))
+                    setPlanificationData(prev => ({...prev, planifierMaintenant: checked as boolean}))
                   }
                 />
                 <Label htmlFor="planifierMaintenant">Planifier maintenant</Label>
@@ -253,41 +314,47 @@ const CreateInterventionModal = ({ onCreate }) => {
 
               {planificationData.planifierMaintenant && (
                 <div className="space-y-4">
-                  <Input
-                    name="datePlanifiee"
-                    type="date"
-                    value={planificationData.datePlanifiee}
-                    onChange={(e) => handlePlanificationChange({
-                      name: "datePlanifiee",
-                      value: e.target.value
-                    })}
-                    required
-                  />
+                  <div className="space-y-2">
+                    <Label htmlFor="datePlanifiee">Date planifiée</Label>
+                    <Input
+                      id="datePlanifiee"
+                      type="date"
+                      value={planificationData.datePlanifiee}
+                      onChange={(e) => handlePlanificationChange({
+                        name: "datePlanifiee",
+                        value: e.target.value
+                      })}
+                      required
+                    />
+                  </div>
 
-                  <Select 
-                    value={planificationData.idTechnicien}
-                    onValueChange={(value) => handlePlanificationChange({
-                      name: "idTechnicien",
-                      value
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Sélectionner un technicien" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {techniciens.map((technicien) => (
-                        <SelectItem key={technicien.id} value={technicien.id.toString()}>
-                          {`${technicien.nom} ${technicien.prenom}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <div className="space-y-2">
+                    <Label htmlFor="technicien">Technicien</Label>
+                    <Select 
+                      value={planificationData.idTechnicien}
+                      onValueChange={(value) => handlePlanificationChange({
+                        name: "idTechnicien",
+                        value
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Sélectionner un technicien" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {techniciens.map((tech) => (
+                          <SelectItem key={tech.id} value={tech.id.toString()}>
+                            {`${tech.nom} ${tech.prenom}`}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               )}
             </div>
           </div>
 
-          <div className="flex justify-end space-x-2 pt-4">
+          <div className="flex justify-end space-x-2">
             <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
               Annuler
             </Button>
@@ -298,7 +365,6 @@ const CreateInterventionModal = ({ onCreate }) => {
         </form>
       </DialogContent>
     </Dialog>
-    </>
   );
 };
 

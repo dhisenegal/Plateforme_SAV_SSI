@@ -146,6 +146,7 @@ model InstallationEquipement {
   idEquipement      Int
   idInstallation    Int
   quantite          Int
+  estGaranti        Boolean  @default(true)
   Equipement        Equipement   @relation(fields: [idEquipement], references: [id], onDelete: Cascade)
   Installation      Installation @relation(fields: [idInstallation], references: [id], onDelete: Cascade)
   Garanties         Garantie[]
@@ -214,6 +215,8 @@ model Intervention {
   statut            EnumStatut_i @default(NON_PLANIFIE)
   typePanneDeclare  String
   dateDeclaration   DateTime
+  sousGarantie       Boolean? @default(true)
+  urgent              Boolean? @default(false)
   idClient          Int?
   idSite            Int?
   idSysteme         Int?

@@ -23,7 +23,7 @@ export const getEquipementsBySiteId = async (siteId: number): Promise<Installati
   });
 };
 
-// Créer une nouvelle installation d'équipement
+// Créer une nouvelle installation d'équipement avec garantie
 export const createInstallationEquipement = async (data: {
   idEquipement: number;
   quantite: number;
@@ -61,23 +61,41 @@ export const createInstallationEquipement = async (data: {
         }
       });
     }
+
+    const installationDate = new Date(data.dateInstallation);
+    const garantieEndDate = new Date(installationDate);
+    garantieEndDate.setFullYear(garantieEndDate.getFullYear() + 1);
     
-    // Créer l'équipement d'installation
-    const installationEquipement = await prisma.installationEquipement.create({
-      data: {
-        idEquipement: data.idEquipement,
-        quantite: data.quantite,
-        dateInstallation: new Date(data.dateInstallation),
-        idInstallation: installation.id,
-        statut: 'ok'
-      },
-      include: {
-        Equipement: true,
-        Installation: true
-      }
+    // Créer l'équipement d'installation avec garantie dans une transaction
+    const result = await prisma.$transaction(async (tx) => {
+      const installationEquipement = await tx.installationEquipement.create({
+        data: {
+          idEquipement: data.idEquipement,
+          quantite: data.quantite,
+          dateInstallation: installationDate,
+          idInstallation: installation.id,
+          statut: 'ok',
+          estGaranti: true
+        },
+        include: {
+          Equipement: true,
+          Installation: true
+        }
+      });
+
+      // Créer la garantie
+      await tx.garantie.create({
+        data: {
+          dateDebutGarantie: installationDate,
+          dateFinGarantie: garantieEndDate,
+          idInstallationEq: installationEquipement.id
+        }
+      });
+
+      return installationEquipement;
     });
     
-    return installationEquipement;
+    return result;
   } catch (error) {
     console.error("Erreur création installation équipement:", error);
     throw error;
