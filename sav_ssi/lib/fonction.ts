@@ -90,35 +90,29 @@ export async function getDateDeclarationPanne(idIntervention: number): Promise<s
     return null;
   }
 }
-export const getGarantieStatus = async (idInstallationEq: number) => {
+export const getGarantieStatus = async (idInstallationEq: number): Promise<number> => {
   try {
     const garantie = await prisma.garantie.findFirst({
-      where: {
-        idInstallationEq: idInstallationEq,
-      },
-      select: {
-        dateDebutGarantie: true,
-        dateFinGarantie: true,
-      },
+      where: { idInstallationEq },
+      select: { dateDebutGarantie: true },
     });
 
     if (!garantie) {
-      return "Aucune garantie trouvée pour cette installation";
+      return 0; // Aucune garantie trouvée, donc pas sous garantie
     }
 
     const now = new Date();
-    const { dateDebutGarantie, dateFinGarantie } = garantie;
+    const dateDebutGarantie = new Date(garantie.dateDebutGarantie);
+    const dateFinGarantie = new Date(dateDebutGarantie);
+    dateFinGarantie.setFullYear(dateFinGarantie.getFullYear() + 1); // Ajout d'1 an
 
-    if (now >= new Date(dateDebutGarantie) && now <= new Date(dateFinGarantie)) {
-      return "Installation sous garantie";
-    } else {
-      return "Garantie expirée ou non encore active";
-    }
+    return now >= dateDebutGarantie && now <= dateFinGarantie ? 1 : 0;
   } catch (error) {
     console.error("Erreur lors de la vérification de la garantie :", error);
-    return "Erreur lors de la vérification de la garantie";
+    return 0; // En cas d'erreur, considérer que ce n'est pas sous garantie
   }
 };
+
 
 export const getSiteByInstallation = async (installationId: number) => {
   try {

@@ -6,10 +6,12 @@ import { fetchDetails } from "@/lib/fonctionas";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import Image from "next/image";
+import { getGarantieStatus } from "@/lib/garantie"; // Importer la fonction de garantie
 
 const InterventionPage = () => {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
+  const [garantieStatus, setGarantieStatus] = useState(false); // Statut de la garantie (true ou false)
   const id = useParams()?.id;
 
   useEffect(() => {
@@ -20,8 +22,12 @@ const InterventionPage = () => {
         if (result.dateIntervention) {
           result.dateIntervention = new Date(result.dateIntervention).toLocaleDateString();
         }
-        if (result.dateDeclaration) {
-          result.dateDeclaration = new Date(result.dateDeclaration).toLocaleDateString();
+        
+        // Si le statut de garantie dans la base est "garantie", alors c'est sous garantie
+        if (result.statut === "garantie") {
+          setGarantieStatus(true);
+        } else {
+          setGarantieStatus(false);
         }
 
         setData(result);
@@ -39,18 +45,15 @@ const InterventionPage = () => {
     return date ? new Date(date).toLocaleDateString() : 'N/A';
   };
 
-  // La fonction exportToPDF utilise html2canvas pour créer une capture d'écran du contenu
-  // imgData stocke cette capture sous forme de données URL PNG, qui est ensuite utilisée 
-  // pour créer le PDF avec jsPDF
   const exportToPDF = () => {
     const input = document.getElementById('pdf-content');
     if (input) {
       html2canvas(input).then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');  // Convertit le canvas en image PNG
+        const imgData = canvas.toDataURL('image/png'); 
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);  // Ajoute l'image au PDF
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight); 
         pdf.save('export.pdf');
       });
     }
@@ -88,7 +91,7 @@ const InterventionPage = () => {
                 <p><strong>Système :</strong> {data.systeme || 'N/A'}</p>
               </div>
               <div>
-                <p><strong>Date Intervention :</strong> {formatDate(data.dateIntervention)}</p>
+                <p><strong>Date Intervention :</strong> {data.dateIntervention}</p>
                 <p><strong>Heure Intervention :</strong> {data.heureIntervention || 'N/A'}</p>
                 <p><strong>Durée Intervention :</strong> {data.dureeHeure || 'N/A'}</p>
               </div>
@@ -100,7 +103,7 @@ const InterventionPage = () => {
                   Oui
                   <input
                     type="checkbox"
-                    checked={data.statut === 'sous garantie'}
+                    checked={garantieStatus === true} // Si le matériel est sous garantie, la case "Oui" est cochée
                     readOnly
                     className="ml-1"
                   />
@@ -109,7 +112,7 @@ const InterventionPage = () => {
                   Non
                   <input
                     type="checkbox"
-                    checked={data.statut !== 'sous garantie'}
+                    checked={garantieStatus === false} // Si le matériel n'est pas sous garantie, la case "Non" est cochée
                     readOnly
                     className="ml-1"
                   />

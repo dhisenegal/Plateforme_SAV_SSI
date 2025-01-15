@@ -197,23 +197,24 @@ const MaintenancePage = () => {
                         <td className="border p-3">{action.libeleAction}</td>
                         <td className="border p-3 text-center">
                           <button
+                          className="hover:opacity-75 transition-opacity"
+                          title={action.statut ? "Marquer comme non fait" : "Marquer comme fait"}
                             onClick={() => handleStatusChange(action.action_id)}
-                            className="hover:opacity-75 transition-opacity"
-                            title={action.statut ? "Marquer comme non fait" : "Marquer comme fait"}
-                          >
+                          disabled>
                             {action.statut ? (
-                              <FaCheckCircle className="text-green-500 text-xl inline" />
+                              <FaCheckCircle className="text-green-500" />
                             ) : (
-                              <FaTimesCircle className="text-red-500 text-xl inline" />
+                              <FaTimesCircle className="text-red-500" />
                             )}
                           </button>
                         </td>
                         <td className="border p-3">
                           <textarea
-                            value={action.observation}
-                            onChange={(e) => handleObservationChange(action.action_id, e.target.value)}
-                            className="w-full min-h-[80px] p-2 border rounded resize-y"
-                            placeholder="Ajouter une observation"
+                          value={action.observation}
+                          onChange={(e) => handleObservationChange(action.action_id, e.target.value)}
+                          className="w-full min-h-[80px] p-2 border rounded resize-y"
+                          placeholder="Ajouter une observation"
+                          disabled
                           />
                         </td>
                       </tr>

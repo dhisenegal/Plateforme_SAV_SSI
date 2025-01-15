@@ -141,7 +141,7 @@ async function main() {
  
   
 {
-  /* // Créer des sites
+   // Créer des sites
   const SITE1 = await prisma.site.upsert({
     where: { id: 1 },
     update: {},
@@ -164,7 +164,32 @@ async function main() {
     },
   });
 
-  // Créer des contrats
+  const systeme1 = await prisma.systeme.upsert({
+    where: { id: 1 },
+    update: {},
+    create: {
+      id: 1,
+      nom: "SYSTÈME DE DETECTION INCENDIE CONVENTIONNEL",
+    },
+  });
+  
+  const systeme2 = await prisma.systeme.upsert({
+    where: { id: 2 },
+    update: {},
+    create: {
+      id: 2,
+      nom: "MOYENS DE SECOURS EXTINCTEURS",
+    },
+  });
+  const systeme3 = await prisma.systeme.upsert({
+    where: { id: 3 },
+    update: {},
+    create: {
+      id: 3,
+      nom: "MOYENS DE SECOURS RIA",
+    },
+  });
+  /*// Créer des contrats
   const contrat1 = await prisma.contrat.upsert({
     where: { id: 1 },
     update: {},
