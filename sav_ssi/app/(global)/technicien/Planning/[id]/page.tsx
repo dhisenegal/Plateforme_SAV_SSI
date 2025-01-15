@@ -13,7 +13,7 @@ import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { getSystemIdFromInstallation, getActionsBySystem } from '@/actions/admin/maintenanceAction';
 import { Form, FormControl, FormItem, FormLabel } from '@/components/ui/form';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { updateIntervention, updateInterventionStatus, updateMaintenanceAction } from '@/actions/technicien/planning';
+import { updateIntervention, updateInterventionStatus,updateMaintenanceStatus,  updateMaintenanceAction } from '@/actions/technicien/planning';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@radix-ui/react-dialog';
 import InterventionSection from '@/actions/technicien/InterventionSection';
 import html2canvas from 'html2canvas';
@@ -188,13 +188,20 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     }
   };
 
-  const handleSuspendOrResume = async () => {
+  const handleSuspendOrResume = async (type: 'intervention' | 'maintenance') => {
     setIsSaving(true);
     try {
       if (id) {
         const newStatus = isSuspended ? 'EN_COURS' : 'SUSPENDU';
-        const result = await updateInterventionStatus(parseInt(id), newStatus);
-        console.log('Statut mis à jour avec succès', result);
+
+        let result;
+        if (type === 'intervention') {
+          result = await updateInterventionStatus(parseInt(id), newStatus);
+        } else if (type === 'maintenance') {
+          result = await updateMaintenanceStatus(parseInt(id), newStatus);
+        }
+
+        console.log(`Statut de ${type} mis à jour avec succès`, result);
         setIsSuspended(!isSuspended);
         setDetails((prevDetails: any) => ({
           ...prevDetails,
@@ -202,11 +209,12 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         }));
       }
     } catch (err) {
-      console.error('Erreur lors de la mise à jour du statut', err);
+      console.error(`Erreur lors de la mise à jour du statut de ${type}`, err);
     } finally {
       setIsSaving(false);
     }
   };
+
 
   useEffect(() => {
     if (id && type) {
@@ -468,7 +476,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
               <div className="flex justify-end space-x-4 mt-6">
                 <Button
                   type="button"
-                  onClick={handleSuspendOrResume}
+                  onClick={() => (type === 'intervention' || type === 'maintenance') && handleSuspendOrResume(type)}
                   disabled={isSaving}
                   className={isSuspended ? 'bg-orange-500 hover:bg-orange-600' : 'bg-red-500 hover hover:bg-red-600'}
                   >
