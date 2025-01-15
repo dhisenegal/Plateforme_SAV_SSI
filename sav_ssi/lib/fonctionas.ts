@@ -164,7 +164,6 @@ export async function updateMaintenanceActions(maintenanceId: string, actions: a
     throw new Error('Erreur lors de la mise à jour des actions');
   }
 }
-
 export async function fetchMaintenanceActions(idMaintenance) {
   if (!idMaintenance) {
     throw new Error('ID de maintenance manquant');
@@ -173,8 +172,8 @@ export async function fetchMaintenanceActions(idMaintenance) {
   try {
     const parsedId = parseInt(idMaintenance);
 
-    // Récupérer toutes les actions pour cette maintenance
-    const maintenanceActions = await prisma.maintenanceAction.findMany({
+    // Get all actions with duplicates
+    const allActions = await prisma.maintenanceAction.findMany({
       where: { 
         idMaintenance: parsedId 
       },
@@ -187,29 +186,50 @@ export async function fetchMaintenanceActions(idMaintenance) {
         },
       },
       orderBy: {
-        Action: {
-          id: 'asc'
+        id: 'desc' // Most recent first
+      }
+    });
+
+    // Group by idAction to find duplicates
+    const actionsByIdAction = allActions.reduce((acc, action) => {
+      if (!acc[action.idAction]) {
+        acc[action.idAction] = [];
+      }
+      acc[action.idAction].push(action);
+      return acc;
+    }, {});
+
+    // Delete older duplicates and keep most recent
+    await prisma.$transaction(async (tx) => {
+      for (const idAction in actionsByIdAction) {
+        const actions = actionsByIdAction[idAction];
+        if (actions.length > 1) {
+          const [keep, ...duplicates] = actions; // Keep most recent (first due to desc order)
+          await tx.maintenanceAction.deleteMany({
+            where: {
+              id: {
+                in: duplicates.map(d => d.id)
+              }
+            }
+          });
         }
       }
     });
 
-    // Créer un Map pour garder uniquement la dernière action pour chaque idAction
-    const uniqueActions = new Map();
-    maintenanceActions.forEach(action => {
-      uniqueActions.set(action.idAction, {
-        action_id: action.id,
-        libeleAction: action.Action.libeleAction,
-        statut: action.statut,
-        observation: action.observation,
-        idAction: action.idAction
-      });
+    // Return latest actions only
+    return Object.values(actionsByIdAction).map(actions => {
+      const latest = actions[0]; // Most recent action
+      return {
+        action_id: latest.id,
+        libeleAction: latest.Action.libeleAction,
+        statut: latest.statut,
+        observation: latest.observation,
+        idAction: latest.idAction
+      };
     });
 
-    // Convertir le Map en array
-    return Array.from(uniqueActions.values());
   } catch (error) {
-    console.error('Erreur lors de la récupération des actions de maintenance :', error);
-    throw new Error('Erreur lors de la récupération des actions de maintenance');
+    console.error('Erreur lors de la récupération des actions:', error);
+    throw new Error('Erreur lors de la récupération des actions');
   }
 }
-

@@ -224,7 +224,7 @@ CREATE TABLE `Intervention` (
     `Heureint` DATETIME(3) NULL,
     `numero` INTEGER NULL,
     `ficheInt` VARCHAR(191) NULL,
-    `delai` BOOLEAN NOT NULL DEFAULT false,
+    `horsDelai` BOOLEAN NOT NULL DEFAULT false,
     `idTechnicien` INTEGER NULL,
     `prenomContact` VARCHAR(191) NULL,
     `telephoneContact` VARCHAR(191) NULL,

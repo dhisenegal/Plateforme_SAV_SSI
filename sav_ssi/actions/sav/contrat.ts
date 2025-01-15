@@ -108,3 +108,57 @@ export const deleteContrat = async (id: number): Promise<Contrat> => {
     throw new Error("Erreur lors de la suppression du contrat");
   }
 };
+
+export const renewContrat = async (
+  id: number,
+  data: {
+    nom: string;
+    periodicite: string;
+    typeContrat: string;
+    pieceMainDoeuvre: boolean;
+    nombreAnnees: number;
+  }
+): Promise<Contrat> => {
+  if (!id || !data) {
+    throw new Error("Données de renouvellement invalides");
+  }
+
+  try {
+    // Récupérer le contrat existant
+    const existingContract = await prisma.contrat.findUnique({
+      where: { id },
+    });
+
+    if (!existingContract) {
+      throw new Error("Contrat non trouvé");
+    }
+
+    // Calculer les nouvelles dates
+    const dateDebut = new Date();
+    const dateFin = new Date();
+    dateFin.setFullYear(dateFin.getFullYear() + data.nombreAnnees);
+
+    // Mettre à jour le contrat
+    return await prisma.contrat.update({
+      where: { id },
+      data: {
+        nom: data.nom,
+        dateDebut,
+        dateFin,
+        periodicite: data.periodicite,
+        typeContrat: data.typeContrat,
+        pieceMainDoeuvre: data.pieceMainDoeuvre
+      },
+      include: {
+        Site: {
+          include: {
+            Client: true,
+          },
+        },
+      },
+    });
+  } catch (error) {
+    console.error("Erreur lors du renouvellement du contrat:", error);
+    throw new Error("Erreur lors du renouvellement du contrat");
+  }
+};
