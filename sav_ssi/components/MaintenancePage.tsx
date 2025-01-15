@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import html2canvas from 'html2canvas';
@@ -12,6 +13,7 @@ interface Action {
   libeleAction: string;
   statut: boolean;
   observation: string;
+  idAction: number;
 }
 
 interface MaintenanceData {
@@ -39,34 +41,48 @@ const MaintenancePage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [updateKey, setUpdateKey] = useState(0);
 
   useEffect(() => {
-    const loadInitialData = async () => {
+    let isMounted = true;
+
+    const loadData = async () => {
+      if (!id) return;
+
       try {
-        if (!id) {
-          throw new Error('ID manquant');
-        }
-        const [fetchedData, actionsData] = await Promise.all([
+        setLoading(true);
+        
+        const [maintenanceData, actionsData] = await Promise.all([
           fetchDetails(id, "maintenance"),
           fetchMaintenanceActions(id)
         ]);
 
-        if (fetchedData.dateMaintenance) {
-          fetchedData.dateMaintenance = new Date(fetchedData.dateMaintenance).toLocaleDateString();
-        }
-        setData(fetchedData);
+        if (!isMounted) return;
+
+        setData({
+          ...maintenanceData,
+          dateMaintenance: maintenanceData.dateMaintenance 
+            ? new Date(maintenanceData.dateMaintenance).toLocaleDateString()
+            : ''
+        });
         setActions(actionsData);
-      } catch (err: any) {
-        setError(err.message);
-        console.error('Erreur lors du chargement des données:', err);
+      } catch (err) {
+        if (isMounted) {
+          setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+          console.error('Erreur de chargement:', err);
+        }
       } finally {
-        setLoading(false);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
-    loadInitialData();
-  }, [id, updateKey]);
+    loadData();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
   const handleStatusChange = (actionId: number) => {
     setActions(prevActions =>
@@ -89,16 +105,15 @@ const MaintenancePage = () => {
   };
 
   const handleSubmit = async () => {
-    if (!id) return;
+    if (!id || saving) return;
 
     try {
       setSaving(true);
       await updateMaintenanceActions(id, actions);
-      setUpdateKey(prev => prev + 1);
       alert('Modifications enregistrées avec succès');
     } catch (error) {
       alert('Erreur lors de l\'enregistrement');
-      console.error('Erreur lors de la sauvegarde:', error);
+      console.error('Erreur de sauvegarde:', error);
     } finally {
       setSaving(false);
     }
@@ -106,29 +121,33 @@ const MaintenancePage = () => {
 
   const exportToPDF = () => {
     const input = document.getElementById('pdf-content');
-    if (input) {
-      html2canvas(input).then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save('fiche-maintenance.pdf');
-      });
-    }
+    if (!input) return;
+
+    html2canvas(input).then((canvas) => {
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save('fiche-maintenance.pdf');
+    });
   };
 
-  if (loading) return (
-    <div className="flex justify-center items-center min-h-screen">
-      <div className="text-lg">Chargement...</div>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-lg">Chargement...</div>
+      </div>
+    );
+  }
 
-  if (error) return (
-    <div className="flex justify-center items-center min-h-screen">
-      <div className="text-red-500 text-lg">Erreur: {error}</div>
-    </div>
-  );
+  if (error) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-red-500 text-lg">Erreur: {error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center mt-10 mb-10">
@@ -172,9 +191,7 @@ const MaintenancePage = () => {
                 <p><strong>Téléphone :</strong> {data.telephoneContact || 'N/A'}</p>
               </div>
               <div className="space-y-2">
-                <p><strong>Date :</strong> {
-                  data.dateMaintenance ? new Date(data.dateMaintenance).toLocaleDateString() : 'N/A'
-                }</p>
+                <p><strong>Date :</strong> {data.dateMaintenance || 'N/A'}</p>
                 <p><strong>Heure Début :</strong> {data.heureDebut || 'N/A'}</p>
                 <p><strong>Heure Fin :</strong> {data.heureFin || 'N/A'}</p>
               </div>

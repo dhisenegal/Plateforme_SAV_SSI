@@ -2,25 +2,34 @@
 
 import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import {useSearchParams} from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@/components/ui/table";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { FaPlus, FaEdit, FaTrash, FaSyncAlt, FaPause, FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import { FaPlus, FaSyncAlt, FaArrowLeft, FaArrowRight } from "react-icons/fa";
 import { Label } from "@/components/ui/label";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { getAllContrats, createContrat, updateContrat, deleteContrat, getAllClients, getSitesByClientId } from "@/actions/sav/contrat";
+import { getAllContrats, createContrat, renewContrat, getAllClients, getSitesByClientId } from "@/actions/sav/contrat";
 
 const contractTypes = ["Préventive", "Curative"];
+const periodicityOptions = ["Mensuels", "Trimestriels", "Semestriels", "Annuels"];
 
 const ContratPage = () => {
   const [contracts, setContracts] = useState([]);
   const [clients, setClients] = useState([]);
   const [sites, setSites] = useState([]);
-  const [newContract, setNewContract] = useState({ nom: "", client: "", site: "", startDate: "", endDate: "", periodicite: "", typeContrat: "", pieceMainDoeuvre: false });
-  const [selectedContract, setSelectedContract] = useState(null);
+  const [newContract, setNewContract] = useState({ 
+    nom: "", 
+    client: "", 
+    site: "", 
+    startDate: "", 
+    endDate: "", 
+    periodicite: "", 
+    typeContrat: "", 
+    pieceMainDoeuvre: false 
+  });
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [contractToDelete, setContractToDelete] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,15 +37,16 @@ const ContratPage = () => {
   const [itemsPerPage] = useState(10);
   const [totalContracts, setTotalContracts] = useState(0);
   const [filter, setFilter] = useState("");
-  
+  const [renewalContract, setRenewalContract] = useState(null);
+  const [isRenewDialogOpen, setIsRenewDialogOpen] = useState(false);
+
   const params = useSearchParams();
+
   useEffect(() => {
     const fetchContracts = async () => {
-      // Récupérer le filtre depuis l'URL
       const urlFilter = params.get('filter')?.toString();
       setFilter(urlFilter || "");
 
-      // Modifier la requête en fonction du filtre
       let whereClause = {};
       
       if (urlFilter === "expiring") {
@@ -46,7 +56,7 @@ const ContratPage = () => {
         whereClause = {
           dateFin: {
             lte: thirtyDaysFromNow,
-            gte: new Date() // Pour exclure les contrats déjà expirés
+            gte: new Date()
           }
         };
       }
@@ -87,69 +97,79 @@ const ContratPage = () => {
       };
       const createdContract = await createContrat(newContractData);
       setContracts([...contracts, createdContract]);
-      setNewContract({ nom: "", client: "", site: "", startDate: "", endDate: "", periodicite: "", typeContrat: "", pieceMainDoeuvre: false });
+      setNewContract({ 
+        nom: "", 
+        client: "", 
+        site: "", 
+        startDate: "", 
+        endDate: "", 
+        periodicite: "", 
+        typeContrat: "", 
+        pieceMainDoeuvre: false 
+      });
       toast.success("Contrat ajouté avec succès");
     } catch (error) {
       toast.error("Erreur lors de l'ajout du contrat");
     }
   };
 
-  const handleEditContract = (id) => {
-    const contract = contracts.find(c => c.id === id);
-    setSelectedContract(contract);
-    handleClientChange(contract.clientId);
+  const handleRenewClick = (contract) => {
+    setRenewalContract({
+      ...contract,
+      nombreAnnees: 1
+    });
+    setIsRenewDialogOpen(true);
   };
 
-  const handleUpdateContract = async () => {
+  const handleRenewContract = async () => {
+    if (!renewalContract) {
+      toast.error("Données de renouvellement manquantes");
+      return;
+    }
+    
     try {
-      const updatedContractData = {
-        nom: selectedContract.nom,
-        dateDebut: new Date(selectedContract.startDate),
-        dateFin: selectedContract.endDate ? new Date(selectedContract.endDate) : null,
-        periodicite: selectedContract.periodicite,
-        typeContrat: selectedContract.typeContrat,
-        pieceMainDoeuvre: selectedContract.pieceMainDoeuvre,
-        idSite: parseInt(selectedContract.site),
+      // Vérifier que toutes les données requises sont présentes
+      const renewalData = {
+        nom: renewalContract.nom,
+        periodicite: renewalContract.periodicite,
+        typeContrat: renewalContract.typeContrat,
+        pieceMainDoeuvre: renewalContract.pieceMainDoeuvre,
+        nombreAnnees: renewalContract.nombreAnnees || 1 // Valeur par défaut si non définie
       };
-      const updatedContract = await updateContrat(selectedContract.id, updatedContractData);
-      setContracts(contracts.map(c => c.id === selectedContract.id ? updatedContract : c));
-      setSelectedContract(null);
-      toast.success("Contrat modifié avec succès");
+  
+      const updatedContract = await renewContrat(renewalContract.id, renewalData);
+  
+      // Mettre à jour la liste des contrats
+      setContracts(contracts.map(c => 
+        c.id === updatedContract.id ? updatedContract : c
+      ));
+      
+      setIsRenewDialogOpen(false);
+      setRenewalContract(null);
+      toast.success("Contrat renouvelé avec succès");
     } catch (error) {
-      toast.error("Erreur lors de la modification du contrat");
+      console.error(error);
+      toast.error("Erreur lors du renouvellement du contrat");
     }
   };
 
-  const handleDeleteContract = (id) => {
-    setIsDeleteDialogOpen(true);
-    setContractToDelete(id);
+  const isExpiringSoon = (dateFin) => {
+    if (!dateFin) return false;
+    const endDate = new Date(dateFin);
+    const today = new Date();
+    const thirtyDaysFromNow = new Date();
+    thirtyDaysFromNow.setDate(today.getDate() + 30);
+    
+    return endDate <= thirtyDaysFromNow && endDate >= today;
   };
 
-  const confirmDeleteContract = async () => {
-    try {
-      await deleteContrat(contractToDelete);
-      setContracts(contracts.filter(c => c.id !== contractToDelete));
-      setIsDeleteDialogOpen(false);
-      setContractToDelete(null);
-      toast.success("Contrat supprimé avec succès");
-    } catch (error) {
-      toast.error("Erreur lors de la suppression du contrat");
-    }
+  const isExpired = (dateFin) => {
+    if (!dateFin) return false;
+    const endDate = new Date(dateFin);
+    const today = new Date();
+    return endDate < today;
   };
-
-  const cancelDeleteContract = () => {
-    setIsDeleteDialogOpen(false);
-    setContractToDelete(null);
-  };
-
-  const handleRenewContract = (id) => {
-    // Logic to renew contract
-  };
-
-  const handleSuspendContract = (id) => {
-    // Logic to suspend contract
-  };
-
+  
   const formatDate = (date) => {
     const d = new Date(date);
     return isNaN(d.getTime()) ? "" : d.toISOString().split('T')[0];
@@ -168,13 +188,15 @@ const ContratPage = () => {
       setCurrentPage(currentPage + 1);
     }
   };
-    if(loading){
-      return (
-        <div className="flex items-center justify-center gap-3">
-          Chargement en cours...
-        </div>
-      );
-    }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center gap-3">
+        Chargement en cours...
+      </div>
+    );
+  }
+
   return (
     <>
       <div className="p-6">
@@ -247,8 +269,8 @@ const ContratPage = () => {
                   onChange={(e) => setNewContract({ ...newContract, endDate: e.target.value })}
                   value={newContract.endDate}
                   className="mb-4"
-                  disabled={newContract.typeContrat === "Tacite"}
                 />
+                <Label htmlFor="periodicite">Périodicité</Label>
                 <Select
                   value={newContract.periodicite}
                   onValueChange={(value) => setNewContract({ ...newContract, periodicite: value })}
@@ -257,9 +279,11 @@ const ContratPage = () => {
                     <SelectValue placeholder="Sélectionnez une périodicité" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Mensuelle">Mensuelle</SelectItem>
-                    <SelectItem value="Semestrielle">Semestrielle</SelectItem>
-                    <SelectItem value="Annuelle">Annuelle</SelectItem>
+                    {periodicityOptions.map((option) => (
+                      <SelectItem key={option} value={option}>
+                        {option}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <Select
@@ -296,192 +320,182 @@ const ContratPage = () => {
             </DialogContent>
           </Dialog>
         </div>
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Nom</TableHead>
-          <TableHead>Client</TableHead>
-          <TableHead>Site</TableHead>
-          <TableHead>Date de début</TableHead>
-          <TableHead>Date de fin</TableHead>
-          <TableHead>Périodicité</TableHead>
-          <TableHead>Type de contrat</TableHead>
-          <TableHead>Inclut pièces et main d'œuvre</TableHead>
-          <TableHead>Actions</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {contracts.map((contract) => (
-          <TableRow key={contract.id} className="cursor-pointer">
-            <TableCell>{contract.nom}</TableCell>
-            <TableCell>{contract.Site.Client.nom}</TableCell>
-            <TableCell>{contract.Site.nom}</TableCell>
-            <TableCell>{new Date(contract.dateDebut).toLocaleDateString()}</TableCell>
-            <TableCell>{contract.dateFin ? new Date(contract.dateFin).toLocaleDateString() : "Tacite"}</TableCell>
-            <TableCell>{contract.periodicite}</TableCell>
-            <TableCell>{contract.typeContrat}</TableCell>
-            <TableCell>{contract.pieceMainDoeuvre ? "Oui" : "Non"}</TableCell>
-            <TableCell>
-              <div className="flex space-x-2">
-                <FaEdit className="text-blue-500 cursor-pointer" onClick={() => handleEditContract(contract.id)} />
-                <FaSyncAlt className="text-green-500 cursor-pointer" onClick={() => handleRenewContract(contract.id)} />
-                <FaPause className="text-yellow-500 cursor-pointer" onClick={() => handleSuspendContract(contract.id)} />
-                <FaTrash className="text-red-500 cursor-pointer" onClick={() => handleDeleteContract(contract.id)} />
-              </div>
-            </TableCell>
-          </TableRow>
-        ))}
-      </TableBody>
-    </Table>
-    <div className="flex justify-end items-center mt-4 gap-2">
-      <span>
-        Page {currentPage} / {totalPages}
-      </span>
-      <Button onClick={handlePreviousPage} disabled={currentPage === 1} className="bg-blue-500">
-        <FaArrowLeft />
-      </Button>
-      <Button onClick={handleNextPage} disabled={currentPage === totalPages} className="bg-blue-500">
-        <FaArrowRight />
-      </Button>
-    </div>
 
-    {selectedContract && (
-      <Dialog open={selectedContract !== null} onOpenChange={() => setSelectedContract(null)}>
-        <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
-          <DialogHeader>
-            <DialogTitle>Modifier le Contrat</DialogTitle>
-            <DialogDescription>Modifiez les détails du contrat.</DialogDescription>
-          </DialogHeader>
-          <div>
-            <Input
-              name="nom"
-              placeholder="Nom"
-              onChange={(e) => setSelectedContract({ ...selectedContract, nom: e.target.value })}
-              value={selectedContract.nom}
-              className="mb-4"
-            />
-            <Select
-              value={selectedContract.client}
-              onValueChange={handleClientChange}
-            >
-              <SelectTrigger className="w-full mb-4">
-                <SelectValue placeholder="Sélectionnez un client" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.nom}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={selectedContract.site}
-              onValueChange={(value) => setSelectedContract({ ...selectedContract, site: value })}
-            >
-              <SelectTrigger className="w-full mb-4">
-                <SelectValue placeholder="Sélectionnez un site" />
-              </SelectTrigger>
-              <SelectContent>
-                {sites.map((site) => (
-                  <SelectItem key={site.id} value={site.id}>
-                    {site.nom}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Label htmlFor="startDate">Date de début</Label>
-            <Input
-              name="startDate"
-              type="date"
-              placeholder="Date de début"
-              onChange={(e) => setSelectedContract({ ...selectedContract, startDate: e.target.value })}
-              value={formatDate(selectedContract.startDate)}
-              className="mb-4"
-            />
-            <Label htmlFor="endDate">Date de fin</Label>
-            <Input
-              name="endDate"
-              type="date"
-              placeholder="Date de fin"
-              onChange={(e) => setSelectedContract({ ...selectedContract, endDate: e.target.value })}
-              value={formatDate(selectedContract.endDate)}
-              className="mb-4"
-              disabled={selectedContract.typeContrat === "Tacite"}
-            />
-            <Select
-              value={selectedContract.periodicite}
-              onValueChange={(value) => setSelectedContract({ ...selectedContract, periodicite: value })}
-            >
-              <SelectTrigger className="w-full mb-4">
-                <SelectValue placeholder="Sélectionnez une périodicité" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="Mensuelle">Mensuelle</SelectItem>
-                <SelectItem value="Semestrielle">Semestrielle</SelectItem>
-                <SelectItem value="Annuelle">Annuelle</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select
-              value={selectedContract.typeContrat}
-              onValueChange={(value) => setSelectedContract({ ...selectedContract, typeContrat: value })}
-            >
-              <SelectTrigger className="w-full mb-4">
-                <SelectValue placeholder="Sélectionnez un type de contrat" />
-              </SelectTrigger>
-              <SelectContent>
-                {contractTypes.map((type) => (
-                  <SelectItem key={type} value={type}>
-                    {type}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            {selectedContract.typeContrat === "Curative" && (
-              <div className="flex items-center mb-4">
-                <input
-                  type="checkbox"
-                  id="pieceMainDoeuvre"
-                  checked={selectedContract.pieceMainDoeuvre}
-                  onChange={(e) => setSelectedContract({ ...selectedContract, pieceMainDoeuvre: e.target.checked })}
-                  className="mr-2"
-                />
-                <label htmlFor="pieceMainDoeuvre">Inclut pièces et main d'œuvre</label>
-              </div>
-            )}
-            <div className="flex justify-between">
-              <Button onClick={handleUpdateContract} className="bg-blue-500 text-white hover:bg-blue-600">
-                Modifier
-              </Button>
-              <Button onClick={() => handleDeleteContract(selectedContract.id)} className="bg-red-500 text-white hover:bg-red-600">
-                Supprimer
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    )}
-
-    <Dialog open={isDeleteDialogOpen} onOpenChange={cancelDeleteContract}>
-      <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
-        <DialogHeader>
-          <DialogTitle>Confirmation de Suppression</DialogTitle>
-          <DialogDescription>Êtes-vous sûr de vouloir supprimer ce contrat ?</DialogDescription>
-        </DialogHeader>
-        <div className="flex justify-between">
-          <Button onClick={confirmDeleteContract} className="bg-red-500 text-white hover:bg-red-600">
-            Supprimer
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Nom</TableHead>
+              <TableHead>Client</TableHead>
+              <TableHead>Site</TableHead>
+              <TableHead>Date de début</TableHead>
+              <TableHead>Date de fin</TableHead>
+              <TableHead>Passages/mois</TableHead>
+              <TableHead>Type de contrat</TableHead>
+              <TableHead>Pièces et main d'œuvre</TableHead>
+              <TableHead>Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+          {contracts.map((contract) => (
+              <TableRow 
+                key={contract.id} 
+                className={`cursor-pointer ${isExpiringSoon(contract.dateFin) ? 'bg-red-100' : ''}`}
+              >
+                <TableCell>{contract.nom}</TableCell>
+                <TableCell>{contract.Site.Client.nom}</TableCell>
+                <TableCell>{contract.Site.nom}</TableCell>
+                <TableCell>{new Date(contract.dateDebut).toLocaleDateString()}</TableCell>
+                <TableCell className={`${isExpiringSoon(contract.dateFin) ? 'font-bold text-red-600' : ''}`}>
+                  {contract.dateFin ? new Date(contract.dateFin).toLocaleDateString() : "N/A"}
+                  {isExpired(contract.dateFin) && <span className="text-red-600 ml-2">Expiré</span>}
+                </TableCell>
+                <TableCell>{contract.periodicite}</TableCell>
+                <TableCell>{contract.typeContrat}</TableCell>
+                <TableCell>{contract.pieceMainDoeuvre ? "Oui" : "Non"}</TableCell>
+                <TableCell>
+                  <div className="flex space-x-2">
+                    <FaSyncAlt 
+                      className="text-green-500 cursor-pointer" 
+                      onClick={() => handleRenewClick(contract)} 
+                    />
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}         
+          </TableBody>
+        </Table>
+        <div className="flex justify-end items-center mt-4 gap-2">
+          <span>
+            Page {currentPage} / {totalPages}
+          </span>
+          <Button onClick={handlePreviousPage} disabled={currentPage === 1} className="bg-blue-500">
+            <FaArrowLeft />
           </Button>
-          <Button onClick={cancelDeleteContract} className="bg-gray-500 text-white hover:bg-gray-600">
-            Annuler
+          <Button onClick={handleNextPage} disabled={currentPage === totalPages} className="bg-blue-500">
+            <FaArrowRight />
           </Button>
         </div>
-      </DialogContent>
-    </Dialog>
-    </div>
 
-    <ToastContainer />
+        <Dialog open={isRenewDialogOpen} onOpenChange={() => setIsRenewDialogOpen(false)}>
+          <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
+            <DialogHeader>
+              <DialogTitle>Renouvellement du Contrat</DialogTitle>
+              <DialogDescription>
+                La date de début sera fixée à aujourd'hui. La date de fin sera calculée en fonction du nombre d'années de renouvellement.
+              </DialogDescription>
+            </DialogHeader>
+            {renewalContract && (
+              <div className="space-y-4">
+                <div>
+                  <Label>Nom du contrat</Label>
+                  <Input
+                    value={renewalContract.nom}
+                    onChange={(e) => setRenewalContract({
+                      ...renewalContract,
+                      nom: e.target.value
+                    })}
+                  />
+                </div>
+
+                <div>
+                  <Label>Nombre d'années de renouvellement</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={renewalContract.nombreAnnees}
+                    onChange={(e) => setRenewalContract({
+                      ...renewalContract,
+                      nombreAnnees: parseInt(e.target.value)
+                    })}
+                  />
+                </div>
+
+                <div>
+                  <Label>Périodicité</Label>
+                  <Select
+                    value={renewalContract.periodicite}
+                    onValueChange={(value) => setRenewalContract({
+                      ...renewalContract,
+                      periodicite: value
+                    })}
+                  >
+                    <SelectTrigger className="w-full mb-4">
+                      <SelectValue placeholder="Sélectionnez une périodicité" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {periodicityOptions.map((option) => (
+                        <SelectItem key={option} value={option}>
+                          {option}
+                        </SelectItem>
+                      ))} 
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label>Type de contrat</Label>
+                  <Select
+                    value={renewalContract.typeContrat}
+                    onValueChange={(value) => setRenewalContract({
+                      ...renewalContract,
+                      typeContrat: value
+                    })}
+                  >
+                    <SelectTrigger className="w-full mb-4">
+                      <SelectValue placeholder="Sélectionnez un type de contrat" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {contractTypes.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {renewalContract.typeContrat === "Curative" && (
+                  <div className="flex items-center mb-4">
+                    <input
+                      type="checkbox"
+                      id="renewPieceMainDoeuvre"
+                      checked={renewalContract.pieceMainDoeuvre}
+                      onChange={(e) => setRenewalContract({
+                        ...renewalContract,
+                        pieceMainDoeuvre: e.target.checked
+                      })}
+                      className="mr-2"
+                    />
+                    <label htmlFor="renewPieceMainDoeuvre">
+                      Inclut pièces et main d'œuvre
+                    </label>
+                  </div>
+                )}
+
+                <div className="flex justify-end gap-2 mt-4">
+                  <Button
+                    onClick={() => setIsRenewDialogOpen(false)}
+                    variant="outline"
+                    className="bg-gray-500 text-white hover:bg-gray-600"
+                  >
+                    Annuler
+                  </Button>
+                  <Button
+                    onClick={handleRenewContract}
+                    className="bg-green-500 text-white hover:bg-green-600"
+                  >
+                    Renouveler
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        <ToastContainer />
+      </div>
     </>
-    );
-    };
-export default ContratPage;  
+  );
+};
+
+export default ContratPage;
