@@ -5,14 +5,13 @@ import { useParams } from "next/navigation";
 import { fetchDetails } from "@/lib/fonctionas";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import Image from "next/image";
-import { getGarantieStatus } from "@/lib/garantie"; // Importer la fonction de garantie
+import { checkGarantieStatus } from "@/lib/fonction"; // Importer la fonction de garantie
 
 const InterventionPage = () => {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
-  const [garantieStatus, setGarantieStatus] = useState(false); // Statut de la garantie (true ou false)
-  const id = useParams()?.id;
+  const [garantieStatus, setGarantieStatus] = useState(null); // Statut de la garantie (1 ou 0)
+  const { id } = useParams();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -22,13 +21,10 @@ const InterventionPage = () => {
         if (result.dateIntervention) {
           result.dateIntervention = new Date(result.dateIntervention).toLocaleDateString();
         }
-        
-        // Si le statut de garantie dans la base est "garantie", alors c'est sous garantie
-        if (result.statut === "garantie") {
-          setGarantieStatus(true);
-        } else {
-          setGarantieStatus(false);
-        }
+
+        // Vérification du statut de la garantie à l'aide de la fonction checkGarantieStatus
+        const status = await checkGarantieStatus(result.idInstallationEq); // Utilisez le bon champ pour l'ID de l'installation
+        setGarantieStatus(status); // Mettre à jour l'état de la garantie
 
         setData(result);
       } catch (err) {
@@ -103,7 +99,7 @@ const InterventionPage = () => {
                   Oui
                   <input
                     type="checkbox"
-                    checked={garantieStatus === true} // Si le matériel est sous garantie, la case "Oui" est cochée
+                    checked={garantieStatus === 1} // Coche "Oui" si la garantie est active
                     readOnly
                     className="ml-1"
                   />
@@ -112,7 +108,7 @@ const InterventionPage = () => {
                   Non
                   <input
                     type="checkbox"
-                    checked={garantieStatus === false} // Si le matériel n'est pas sous garantie, la case "Non" est cochée
+                    checked={garantieStatus === 0} // Coche "Non" si la garantie n'est pas active
                     readOnly
                     className="ml-1"
                   />

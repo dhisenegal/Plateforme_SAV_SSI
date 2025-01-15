@@ -461,7 +461,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                   <FormItem>
                     <FormLabel>Matériel sous garantie</FormLabel>
                     <FormControl>
-                      <Input value="NON" readOnly className="text-blue-400" />
+                      <Input value="Oui" readOnly className="text-blue-400" />
                     </FormControl>
                   </FormItem>
                 </div>
