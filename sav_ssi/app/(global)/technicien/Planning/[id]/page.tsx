@@ -156,11 +156,12 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
       await handleSave(data);
 
       if (id && type === 'intervention') {
-        const result = await updateIntervention(parseInt(id), {
+        const updateData = {
           diagnostics: data.diagnostic,
           travauxRealises: data.travauxRealises,
           dureeHeure: new Date(data.dureeHeure),
-        });
+        };
+        const result = await updateIntervention(parseInt(id), updateData);
         console.log('Données validées avec succès', result);
       }
 
@@ -180,9 +181,9 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         const updatedDetails = await fetchDetails(parseInt(id), type);
         setDetails(updatedDetails);
         form.reset({
-          diagnostic: updatedDetails.diagnostic || data.diagnostic,
+          diagnostic: updatedDetails.diagnostics || data.diagnostic,
           travauxRealises: updatedDetails.travauxRealises || data.travauxRealises,
-          dureeHeure: updatedDetails.dureeHeure || data.dureeHeure
+          dureeHeure: updatedDetails.dureeHeure ? updatedDetails.dureeHeure.toString() : data.dureeHeure
         });
       }
     } catch (err) {

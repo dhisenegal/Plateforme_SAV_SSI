@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { FaFileExport } from "react-icons/fa";
+import { exportMaintenancesToExcel } from "@/utils/maintenance-export";
 import { FaSpinner, FaPause, FaEdit, FaPlus } from "react-icons/fa";
 import { getAllMaintenances, updateMaintenanceStatus, planifierMaintenanceGlobal } from "@/actions/sav/maintenance";
 import { getClients } from "@/actions/sav/client";
@@ -157,6 +159,9 @@ const MaintenancesPage = () => {
       </div>
     );
   }
+  const handleExport = () => {
+    exportMaintenancesToExcel(maintenances);
+  };
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -192,11 +197,23 @@ const MaintenancesPage = () => {
         </Select>
       </div>
       <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">Gestion Maintenances</h1>
-        <Button className="flex items-center bg-blue-500 text-white hover:bg-blue-600" onClick={() => setIsOpen(true)}>
+      <h1 className="text-2xl font-bold">Gestion Maintenances</h1>
+      <div className="flex gap-2">
+        <Button 
+          className="flex items-center bg-green-500 text-white hover:bg-green-600" 
+          onClick={handleExport}
+        >
+          <FaFileExport className="mr-2" />
+          Exporter Excel
+        </Button>
+        <Button 
+          className="flex items-center bg-blue-500 text-white hover:bg-blue-600" 
+          onClick={() => setIsOpen(true)}
+        >
           <FaPlus className="mr-2" />
           Planifier Maintenance
         </Button>
+      </div>
       </div>
       <Table>
         <TableHeader>
