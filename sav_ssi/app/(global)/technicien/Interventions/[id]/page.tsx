@@ -1,3 +1,4 @@
+
 import { fetchDetails } from '@/lib/fonctionas';
 import InterventionPage from '@/components/InterventionPage';
 

@@ -9,12 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-<<<<<<< HEAD
-import { formatStatut, getPlanning, formatDate, getClientName, getDescription, getType, getDateMaintenanceOrIntervention, getStatut } from '@/actions/technicien/planning';
-import { fetchDetails } from '@/lib/fonctionas';
-=======
 import { getEtatUrgence, formatStatut, getPlanning, formatDate, getClientName, getDescription, getType, getDateMaintenanceOrIntervention, getStatut } from '@/actions/technicien/planning';
->>>>>>> 35c4b6775540c5b1c0c26751083e73bcbdee7347
 
 const PlanningTabContent = () => {
   const { data: session } = useSession();
@@ -82,11 +77,7 @@ const PlanningTabContent = () => {
           {currentPlanning.map((plan) => (
             <TableRow
               key={plan.id}
-<<<<<<< HEAD
-              className={`cursor-pointer hover:bg-blue-100 ${plan.urgent === 1 ? 'bg-red-200' : ''}`}
-=======
               className={`cursor-pointer hover:bg-blue-100 ${plan.urgent ? 'bg-red-50' : ''}`}
->>>>>>> 35c4b6775540c5b1c0c26751083e73bcbdee7347
               onClick={() => router.push(`/technicien/Planning/${plan.id}?type=${plan.type.toLowerCase()}`)}
             >
               <TableCell>{plan.date || 'Non défini'}</TableCell>
