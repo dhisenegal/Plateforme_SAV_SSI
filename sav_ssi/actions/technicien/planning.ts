@@ -93,15 +93,14 @@ export const updateMaintenanceAction = async (MaintenanceId: number, actions: Ac
   }
 };
 // Fonction pour mettre à jour une intervention
-export const updateIntervention = async (id: number, diagnostics: string, travauxRealises: string, dateIntervention: Date, dureeHeure: number ) => {
+export const updateIntervention = async (id: number, diagnostics: string, travauxRealises: string ) => {
   try {
     const result = await prisma.intervention.update({
       where: { id: id },
       data: {
         diagnostics: diagnostics,
         travauxRealises: travauxRealises,
-        dateIntervention:dateIntervention,
-        dureeHeure: dureeHeure,
+        
       },
     });
     return result;

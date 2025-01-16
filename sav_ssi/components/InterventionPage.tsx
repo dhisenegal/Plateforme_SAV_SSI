@@ -5,12 +5,13 @@ import { useParams } from "next/navigation";
 import { fetchDetails } from "@/lib/fonctionas";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import Image from "next/image";
+import { checkGarantieStatus } from "@/lib/fonction"; // Importer la fonction de garantie
 
 const InterventionPage = () => {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
-  const id = useParams()?.id;
+  const [garantieStatus, setGarantieStatus] = useState(null); // Statut de la garantie (1 ou 0)
+  const { id } = useParams();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -20,9 +21,10 @@ const InterventionPage = () => {
         if (result.dateIntervention) {
           result.dateIntervention = new Date(result.dateIntervention).toLocaleDateString();
         }
-        if (result.dateDeclaration) {
-          result.dateDeclaration = new Date(result.dateDeclaration).toLocaleDateString();
-        }
+
+        // Vérification du statut de la garantie à l'aide de la fonction checkGarantieStatus
+        const status = await checkGarantieStatus(result.idInstallationEq); // Utilisez le bon champ pour l'ID de l'installation
+        setGarantieStatus(status); // Mettre à jour l'état de la garantie
 
         setData(result);
       } catch (err) {
@@ -39,18 +41,15 @@ const InterventionPage = () => {
     return date ? new Date(date).toLocaleDateString() : 'N/A';
   };
 
-  // La fonction exportToPDF utilise html2canvas pour créer une capture d'écran du contenu
-  // imgData stocke cette capture sous forme de données URL PNG, qui est ensuite utilisée 
-  // pour créer le PDF avec jsPDF
   const exportToPDF = () => {
     const input = document.getElementById('pdf-content');
     if (input) {
       html2canvas(input).then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');  // Convertit le canvas en image PNG
+        const imgData = canvas.toDataURL('image/png'); 
         const pdf = new jsPDF('p', 'mm', 'a4');
         const pdfWidth = pdf.internal.pageSize.getWidth();
         const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);  // Ajoute l'image au PDF
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight); 
         pdf.save('export.pdf');
       });
     }
@@ -88,7 +87,7 @@ const InterventionPage = () => {
                 <p><strong>Système :</strong> {data.systeme || 'N/A'}</p>
               </div>
               <div>
-                <p><strong>Date Intervention :</strong> {formatDate(data.dateIntervention)}</p>
+                <p><strong>Date Intervention :</strong> {data.dateIntervention}</p>
                 <p><strong>Heure Intervention :</strong> {data.heureIntervention || 'N/A'}</p>
                 <p><strong>Durée Intervention :</strong> {data.dureeHeure || 'N/A'}</p>
               </div>
@@ -100,7 +99,7 @@ const InterventionPage = () => {
                   Oui
                   <input
                     type="checkbox"
-                    checked={data.statut === 'sous garantie'}
+                    checked={garantieStatus === 1} // Coche "Oui" si la garantie est active
                     readOnly
                     className="ml-1"
                   />
@@ -109,7 +108,7 @@ const InterventionPage = () => {
                   Non
                   <input
                     type="checkbox"
-                    checked={data.statut !== 'sous garantie'}
+                    checked={garantieStatus === 0} // Coche "Non" si la garantie n'est pas active
                     readOnly
                     className="ml-1"
                   />
