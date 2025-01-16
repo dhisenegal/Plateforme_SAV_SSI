@@ -144,6 +144,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     }
   };
 
+  
   const handleValidate = async () => {
     setIsSaving(true);
     try {
@@ -156,7 +157,11 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
       await handleSave(data);
 
       if (id && type === 'intervention') {
-        const result = await updateIntervention(parseInt(id), data.diagnostic, data.travauxRealises, dateIntervention, data.dureeHeure);
+        const result = await updateIntervention(parseInt(id), {
+          diagnostics: data.diagnostic,
+          travauxRealises: data.travauxRealises,
+          dureeHeure: new Date(data.dureeHeure),
+        });
         console.log('Données validées avec succès', result);
       }
 
