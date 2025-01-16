@@ -4,12 +4,12 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
-import { FaEye, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { FaEye, FaArrowLeft, FaArrowRight, FaExclamationTriangle } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { formatStatut, getPlanning, formatDate, getClientName, getDescription, getType, getDateMaintenanceOrIntervention, getStatut } from '@/actions/technicien/planning';
+import { getEtatUrgence, formatStatut, getPlanning, formatDate, getClientName, getDescription, getType, getDateMaintenanceOrIntervention, getStatut } from '@/actions/technicien/planning';
 
 const PlanningTabContent = () => {
   const { data: session } = useSession();
@@ -35,7 +35,16 @@ const PlanningTabContent = () => {
           const formattedDate = await formatDate(date);
           const statut = await getStatut(plan.id, type.toLowerCase());
           const formattedStatut = await formatStatut(statut);
-          return { ...plan, client: clientName, description, date: formattedDate, type, statut: formattedStatut };
+          const urgent = await getEtatUrgence(plan.id, type.toLowerCase());
+          return { 
+            ...plan, 
+            client: clientName, 
+            description, 
+            date: formattedDate, 
+            type, 
+            statut: formattedStatut,
+            urgent 
+          };
         })
       );
 
@@ -60,6 +69,7 @@ const PlanningTabContent = () => {
             <TableHead>Description</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Statut</TableHead>
+            <TableHead>Urgent</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -67,7 +77,7 @@ const PlanningTabContent = () => {
           {currentPlanning.map((plan) => (
             <TableRow
               key={plan.id}
-              className="cursor-pointer hover:bg-blue-100"
+              className={`cursor-pointer hover:bg-blue-100 ${plan.urgent ? 'bg-red-50' : ''}`}
               onClick={() => router.push(`/technicien/Planning/${plan.id}?type=${plan.type.toLowerCase()}`)}
             >
               <TableCell>{plan.date || 'Non défini'}</TableCell>
@@ -75,9 +85,22 @@ const PlanningTabContent = () => {
               <TableCell>{plan.description}</TableCell>
               <TableCell>{plan.type}</TableCell>
               <TableCell>{plan.statut || 'Non défini'}</TableCell>
+              <TableCell>
+                {plan.urgent ? (
+                  <div className="flex items-center text-red-600">
+                    <FaExclamationTriangle className="mr-2" />
+                    <span className="text-sm font-semibold">Urgent</span>
+                  </div>
+                ) : (
+                  <span className="text-sm text-gray-500">-</span>
+                )}
+              </TableCell>
               <TableCell className="flex justify-center">
                 <Link href={`/technicien/Planning/${plan.id}?type=${plan.type.toLowerCase()}`} passHref>
-                  <FaEye className="text-blue-500 cursor-pointer" onClick={(e) => e.stopPropagation()} />
+                  <FaEye 
+                    className="text-blue-500 cursor-pointer" 
+                    onClick={(e) => e.stopPropagation()} 
+                  />
                 </Link>
               </TableCell>
             </TableRow>
@@ -87,10 +110,18 @@ const PlanningTabContent = () => {
 
       <div className="flex justify-end items-center mt-4 gap-2">
         <span>Page {currentPage} / {totalPages}</span>
-        <Button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1} className="bg-blue-500">
+        <Button 
+          onClick={() => setCurrentPage(currentPage - 1)} 
+          disabled={currentPage === 1} 
+          className="bg-blue-500"
+        >
           <FaArrowLeft />
         </Button>
-        <Button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages} className="bg-blue-500">
+        <Button 
+          onClick={() => setCurrentPage(currentPage + 1)} 
+          disabled={currentPage === totalPages} 
+          className="bg-blue-500"
+        >
           <FaArrowRight />
         </Button>
       </div>

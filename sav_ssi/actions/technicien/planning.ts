@@ -4,7 +4,21 @@ import prisma from "@/lib/prisma";
 import { Main } from "next/document";
 
 
-
+export const getEtatUrgence = async (id: number, type: string) => {
+  try {
+    if (type === 'intervention') {
+      const intervention = await prisma.intervention.findUnique({
+        where: { id },
+        select: { urgent: true }
+      });
+      return intervention?.urgent ? 1 : 0;
+    }
+    return 0;
+  } catch (error) {
+    console.error('Erreur lors de la récupération de l\'état d\'urgence:', error);
+    return 0;
+  }
+};
 
 // Fonction pour mettre à jour le statut de l'intervention
 export const updateInterventionStatus = async (id: number, statut: string) => {

@@ -420,11 +420,13 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                     </FormControl>
                   </FormItem>
                   <FormItem>
-                    <FormLabel>Durée de l'intervention</FormLabel>
+                    <FormLabel>Heure de l'intervention</FormLabel>
                     <FormControl>
                       <Input
-                        {...form.register('dureeIntervention')}
-                        placeholder="Durée de l'intervention"
+                        type="time"
+                        {...form.register('HeureIntervention')}
+                        placeholder="Heure de l'intervention"
+                         className="w-full p-2 border-2 border-gray-300 rounded-md"
                       />
                     </FormControl>
                   </FormItem>
@@ -461,9 +463,20 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                   <FormItem>
                     <FormLabel>Matériel sous garantie</FormLabel>
                     <FormControl>
-                      <Input value="Oui" readOnly className="text-blue-400" />
+                      <Input value={details.sousGarantie ? 'Oui' : 'NON' } readOnly className="text-blue-400" />
                     </FormControl>
                   </FormItem>
+
+                  <FormLabel>Durée de l'intervention (en heures)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...form.register('DuréeIntervention')}
+                        placeholder="Durée de l'intervention (en heures)"
+                        min="0"
+                        className="w-full p-2 border-2 border-gray-300 rounded-md"
+                      />
+                    </FormControl>
                 </div>
               </div>
 
