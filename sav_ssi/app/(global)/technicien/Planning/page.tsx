@@ -10,6 +10,7 @@ import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { formatStatut, getPlanning, formatDate, getClientName, getDescription, getType, getDateMaintenanceOrIntervention, getStatut } from '@/actions/technicien/planning';
+import { fetchDetails } from '@/lib/fonctionas';
 
 const PlanningTabContent = () => {
   const { data: session } = useSession();
@@ -67,7 +68,7 @@ const PlanningTabContent = () => {
           {currentPlanning.map((plan) => (
             <TableRow
               key={plan.id}
-              className="cursor-pointer hover:bg-blue-100"
+              className={`cursor-pointer hover:bg-blue-100 ${plan.urgent === 1 ? 'bg-red-200' : ''}`}
               onClick={() => router.push(`/technicien/Planning/${plan.id}?type=${plan.type.toLowerCase()}`)}
             >
               <TableCell>{plan.date || 'Non défini'}</TableCell>

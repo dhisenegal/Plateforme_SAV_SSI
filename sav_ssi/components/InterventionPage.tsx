@@ -5,12 +5,26 @@ import { useParams } from "next/navigation";
 import { fetchDetails } from "@/lib/fonctionas";
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
-import { checkGarantieStatus } from "@/lib/fonction"; // Importer la fonction de garantie
+
+interface InterventionData {
+  clientName?: string;
+  adresse?: string;
+  telephoneContact?: string;
+  systeme?: string;
+  dateIntervention?: string;
+  heureIntervention?: string;
+  dureeHeure?: string;
+  sousGarantie?: number; // Notez que sousGarantie est de type number
+  dateDeclaration?: string;
+  description?: string;
+  diagnostics?: string;
+  travauxRealises?: string;
+  technicienName?: string;
+}
 
 const InterventionPage = () => {
-  const [data, setData] = useState(null);
-  const [error, setError] = useState(null);
-  const [garantieStatus, setGarantieStatus] = useState(null); // Statut de la garantie (1 ou 0)
+  const [data, setData] = useState<InterventionData | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const { id } = useParams();
 
   useEffect(() => {
@@ -22,10 +36,8 @@ const InterventionPage = () => {
           result.dateIntervention = new Date(result.dateIntervention).toLocaleDateString();
         }
 
-        // Vérification du statut de la garantie à l'aide de la fonction checkGarantieStatus
-        const status = await checkGarantieStatus(result.idInstallationEq); // Utilisez le bon champ pour l'ID de l'installation
-        setGarantieStatus(status); // Mettre à jour l'état de la garantie
-
+        // Assurez-vous que sousGarantie est bien récupéré et mis à jour dans l'état
+        console.log("Sous Garantie:", result.sousGarantie); // Ajout de console.log pour vérifier la valeur
         setData(result);
       } catch (err) {
         setError(err.message);
@@ -37,7 +49,7 @@ const InterventionPage = () => {
     }
   }, [id]);
 
-  const formatDate = (date) => {
+  const formatDate = (date: string | undefined) => {
     return date ? new Date(date).toLocaleDateString() : 'N/A';
   };
 
@@ -99,7 +111,7 @@ const InterventionPage = () => {
                   Oui
                   <input
                     type="checkbox"
-                    checked={garantieStatus === 1} // Coche "Oui" si la garantie est active
+                    checked={data.sousGarantie === 1} // Coche "Oui" si la garantie est active
                     readOnly
                     className="ml-1"
                   />
@@ -108,7 +120,7 @@ const InterventionPage = () => {
                   Non
                   <input
                     type="checkbox"
-                    checked={garantieStatus === 0} // Coche "Non" si la garantie n'est pas active
+                    checked={data.sousGarantie === 0} // Coche "Non" si la garantie n'est pas active
                     readOnly
                     className="ml-1"
                   />

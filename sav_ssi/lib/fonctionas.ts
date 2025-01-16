@@ -44,6 +44,8 @@ export async function fetchDetails(id, type) {
         telephoneContact: intervention.telephoneContact,
         adresse: intervention.adresse,
         datePlanifiee: intervention.datePlanifiee,
+        sousGarantie: intervention.sousGarantie,
+        urgent= intervention.urgent,
         technicienName: intervention.Technicien?.prenom || null,
       };
     } else if (type === 'maintenance') {

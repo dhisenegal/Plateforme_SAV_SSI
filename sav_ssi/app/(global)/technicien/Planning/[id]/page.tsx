@@ -66,14 +66,15 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
   const [systemId, setSystemId] = useState<number | null>(null);
   const [loadingActions, setLoadingActions] = useState<boolean>(false);
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      diagnostic: '',
-      travauxRealises: '',
-      dureeHeure:'',
-    }
-  });
+  // Correction avec une initialisation explicite des propriétés
+const form = useForm({
+  resolver: zodResolver(formSchema),
+  defaultValues: {
+    diagnostic: '',  // <- correct
+    travauxRealises: '',  // <- correct
+    dureeHeure: ''  // <- correct
+  }
+});
 
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
   console.log("ID:", id); // Debugging line
