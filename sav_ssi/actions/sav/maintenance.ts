@@ -48,12 +48,12 @@ export const getAllMaintenances = async (
         ]
       },
       ...(dateDebut ? [{
-        dateMaintenance: {
+        datePlanifiee: {
           gte: new Date(dateDebut)
         }
       }] : []),
       ...(dateFin ? [{
-        dateMaintenance: {
+        datePlanifiee: {
           lte: new Date(dateFin)
         }
       }] : []),
