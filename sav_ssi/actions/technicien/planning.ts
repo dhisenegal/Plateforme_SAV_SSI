@@ -100,6 +100,7 @@ interface UpdateInterventionData {
   Heureint: Date;
 }
 
+
 export const updateIntervention = async (id: number, data: UpdateInterventionData) => {
   try {
     // Ajoutez un log pour vérifier les données avant la mise à jour
@@ -118,6 +119,26 @@ export const updateIntervention = async (id: number, data: UpdateInterventionDat
   } catch (error) {
     console.error('Erreur lors de la mise à jour de l\'intervention :', error);
     throw new Error('Erreur lors de la mise à jour de l\'intervention');
+  }
+};  
+
+export const updateMaintenance = async (id: number, data: UpdateMaintenanceData) => {
+  try {
+    // Ajoutez un log pour vérifier les données avant la mise à jour
+    console.log('Données envoyées à updateMaintenance:', data);
+
+    const result = await prisma.maintenance.update({
+      where: { id: id }, // Utilisation de l'id de la maintenance pour la mise à jour
+      data: {
+        Heuredebut: data.Heuredebut, // Mise à jour de l'heure de début
+        Heuredefin: data.Heuredefin, // Mise à jour de l'heure de fin
+      },
+    });
+
+    return result;
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour de la maintenance :', error);
+    throw new Error('Erreur lors de la mise à jour de la maintenance');
   }
 };
 
