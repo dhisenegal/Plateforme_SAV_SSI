@@ -228,8 +228,10 @@ model Intervention {
   pieceFournies     String?
   datePlanifiee     DateTime?
   dateIntervention  DateTime?
-  dureeHeure        DateTime?
+  dureeHeure        Int?
+  dateFinInt        DateTime? 
   Heureint          DateTime?
+
   numero            Int?
   ficheInt          String?
   horsDelai             Boolean @default(false)

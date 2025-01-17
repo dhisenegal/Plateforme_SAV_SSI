@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useEffect, useState } from 'react';
 import { fetchDetails } from '@/lib/fonctionas';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
@@ -28,7 +29,10 @@ const formSchema = z.object({
   }),
   dureeHeure: z.string().min(1, {
     message: 'La durée de l\'intervention est requise.'
-  })
+  }),
+  Heureint: z.string().min(1, {
+    message: 'L\'heure de l\'intervention est requise.'
+  }),
 });
 
 type DetailsPageProps = {
@@ -72,6 +76,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
       diagnostic: '',
       travauxRealises: '',
       dureeHeure:'',
+      Heureint: '',
     }
   });
 
@@ -149,22 +154,28 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     try {
       const data = form.getValues();
       console.log('Validation de l\'état', data);
-
-      // Inclure la date du jour
-      const dateIntervention = new Date();
-
+      const currentDate = new Date();
+      const currentDateString = currentDate.toISOString().split('T')[0]; // yyyy-mm-dd
+  
+      // Combiner la date courante avec l'heure d'intervention
+      
       await handleSave(data);
-
+  
       if (id && type === 'intervention') {
-        const updateData = {
-          diagnostics: data.diagnostic,
-          travauxRealises: data.travauxRealises,
-          dureeHeure: new Date(data.dureeHeure),
-        };
-        const result = await updateIntervention(parseInt(id), updateData);
-        console.log('Données validées avec succès', result);
+        // Vérifiez que les données sont un objet et non null
+        if (data && typeof data === 'object') {
+          const result = await updateIntervention(parseInt(id), {
+            diagnostics: data.diagnostic,
+            travauxRealises: data.travauxRealises,
+            dureeHeure: parseInt(data.dureeHeure), // assurez-vous de convertir en nombre
+            Heureint: new Date(`${currentDateString}T${data.Heureint}:00`),
+          });
+          console.log('Données validées avec succès', result);
+        } else {
+          console.error('Les données de l\'intervention sont invalides:', data);
+        }
       }
-
+  
       if (id && type === 'maintenance') {
         const updates = actions.map((action, idx) => ({
           idAction: action.id,
@@ -174,16 +185,17 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         }));
         await updateMaintenanceAction(parseInt(id as string), updates);
       }
-
+  
       setIsOverlayVisible(true);
-
+  
       if (id && type) {
         const updatedDetails = await fetchDetails(parseInt(id), type);
         setDetails(updatedDetails);
         form.reset({
           diagnostic: updatedDetails.diagnostics || data.diagnostic,
           travauxRealises: updatedDetails.travauxRealises || data.travauxRealises,
-          dureeHeure: updatedDetails.dureeHeure ? updatedDetails.dureeHeure.toString() : data.dureeHeure
+          dureeHeure: String(updatedDetails.dureeHeure || data.dureeHeure),
+          Heureint: updatedDetails.Heureint || data.Heureint,
         });
       }
     } catch (err) {
@@ -193,7 +205,6 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
       setIsConfirmDialogOpen(false);
     }
   };
-
   const handleSuspendOrResume = async (type: 'intervention' | 'maintenance') => {
     setIsSaving(true);
     try {
@@ -232,7 +243,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
             setIsSuspended(true);
           }
           form.reset({
-            diagnostic: fetchedDetails.diagnostic || '',
+            diagnostic: fetchedDetails.diagnostics || '',
             travauxRealises: fetchedDetails.travauxRealises || ''
           });
         } catch (err) {
@@ -257,20 +268,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     setObservations((prev) => ({ ...prev, [taskIdx]: observation }));
   };
 
-  const exportToPDF = () => {
-    const input = document.getElementById('pdf-content');
-    if (input) {
-      html2canvas(input).then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF();
-        const imgProps = pdf.getImageProperties(imgData);
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save('export.pdf');
-      });
-    }
-  };
+  
 
   if (loading) {
     return <div>Chargement...</div>;
@@ -289,10 +287,39 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
 
     return (
       <div className="mt-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-5">
+                <FormItem>
+                <FormLabel>Heure début</FormLabel>
+                <FormControl>
+                  <Input
+                    type="time"
+                    {...form.register('Heureint')}
+                    placeholder="Heure de l'intervention"
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  />
+                </FormControl>
+              </FormItem>
+              </div>
+              <div className="space-y-5">
+              <FormItem>
+                  <FormLabel>Heure fin </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="time"
+                        {...form.register('dureeHeure')}
+                        placeholder="Durée de l'intervention en heures"
+                        
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                      />
+                    </FormControl>
+                    </FormItem>
+                    </div>
+                    </div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
           {details.systeme}
         </h2>
-
+                
         <Table className="min-w-full bg-white border border-gray-200">
           <TableHeader>
             <TableRow>
@@ -381,11 +408,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
 
   return (
     <>
-      <div className="flex justify-end mb-4">
-        <Button onClick={exportToPDF} className="bg-blue-500 hover:bg-blue-600 text-white">
-          Exporter
-        </Button>
-      </div>
+      
       <Card id="pdf-content" className="mx-auto w-full max-w-4xl relative">
         {isOverlayVisible && (
           <div className="absolute inset-0 bg-gray-800 bg-opacity-50 z-10 flex justify-center items-center">
@@ -419,23 +442,8 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                       <Input value={details.siteName || 'N/A'} readOnly />
                     
                   </FormItem>
-                  <FormItem>
-                    <FormLabel>Date de déclaration de la panne</FormLabel>
-                    <FormControl>
-                      <Input value={formatDate(details.dateDeclaration) || 'N/A'} readOnly />
-                    </FormControl>
-                  </FormItem>
-                  <FormItem>
-                    <FormLabel>Heure de l'intervention</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="time"
-                        {...form.register('HeureIntervention')}
-                        placeholder="Heure de l'intervention"
-                         className="w-full p-2 border-2 border-gray-300 rounded-md"
-                      />
-                    </FormControl>
-                  </FormItem>
+                  
+                  
                 </div>
                 <div className="space-y-5">
                   <FormItem>
@@ -466,28 +474,57 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                       />
                     </FormControl>
                   </FormItem>
-                  <FormItem>
-                    <FormLabel>Matériel sous garantie</FormLabel>
-                    <FormControl>
-                      <Input value={details.sousGarantie ? 'Oui' : 'NON' } readOnly className="text-blue-400" />
-                    </FormControl>
-                  </FormItem>
-
-                  <FormLabel>Durée de l'intervention (en heures)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        {...form.register('DuréeIntervention')}
-                        placeholder="Durée de l'intervention (en heures)"
-                        min="0"
-                        className="w-full p-2 border-2 border-gray-300 rounded-md"
-                      />
-                    </FormControl>
+                 
+                  
                 </div>
               </div>
 
               {type === 'intervention' && (
+                <div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-5">
+                  <FormItem>
+                    <FormLabel>Date de déclaration de la panne</FormLabel>
+                    <FormControl>
+                      <Input value={formatDate(details.dateDeclaration) || 'N/A'} readOnly />
+                    </FormControl>
+                  </FormItem>
+                <FormItem>
+                <FormLabel>Heure de l'intervention</FormLabel>
+                <FormControl>
+                  <Input
+                    type="time"
+                    {...form.register('Heureint')}
+                    placeholder="Heure de l'intervention"
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  />
+                </FormControl>
+              </FormItem>
+              </div>
+              <div className="space-y-5">
+              <FormItem>
+                    <FormLabel>Matériel sous garantie</FormLabel>
+                    <FormControl>
+                      <Input value="Oui" readOnly className="text-blue-400" />
+                    </FormControl>
+                  </FormItem>
+              <FormItem>
+                  <FormLabel>Duree de l'intervention (en heures) </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        {...form.register('dureeHeure')}
+                        placeholder="Durée de l'intervention en heures"
+                        
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                      />
+                    </FormControl>
+                    </FormItem>
+                    </div>
+                  </div>
+                  
                 <InterventionSection form={form} isEditable={isEditable} />
+                </div>
               )}
 
               {renderMaintenanceSection()}

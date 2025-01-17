@@ -2,8 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { PDFDownloadLink, Document, Page, Text, View } from '@react-pdf/renderer';
 import Image from 'next/image';
 import { fetchDetails, fetchMaintenanceActions, updateMaintenanceActions } from '@/lib/fonctionas';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
@@ -119,18 +118,29 @@ const MaintenancePage = () => {
     }
   };
 
-  const exportToPDF = () => {
-    const input = document.getElementById('pdf-content');
-    if (!input) return;
+  const MyDocument = () => (
+    <Document>
+      <Page size="A4">
+        <View>
+          <Text>Fiche de Maintenance</Text>
+          <Text>Client: {data?.clientName}</Text>
+          <Text>Date: {data?.dateMaintenance}</Text>
+          {/* Add more fields as necessary */}
+        </View>
+      </Page>
+    </Document>
+  );
 
-    html2canvas(input).then((canvas) => {
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save('fiche-maintenance.pdf');
-    });
+  const exportToPDF = () => {
+    return (
+      <PDFDownloadLink document={<MyDocument />} fileName="fiche-maintenance.pdf">
+        {({ loading, error }) => {
+          if (loading) return 'Loading document...';
+          if (error) return 'Error loading document';
+          return 'Exporter en PDF';
+        }}
+      </PDFDownloadLink>
+    );
   };
 
   if (loading) {
@@ -159,12 +169,7 @@ const MaintenancePage = () => {
         >
           {saving ? 'Enregistrement...' : 'Enregistrer'}
         </button>
-        <button 
-          onClick={exportToPDF} 
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
-        >
-          Exporter en PDF
-        </button>
+        {exportToPDF()}
       </div>
 
       <div className="w-[210mm] p-6 border rounded-lg shadow-lg bg-white">

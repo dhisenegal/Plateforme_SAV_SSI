@@ -44,8 +44,10 @@ export async function fetchDetails(id, type) {
         telephoneContact: intervention.telephoneContact,
         adresse: intervention.adresse,
         datePlanifiee: intervention.datePlanifiee,
-        technicienName: intervention.Technicien?.prenom || null,
         sousGarantie: intervention.sousGarantie,
+        urgent: intervention.urgent,
+        technicienName: intervention.Technicien?.prenom || null,
+        Heureint: intervention.Heureint,
       };
     } else if (type === 'maintenance') {
       const maintenance = await prisma.maintenance.findUnique({
