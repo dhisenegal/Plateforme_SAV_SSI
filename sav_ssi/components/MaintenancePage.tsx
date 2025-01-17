@@ -31,6 +31,40 @@ interface MaintenanceData {
   telephoneContact: string;
 }
 
+
+const formatDate = (dateTime: string | undefined): string => {
+  if (!dateTime) return 'N/A';
+  try {
+    return new Date(dateTime).toLocaleDateString("SN", {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric'
+    });
+  } catch (error) {
+    console.error("Erreur lors du formatage de la date:", error);
+    return 'N/A';
+  }
+};
+
+const formatHeure = (dateTime: string | undefined): string => {
+  if (!dateTime) return 'N/A';
+  try {
+    // Créer un objet Date à partir de la chaîne de date
+    const date = new Date(dateTime);
+    
+    // Formater l'heure en utilisant la locale 'fr-SN' et le fuseau horaire de Dakar
+    return new Intl.DateTimeFormat('fr-SN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Africa/Dakar',
+      hour12: false
+    }).format(date);
+  } catch (error) {
+    console.error("Erreur lors du formatage de l'heure:", error);
+    return 'N/A';
+  }
+};
+
 const MaintenancePage = () => {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
@@ -162,6 +196,7 @@ const MaintenancePage = () => {
   return (
     <div className="flex flex-col items-center mt-10 mb-10">
       <div className="w-full flex justify-end gap-4 mb-4 px-4">
+<<<<<<< HEAD
         <button 
           onClick={handleSubmit} 
           className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded transition-colors"
@@ -170,6 +205,15 @@ const MaintenancePage = () => {
           {saving ? 'Enregistrement...' : 'Enregistrer'}
         </button>
         {exportToPDF()}
+=======
+        
+        <button 
+          onClick={exportToPDF} 
+          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
+        >
+          Exporter 
+        </button>
+>>>>>>> fadb7971cab755ee1d24e460e824dcbb981b4c11
       </div>
 
       <div className="w-[210mm] p-6 border rounded-lg shadow-lg bg-white">
@@ -193,12 +237,12 @@ const MaintenancePage = () => {
               <div className="space-y-2">
                 <p><strong>Client :</strong> {data.clientName || 'N/A'}</p>
                 <p><strong>Contact :</strong> {data.siteName || 'N/A'}</p>
-                <p><strong>Téléphone :</strong> {data.telephoneContact || 'N/A'}</p>
+                <p><strong>Téléphone :</strong> {data.numero || 'N/A'}</p>
               </div>
               <div className="space-y-2">
-                <p><strong>Date :</strong> {data.dateMaintenance || 'N/A'}</p>
-                <p><strong>Heure Début :</strong> {data.heureDebut || 'N/A'}</p>
-                <p><strong>Heure Fin :</strong> {data.heureFin || 'N/A'}</p>
+                <p><strong>Date :</strong> {(formatDate(data.Heuredebut)|| 'N/A')}</p>
+                <p><strong>Heure Début :</strong> {formatHeure(data.Heuredebut || 'N/A' )}</p>
+                <p><strong>Heure Fin :</strong> {formatHeure(data.Heuredefin || 'N/A')}</p>
               </div>
             </div>
 

@@ -60,6 +60,16 @@ export async function fetchDetails(id, type) {
               Systeme: { select: { nom: true } },
             },
           },
+          Contact: {
+            include: {
+              Utilisateur:
+              {
+                select: {
+                  numero: true,
+                },
+              },
+            },      
+          },
           Technicien: {
             select: {
               prenom: true,
@@ -82,6 +92,9 @@ export async function fetchDetails(id, type) {
         description: maintenance.description,
         idInstallation: maintenance?.idInstallation,
         technicienName: maintenance.Technicien?.prenom || null,
+        Heuredebut: maintenance.Heuredebut,
+        Heuredefin: maintenance.Heuredefin,
+        numero: maintenance.Contact?.Utilisateur?.numero || null,
       };
     } else {
       throw new Error('Type invalide');
