@@ -96,17 +96,22 @@ export const updateMaintenanceAction = async (MaintenanceId: number, actions: Ac
 interface UpdateInterventionData {
   diagnostics: string;
   travauxRealises: string;
-  dureeHeure: Date;
+  dureeHeure: number;
+  Heureint: Date;
 }
 
 export const updateIntervention = async (id: number, data: UpdateInterventionData) => {
   try {
+    // Ajoutez un log pour vérifier les données avant la mise à jour
+    console.log('Données envoyées à updateIntervention:', data);
+
     const result = await prisma.intervention.update({
       where: { id: id },
       data: {
         diagnostics: data.diagnostics,
         travauxRealises: data.travauxRealises,
         dureeHeure: data.dureeHeure,
+        Heureint: data.Heureint,
       },
     });
     return result;
@@ -330,6 +335,30 @@ export async function getNextMaintenance() {
       throw error;
     }
     
+  };
+  
+
+  export const formatHeure = async (date: string | undefined): Promise<string> => {
+    // Simuler un délai asynchrone (si nécessaire pour votre cas d'usage)
+    await new Promise(resolve => setTimeout(resolve, 10));
+  
+    if (!date) return 'N/A';
+    
+    try {
+      const dateObj = new Date(date);
+      
+      const heureFormatee = new Intl.DateTimeFormat('fr-SN', {
+        hour: '2-digit',
+        minute: '2-digit',
+        timeZone: 'Africa/Dakar',
+        hour12: false
+      }).format(dateObj);
+      
+      return heureFormatee;
+    } catch (error) {
+      console.error("Erreur lors du formatage de l'heure:", error);
+      return 'N/A';
+    }
   };
   
   // Fonction pour formater la date

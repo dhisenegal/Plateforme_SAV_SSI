@@ -139,6 +139,7 @@ CREATE TABLE `InstallationEquipement` (
     `idEquipement` INTEGER NOT NULL,
     `idInstallation` INTEGER NOT NULL,
     `quantite` INTEGER NOT NULL,
+    `estGaranti` BOOLEAN NOT NULL DEFAULT true,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -212,6 +213,8 @@ CREATE TABLE `Intervention` (
     `statut` ENUM('EN_COURS', 'SUSPENDU', 'TERMINE', 'NON_PLANIFIE', 'PLANIFIE') NOT NULL DEFAULT 'NON_PLANIFIE',
     `typePanneDeclare` VARCHAR(191) NOT NULL,
     `dateDeclaration` DATETIME(3) NOT NULL,
+    `sousGarantie` BOOLEAN NULL DEFAULT true,
+    `urgent` BOOLEAN NULL DEFAULT false,
     `idClient` INTEGER NULL,
     `idSite` INTEGER NULL,
     `idSysteme` INTEGER NULL,
@@ -220,7 +223,8 @@ CREATE TABLE `Intervention` (
     `pieceFournies` VARCHAR(191) NULL,
     `datePlanifiee` DATETIME(3) NULL,
     `dateIntervention` DATETIME(3) NULL,
-    `dureeHeure` DATETIME(3) NULL,
+    `dureeHeure` INTEGER NULL,
+    `dateFinInt` DATETIME(3) NULL,
     `Heureint` DATETIME(3) NULL,
     `numero` INTEGER NULL,
     `ficheInt` VARCHAR(191) NULL,

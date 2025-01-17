@@ -47,6 +47,7 @@ export async function fetchDetails(id, type) {
         sousGarantie: intervention.sousGarantie,
         urgent: intervention.urgent,
         technicienName: intervention.Technicien?.prenom || null,
+        Heureint: intervention.Heureint,
       };
     } else if (type === 'maintenance') {
       const maintenance = await prisma.maintenance.findUnique({
