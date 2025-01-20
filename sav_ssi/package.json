@@ -70,6 +70,7 @@
     "react-leaflet": "^4.2.1",
     "react-modal": "^3.16.1",
     "react-toastify": "^10.0.6",
+    "react-virtualized": "^9.22.5",
     "recharts": "^2.14.1",
     "tailwind-merge": "^2.5.4",
     "tailwindcss-animate": "^1.0.7",

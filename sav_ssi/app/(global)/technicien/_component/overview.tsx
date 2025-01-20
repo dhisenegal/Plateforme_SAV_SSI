@@ -74,7 +74,31 @@ export default function OverViewPage() {
                 <CardContent>
                   <div className="text-2xl font-bold">{interventionsCount}</div>
                   <p className="text-xs text-muted-foreground">
-                    +20.1% par rapport au dernier mois
+                    
+                  </p>
+                </CardContent>
+              </Card>
+              
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Interventions hors délai</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{interventionsHorsDelaiCount}</div>
+                  <p className="text-xs text-muted-foreground">
+                    
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-medium">Interventions Urgentes</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{interventionsHorsDelaiCount}</div>
+                  <p className="text-xs text-muted-foreground">
+                    
                   </p>
                 </CardContent>
               </Card>
@@ -87,31 +111,7 @@ export default function OverViewPage() {
                 <CardContent>
                   <div className="text-2xl font-bold">{maintenancesCount}</div>
                   <p className="text-xs text-muted-foreground">
-                    +180.1% par rapport au dernier mois
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Interventions hors délai</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{interventionsHorsDelaiCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    +19% par rapport au dernier mois
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
-                    Maintenances hors délai
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">0</div> {/* Affichage des maintenances hors délai */}
-                  <p className="text-xs text-muted-foreground">
-                    +30% par rapport au dernier mois
+                    
                   </p>
                 </CardContent>
               </Card>

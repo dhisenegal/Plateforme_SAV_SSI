@@ -11,6 +11,26 @@ import {
 const InterventionSection = ({ form, isEditable }) => {
   return (
     <>
+<FormField
+        control={form.control}
+        name="dureeHeure"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Durée de l'intervention :</FormLabel>
+            <FormControl>
+              <input
+                {...field}
+                type= "number"
+                className="w-full p-2 border border-gray-300 rounded-md"
+                rows={4}
+                value={field.value ?? ''} // Ensure value is not null
+                readOnly={!isEditable} // Rendre le champ modifiable uniquement si isEditable est vrai
+              ></input>
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
       <FormField
         control={form.control}
         name="diagnostic"

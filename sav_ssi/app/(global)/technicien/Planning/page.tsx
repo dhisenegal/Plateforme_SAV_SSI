@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getEtatUrgence, formatStatut, getPlanning, formatDate, getClientName, getDescription, getType, getDateMaintenanceOrIntervention, getStatut } from '@/actions/technicien/planning';
+import { getType, getPlanning } from '@/actions/technicien/planning';
+import { fetchDetails } from '@/lib/fonctionas'; // Assurez-vous que fetchDetails est importé
 
 const PlanningTabContent = () => {
   const { data: session } = useSession();
@@ -17,48 +18,65 @@ const PlanningTabContent = () => {
   const router = useRouter();
   const [currentPlanning, setCurrentPlanning] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [totalPages, setTotalPages] = useState<number>(1);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchPlanning();
   }, [currentPage]);
 
   const fetchPlanning = async () => {
+    setLoading(true); // Met l'état de chargement à true
     try {
-      const planning = await getPlanning(technicienId);
+      // Récupérer le planning pour la page actuelle
+      const planning = await getPlanning(technicienId, currentPage);
+
+      // Récupérer les détails associés à chaque élément du planning
       const planningWithDetails = await Promise.all(
         planning.map(async (plan) => {
-          const clientName = await getClientName(plan);
-          const description = await getDescription(plan);
+          // Déterminer le type en utilisant la fonction getType
           const type = await getType(plan);
-          const date = await getDateMaintenanceOrIntervention(plan.id, type.toLowerCase());
-          const formattedDate = await formatDate(date);
-          const statut = await getStatut(plan.id, type.toLowerCase());
-          const formattedStatut = await formatStatut(statut);
-          const urgent = await getEtatUrgence(plan.id, type.toLowerCase());
-          return { 
-            ...plan, 
-            client: clientName, 
-            description, 
-            date: formattedDate, 
-            type, 
-            statut: formattedStatut,
-            urgent 
+          if (!plan.id || !type || type === 'Type inconnu') {
+            console.error(`Erreur: ID ou type manquant ou inconnu pour le plan ${JSON.stringify(plan)}`);
+            return {};  // Retourne un objet vide ou vous pouvez aussi faire un autre traitement.
+          }
+
+          // Appel de fetchDetails avec le type déterminé par getType
+          const { clientName, description, statut, urgent, technicienName, Heureint, datePlanifiee, systeme } = await fetchDetails(plan.id, type.toLowerCase());
+
+          // Loguer le statut pour débogage
+          console.log('Statut récupéré:', statut);
+
+          return {
+            ...plan,
+            client: clientName,
+            description,
+            statut,
+            date: datePlanifiee,
+            urgent,
+            technicienName,
+            systeme,
+            Heureint,
+            type // Ajout du type pour pouvoir l'afficher dans la table
           };
         })
       );
 
-      setCurrentPlanning(planningWithDetails);
-      setTotalPages(1);
+      // Filtrer les plans dont le statut n'est pas "Terminé"
+      const filteredPlanning = planningWithDetails.filter(plan => plan.statut !== 'TERMINE');
+
+      // Mettre à jour l'état avec les données filtrées
+      setCurrentPlanning(filteredPlanning);
     } catch (error) {
       console.error("Erreur lors de la récupération du planning :", error);
+    } finally {
+      setLoading(false); // Met l'état de chargement à false une fois les données récupérées
     }
   };
 
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Planning</h2>
+        <h2 className="text-2xl font-bold">PLANNING</h2>
       </div>
 
       <Table>
@@ -69,18 +87,18 @@ const PlanningTabContent = () => {
             <TableHead>Description</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Statut</TableHead>
-            <TableHead>Urgent</TableHead>
+            <TableHead>Urgence</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {currentPlanning.map((plan) => (
+          {currentPlanning.map((plan, index) => (
             <TableRow
-              key={plan.id}
+              key={`${plan.id}-${index}`}  // Utiliser une combinaison de l'id et de l'index pour garantir l'unicité
               className={`cursor-pointer hover:bg-blue-100 ${plan.urgent ? 'bg-red-50' : ''}`}
               onClick={() => router.push(`/technicien/Planning/${plan.id}?type=${plan.type.toLowerCase()}`)}
             >
-              <TableCell>{plan.date || 'Non défini'}</TableCell>
+              <TableCell>{plan.date ? new Date(plan.date).toLocaleDateString() : 'Non défini'}</TableCell>
               <TableCell>{plan.client}</TableCell>
               <TableCell>{plan.description}</TableCell>
               <TableCell>{plan.type}</TableCell>
@@ -109,7 +127,7 @@ const PlanningTabContent = () => {
       </Table>
 
       <div className="flex justify-end items-center mt-4 gap-2">
-        <span>Page {currentPage} / {totalPages}</span>
+        <span>Page {currentPage}</span>
         <Button 
           onClick={() => setCurrentPage(currentPage - 1)} 
           disabled={currentPage === 1} 
@@ -119,7 +137,6 @@ const PlanningTabContent = () => {
         </Button>
         <Button 
           onClick={() => setCurrentPage(currentPage + 1)} 
-          disabled={currentPage === totalPages} 
           className="bg-blue-500"
         >
           <FaArrowRight />

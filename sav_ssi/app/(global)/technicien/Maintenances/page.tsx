@@ -9,40 +9,74 @@ import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getPlanning, formatDate, getClientName, getDescription, getType, getDateMaintenanceOrIntervention, getStatut, formatStatut } from '@/actions/technicien/planning';
+import { getPlanning, getType } from '@/actions/technicien/planning'; // Importation de fetchDetails
+import { fetchDetails } from '@/lib/fonctionas'; // Assurez-vous que fetchDetails est bien importé
+
+// Fonction utilitaire pour formater les dates
+const formatDate = (date: Date | string) => {
+  if (date instanceof Date) {
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',   // Affiche le jour sur 2 chiffres
+      month: '2-digit', // Affiche le mois sur 2 chiffres
+      year: 'numeric'   // Affiche l'année sur 4 chiffres
+    });}}
 
 const PlanningTabContent = () => {
   const router = useRouter();
   const [currentPlanning, setCurrentPlanning] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
-  const {data: session} = useSession();
-  const technicienId = session?.user?.id
+  const { data: session } = useSession();
+  const technicienId = session?.user?.id;
+
   useEffect(() => {
     fetchPlanning();
   }, [currentPage]);
 
   const fetchPlanning = async () => {
     try {
+      // Récupérer le planning actuel pour le technicien
       const planning = await getPlanning(technicienId);
 
+      // Ajouter les détails associés pour chaque plan
       const planningWithDetails = await Promise.all(
         planning.map(async (plan) => {
-          const clientName = await getClientName(plan);
-          const description = await getDescription(plan);
-          const type = await getType(plan);
-          const date = await getDateMaintenanceOrIntervention(plan.id, type.toLowerCase());
-          const formattedDate = await formatDate(date);
-          const statut = await getStatut(plan.id, type.toLowerCase());
-          const formattedStatut = await formatStatut(statut); // Utilisation de formatStatut ici
-          return { ...plan, client: clientName, description, date: formattedDate, type, statut: formattedStatut };
+          const type = await getType(plan);  // Récupérer le type (Maintenance ou Intervention)
+          
+          if (!plan.id || !type) {
+            console.error(`Erreur: ID ou type manquant pour le plan ${JSON.stringify(plan)}`);
+            return {};  // Retourne un objet vide si le type ou l'ID est manquant
+          }
+
+          // Appel à fetchDetails pour récupérer les détails supplémentaires
+          const details = await fetchDetails(plan.id, type.toLowerCase());
+
+          // Ajouter les informations récupérées à chaque plan
+          return {
+            ...plan,
+            client: details.clientName,
+            description: details.description,
+            statut: details.statut,
+            date: formatDate(details.datePlanifiee),  // Formater la date ici
+            type,
+            urgent: details.urgent,
+            technicienName: details.technicienName,
+            systeme: details.systeme,
+            Heureint: details.Heureint,
+          };
         })
       );
 
+      // Filtrer les plans de type 'Maintenance' uniquement
       const maintenances = planningWithDetails.filter(plan => plan.type === "Maintenance");
 
+      // Mettre à jour l'état avec les données de type 'Maintenance'
       setCurrentPlanning(maintenances);
-      setTotalPages(1);
+
+      // Calculer le nombre total de pages (à ajuster en fonction de vos données)
+      const totalPlans = maintenances.length;
+      const pageSize = 10; // Ajustez cela selon vos besoins
+      setTotalPages(Math.ceil(totalPlans / pageSize));
     } catch (error) {
       console.error("Erreur lors de la récupération du planning :", error);
     }
@@ -71,7 +105,7 @@ const PlanningTabContent = () => {
               className="cursor-pointer hover:bg-blue-100"
               onClick={() => router.push(`/technicien/Planning/${plan.id}?type=${plan.type.toLowerCase()}`)}
             >
-              <TableCell>{plan.date || 'Non défini'}</TableCell>
+              <TableCell>{(plan.date) || 'Non défini'}</TableCell>
               <TableCell>{plan.client}</TableCell>
               <TableCell>{plan.description}</TableCell>
               <TableCell>{plan.statut || 'Non défini'}</TableCell>
