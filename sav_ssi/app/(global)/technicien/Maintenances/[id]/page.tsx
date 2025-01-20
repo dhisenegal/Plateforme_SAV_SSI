@@ -1,5 +1,5 @@
-// app/maintenance/[id]/page.tsx
 'use client';
+
 import MaintenancePage from '@/components/MaintenancePage';
 
 export default function Page() {
