@@ -2,41 +2,236 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 import Image from 'next/image';
+import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Svg, Path } from '@react-pdf/renderer';
+import { Image as PdfImage,  } from '@react-pdf/renderer';
 import { fetchDetails, fetchMaintenanceActions, updateMaintenanceActions } from '@/lib/fonctionas';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
-interface Action {
-  action_id: number;
-  libeleAction: string;
-  statut: boolean;
-  observation: string;
-  idAction: number;
-}
+// Ajout des composants SVG personnalisés
+const CheckIcon = () => (
+  <Svg viewBox="0 0 24 24" width={16} height={16}>
+    <Path
+      fill="#22C55E"
+      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+    />
+  </Svg>
+);
 
-interface MaintenanceData {
-  id: number;
-  clientName: string;
-  siteName: string;
-  systeme: string;
-  datePlanifiee: string;
-  description: string;
-  technicienName: string;
-  idInstallation: number;
-  dateMaintenance: string;
-  heureDebut: string;
-  heureFin: string;
-  adresse: string;
-  telephoneContact: string;
-}
+const CrossIcon = () => (
+  <Svg viewBox="0 0 24 24" width={16} height={16}>
+    <Path
+      fill="#EF4444"
+      d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"
+    />
+  </Svg>
+);
 
+const styles = StyleSheet.create({
+  page: {
+    padding: 30,
+    fontFamily: 'Helvetica',
+    backgroundColor: '#ffffff'
+  },
+  logoContainer: {
+    alignItems: 'center',
+    marginBottom: 20
+  },
+  logo: {
+    width: 150,
+    height: 75
+  },
+  title: {
+    fontSize: 24,
+    fontFamily: 'Helvetica-Bold',
+    textAlign: 'center',
+    marginBottom: 30,
+    color: '#000000'
+  },
+  infoContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 30
+  },
+  infoGroup: {
+    flex: 1
+  },
+  infoRow: {
+    flexDirection: 'row',
+    marginBottom: 10
+  },
+  label: {
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 12,
+    width: 100
+  },
+  value: {
+    fontSize: 12
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontFamily: 'Helvetica-Bold',
+    marginBottom: 20
+  },
+  table: {
+    width: '100%',
+    marginTop: 6
+  },
+  tableHeader: {
+    flexDirection: 'row',
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#000000'
+  },
+  tableRow: {
+    flexDirection: 'row',
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#000000',
+    minHeight: 40
+  },
+  tableCellHeader: {
+    padding: 5,
+    fontSize: 12,
+    fontFamily: 'Helvetica-Bold',
+    color: '#000000'
+  },
+  tableCell: {
+    padding: 8,
+    fontSize: 11,
+    color: '#000000'
+  },
+  cellTask: {
+    flex: 2,
+    borderRightWidth: 1,
+    borderRightColor: '#000000'
+  },
+  cellObs: {
+    flex: 3
+  },
+  signatureSection: {
+    marginTop: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between'
+  },
+  signatureBlock: {
+    width: '45%'
+  },
+  signatureLabel: {
+    fontFamily: 'Helvetica-Bold',
+    fontSize: 12,
+    marginBottom: 10
+  },
+  statusIconSuccess: {
+    color: '#22C55E',  // Vert
+    fontSize: 16
+  },
+  statusIconError: {
+    color: '#EF4444',  // Rouge
+    fontSize: 16
+  },
+  cellStatus: {
+    width: 50,
+    borderRightWidth: 1,
+    borderRightColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 4
+  },
+  iconContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 20,
+    height: 20
+  }
+});
+
+const MaintenancePDF = ({ data, actions }) => (
+  <Document>
+    <Page size="A4" style={styles.page}>
+      <View style={styles.logoContainer}>
+        <PdfImage src="/logo.jpg" style={styles.logo} />
+      </View>
+
+      <Text style={styles.title}>Fiche de Maintenance</Text>
+
+      <View style={styles.infoContainer}>
+        <View style={styles.infoGroup}>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Client : </Text>
+            <Text style={styles.value}>{data.clientName}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Contact : </Text>
+            <Text style={styles.value}>{data.siteName}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Téléphone : </Text>
+            <Text style={styles.value}>{data.numero}</Text>
+          </View>
+        </View>
+
+        <View style={styles.infoGroup}>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Date : </Text>
+            <Text style={styles.value}>{formatDate(data.Heuredebut)}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Heure Début : </Text>
+            <Text style={styles.value}>{formatHeure(data.Heuredebut)}</Text>
+          </View>
+          <View style={styles.infoRow}>
+            <Text style={styles.label}>Heure Fin : </Text>
+            <Text style={styles.value}>{formatHeure(data.Heuredefin)}</Text>
+          </View>
+        </View>
+      </View>
+
+      <Text style={styles.sectionTitle}>Liste des vérifications</Text>
+
+      <View style={styles.table}>
+        <View style={styles.tableHeader}>
+          <Text style={[styles.tableCellHeader, styles.cellTask]}>Taches</Text>
+          <Text style={[styles.tableCellHeader, styles.cellStatus]}>Statut</Text>
+          <Text style={[styles.tableCellHeader, styles.cellObs]}>Observations</Text>
+        </View>
+
+        {actions.map((action) => (
+          <View key={action.action_id} style={styles.tableRow}>
+            <View style={[styles.tableCell, styles.cellTask]}>
+              <Text>{action.libeleAction}</Text>
+            </View>
+            <View style={[styles.tableCell, styles.cellStatus]}>
+              <View style={styles.iconContainer}>
+                {action.statut ? <CheckIcon /> : <CrossIcon />}
+              </View>
+            </View>
+            <View style={[styles.tableCell, styles.cellObs]}>
+              <Text>{action.observation || 'ras'}</Text>
+            </View>
+          </View>
+        ))}
+      </View>
+
+      <View style={styles.signatureSection}>
+        <View style={styles.signatureBlock}>
+          <Text style={styles.signatureLabel}>VISA Technicien :</Text>
+          <Text>{data.technicienName}</Text>
+        </View>
+        <View style={styles.signatureBlock}>
+          <Text style={styles.signatureLabel}>VISA Client :</Text>
+          <Text>{data.clientName}</Text>
+        </View>
+      </View>
+    </Page>
+  </Document>
+);
 
 const formatDate = (dateTime: string | undefined): string => {
   if (!dateTime) return 'N/A';
   try {
-    return new Date(dateTime).toLocaleDateString("SN", {
+    return new Date(dateTime).toLocaleDateString("fr-SN", {
       year: 'numeric',
       month: 'numeric',
       day: 'numeric'
@@ -50,10 +245,7 @@ const formatDate = (dateTime: string | undefined): string => {
 const formatHeure = (dateTime: string | undefined): string => {
   if (!dateTime) return 'N/A';
   try {
-    // Créer un objet Date à partir de la chaîne de date
     const date = new Date(dateTime);
-    
-    // Formater l'heure en utilisant la locale 'fr-SN' et le fuseau horaire de Dakar
     return new Intl.DateTimeFormat('fr-SN', {
       hour: '2-digit',
       minute: '2-digit',
@@ -73,7 +265,6 @@ const MaintenancePage = () => {
   const [data, setData] = useState<MaintenanceData | null>(null);
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -118,55 +309,6 @@ const MaintenancePage = () => {
     };
   }, [id]);
 
-  const handleStatusChange = (actionId: number) => {
-    setActions(prevActions =>
-      prevActions.map(action =>
-        action.action_id === actionId
-          ? { ...action, statut: !action.statut }
-          : action
-      )
-    );
-  };
-
-  const handleObservationChange = (actionId: number, observation: string) => {
-    setActions(prevActions =>
-      prevActions.map(action =>
-        action.action_id === actionId
-          ? { ...action, observation }
-          : action
-      )
-    );
-  };
-
-  const handleSubmit = async () => {
-    if (!id || saving) return;
-
-    try {
-      setSaving(true);
-      await updateMaintenanceActions(id, actions);
-      alert('Modifications enregistrées avec succès');
-    } catch (error) {
-      alert('Erreur lors de l\'enregistrement');
-      console.error('Erreur de sauvegarde:', error);
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const exportToPDF = () => {
-    const input = document.getElementById('pdf-content');
-    if (!input) return;
-
-    html2canvas(input).then((canvas) => {
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save('fiche-maintenance.pdf');
-    });
-  };
-
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
@@ -186,13 +328,15 @@ const MaintenancePage = () => {
   return (
     <div className="flex flex-col items-center mt-10 mb-10">
       <div className="w-full flex justify-end gap-4 mb-4 px-4">
-        
-        <button 
-          onClick={exportToPDF} 
-          className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors"
-        >
-          Exporter 
-        </button>
+        {data && actions.length > 0 && (
+          <PDFDownloadLink
+            document={<MaintenancePDF data={data} actions={actions} />}
+            fileName="fiche-maintenance.pdf"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors cursor-pointer"
+          >
+            {({ loading }) => loading ? 'Génération...' : 'Exporter en PDF'}
+          </PDFDownloadLink>
+        )}
       </div>
 
       <div className="w-[210mm] p-6 border rounded-lg shadow-lg bg-white">
@@ -208,7 +352,7 @@ const MaintenancePage = () => {
               />
             </div>
             
-            <h1 className="text-2xl font-bold text-center mb-8">
+            <h1 className="text-2xl font-Helvetica-Bold text-center mb-8">
               Fiche de Maintenance
             </h1>
 

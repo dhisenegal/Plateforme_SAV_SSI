@@ -3,9 +3,193 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import { fetchDetails } from "@/lib/fonctionas";
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
+import { PDFDownloadLink, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { Image as PdfImage } from '@react-pdf/renderer';
+import Image from "next/image";
 
+const styles = StyleSheet.create({
+  page: {
+    padding: 40,
+    fontFamily: 'Helvetica',
+    backgroundColor: '#ffffff'
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 20
+  },
+  logoContainer: {
+    width: 150
+  },
+  logo: {
+    width: 100,
+    height: 50
+  },
+  reference: {
+    padding: 4,
+    borderWidth: 1,
+    borderColor: '#000000',
+    fontSize: 10
+  },
+  title: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 20,
+    fontWeight: 'bold'
+  },
+  formContainer: {
+    gap: 8
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 40
+  },
+  leftColumn: {
+    flex: 1
+  },
+  rightColumn: {
+    flex: 1
+  },
+  field: {
+    marginBottom: 10
+  },
+  label: {
+    fontSize: 11,
+    marginBottom: 2
+  },
+  dotLine: {
+    borderBottomWidth: 1,
+    borderStyle: 'dotted',
+    borderColor: '#000000',
+    height: 20
+  },
+  garantieSection: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 10,
+    marginBottom: 10
+  },
+  checkbox: {
+    width: 12,
+    height: 12,
+    border: 1,
+    borderColor: '#000000',
+    marginHorizontal: 5
+  },
+  multiLine: {
+    borderBottomWidth: 1,
+    borderStyle: 'dotted',
+    borderColor: '#000000',
+    minHeight: 60
+  },
+  signatureSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 40
+  },
+  signatureBlock: {
+    width: '45%'
+  },
+  signatureBox: {
+    height: 60,
+    borderWidth: 1,
+    borderColor: '#000000',
+    marginTop: 10
+  },
+  checked: {
+  backgroundColor: '#000000'
+},
+});
+
+const InterventionPDF = ({ data }: { data: InterventionData }) => (
+  <Document>
+    <Page size="A4" style={styles.page}>
+      <View style={styles.header}>
+        <View style={styles.logoContainer}>
+          <PdfImage src="/logo.jpg" style={styles.logo} />
+          <Text style={{ fontSize: 8 }}>Solutions and Integrated Systems</Text>
+        </View>
+        <View>
+          <Text style={styles.reference}>FMC-S19-MASE19</Text>
+        </View>
+      </View>
+
+      <Text style={styles.title}>FICHE D'INTERVENTION</Text>
+
+      <View style={styles.formContainer}>
+        <View style={styles.row}>
+          <View style={styles.leftColumn}>
+            <View style={styles.field}>
+              <Text style={styles.label}>Client : {data.clientName || 'N/A'}</Text>
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>Adresse : {data.adresse || 'N/A'}</Text>
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>Téléphone : {data.telephoneContact || 'N/A'}</Text>
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>Système : {data.systeme || 'N/A'}</Text>
+            </View>
+          </View>
+          <View style={styles.rightColumn}>
+            <View style={styles.field}>
+              <Text style={styles.label}>Date d'intervention : {formatDate(data.Heureint)}</Text>
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>Heure d'intervention : {formatHeure(data.Heureint)}</Text>
+            </View>
+            <View style={styles.field}>
+              <Text style={styles.label}>Durée d'intervention : {data.dureeHeure || 'N/A'} Hrs</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.garantieSection}>
+          <Text style={styles.label}>Matériel sous garantie :</Text>
+          <Text>OUI</Text>
+          <View style={[styles.checkbox, data.sousGarantie === 1 && styles.checked]} />
+          <Text>NON</Text>
+          <View style={[styles.checkbox, data.sousGarantie === 0 && styles.checked]} />
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Date de déclaration de panne : {formatDate(data.dateDeclaration)}</Text>
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Type de panne déclarée :</Text>
+          <Text>{data.description || 'N/A'}</Text>
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Diagnostics / Observations :</Text>
+          <Text>{data.diagnostics || 'N/A'}</Text>
+        </View>
+
+        <View style={styles.field}>
+          <Text style={styles.label}>Travaux réalisés / Pièces Fournies :</Text>
+          <Text>{data.travauxRealises || 'N/A'}</Text>
+        </View>
+
+        <View style={styles.signatureSection}>
+          <View style={styles.signatureBlock}>
+            <Text style={styles.label}>Technicien :</Text>
+            <Text>{data.technicienName || 'N/A'}</Text>
+            <Text style={styles.label}>Signature :</Text>
+            <View style={styles.signatureBox} />
+          </View>
+          <View style={styles.signatureBlock}>
+            <Text style={styles.label}>Nom Client :</Text>
+            <Text>{data.clientName || 'N/A'}</Text>
+            <Text style={styles.label}>Signature :</Text>
+            <View style={styles.signatureBox} />
+          </View>
+        </View>
+      </View>
+    </Page>
+  </Document>
+);
 interface InterventionData {
   clientName?: string;
   adresse?: string;
@@ -85,28 +269,19 @@ const InterventionPage = () => {
     }
   }, [id]);
 
-
-  const exportToPDF = () => {
-    const input = document.getElementById('pdf-content');
-    if (input) {
-      html2canvas(input).then((canvas) => {
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'mm', 'a4');
-        const pdfWidth = pdf.internal.pageSize.getWidth();
-        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-        pdf.save('export.pdf');
-      });
-    }
-  };
-
   return (
     <div className="flex flex-col items-center mt-10">
-  <div className="mb-6 flex w-full">
-    <button onClick={exportToPDF} className="bg-blue-500 hover:bg-blue-600 text-white p-2 rounded ml-auto mr-20">
-      Exporter
-    </button>
-  </div>
+  <div className="w-full flex justify-end gap-4 mb-4 px-4">
+        {data && (
+          <PDFDownloadLink
+            document={<InterventionPDF data={data} />}
+            fileName="fiche-intervention.pdf"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors cursor-pointer"
+          >
+            {({ loading }) => loading ? 'Génération...' : 'Exporter en PDF'}
+          </PDFDownloadLink>
+        )}
+      </div>
       <div className="w-[210mm] p-4 border rounded shadow bg-white">
         {error && <p className="text-red-500 mt-2">{error}</p>}
         {!data && !error && <p className="text-gray-500 mt-2">Chargement des données...</p>}
@@ -115,7 +290,7 @@ const InterventionPage = () => {
         {data && (
           <div id="pdf-content" className="mt-4 p-4 bg-white rounded">
             <div className="mb-6">
-              <img
+              <Image
                 src="/logo.jpg"
                 alt="Logo"
                 width={200}
