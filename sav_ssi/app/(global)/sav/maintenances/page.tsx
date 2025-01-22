@@ -21,6 +21,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { FaComment } from "react-icons/fa";
 import { useSession } from "next-auth/react";
 import ModifierMaintenanceDialog from "@/components/sav/ModifierMaintenanceDialog";
+import Link from "next/link";
 
 const MaintenancesPage = () => {
   const [maintenances, setMaintenances] = useState<any[]>([]);
@@ -325,6 +326,9 @@ const handleModificationSubmit = async (formData) => {
               }}>
                 <FaComment />
                 </Button>
+                <Link href={`/sav/maintenances/${maintenance.id}`}>
+                Voir détails
+              </Link>
               </TableCell>  
             </TableRow>
           ))}

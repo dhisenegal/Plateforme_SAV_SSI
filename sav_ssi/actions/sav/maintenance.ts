@@ -89,6 +89,28 @@ export const getAllMaintenances = async (
   return { maintenances, total };
 };
 
+export const getMaintenancesById = async (id: number): Promise<Maintenance> => {
+  return await prisma.maintenance.findUnique({
+    where: { id },
+    include: {
+      Technicien: true,
+      Contact: {
+        include: {
+          ContactSites: true,
+          Client: true,
+          Utilisateur: true,
+        },
+      },
+      Installation: {
+        include: {
+          Systeme: true,
+        },
+      },
+      Site: true,
+    },
+  });
+};
+
 export const planifierMaintenanceGlobal = async (data: {
   numero: string;
   datePlanifiee: string;
