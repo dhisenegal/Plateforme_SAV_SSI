@@ -305,3 +305,69 @@ export const planifierMaintenance = async (data: {
 
   return result;
 };
+
+// Ajouter un commentaire à une maintenance
+export const ajouterCommentaireMaintenance = async (data: {
+  idMaintenance: number;
+  idUtilisateur: number;
+  commentaire: string;
+}) => {
+  return await prisma.commentaireMaintenance.create({
+    data: {
+      idMaintenance: data.idMaintenance,
+      idUtilisateur: data.idUtilisateur,
+      commentaire: data.commentaire,
+    },
+    include: {
+      Utilisateur: true,
+    },
+  });
+};
+
+// Récupérer les commentaires d'une maintenance
+export const getCommentairesMaintenance = async (idMaintenance: number) => {
+  return await prisma.commentaireMaintenance.findMany({
+    where: {
+      idMaintenance,
+    },
+    include: {
+      Utilisateur: true,
+    },
+    orderBy: {
+      dateCommentaire: 'desc',
+    },
+  });
+};
+
+export const updateMaintenanceWithComment = async (
+  maintenanceId: number,
+  data: {
+    datePlanifiee: string;
+    description: string;
+    idTechnicien: number;
+    commentaireModification: string;
+  }
+) => {
+  return await prisma.$transaction(async (tx) => {
+    // Mettre à jour la maintenance
+    const maintenance = await tx.maintenance.update({
+      where: { id: maintenanceId },
+      data: {
+        datePlanifiee: new Date(data.datePlanifiee),
+        description: data.description,
+        idTechnicien: parseInt(data.idTechnicien.toString())
+      }
+    });
+
+    // Ajouter le commentaire de modification
+    await tx.commentaireMaintenance.create({
+      data: {
+        idMaintenance: maintenanceId,
+        idUtilisateur: data.idUtilisateur,
+        commentaire: `[Modification du planning] ${data.commentaireModification}`
+      }
+    });
+
+    return maintenance;
+  });
+};

@@ -23,6 +23,7 @@ model Utilisateur {
   Maintenances Maintenance[]   @relation("TechnicienMaintenance")
   Sessions   Session[]
   Commentaires Commentaire[]
+  CommentairesMaintenances CommentaireMaintenance[]
 }
 
 model Role {
@@ -191,6 +192,17 @@ model Maintenance {
   Installation      Installation @relation(fields: [idInstallation], references: [id], onDelete: Cascade)
   Technicien        Utilisateur  @relation("TechnicienMaintenance", fields: [idTechnicien], references: [id])
   Actions           MaintenanceAction[]
+  CommentairesMaintenances CommentaireMaintenance[]
+}
+
+model CommentaireMaintenance {
+  id                Int      @id @default(autoincrement())
+  idMaintenance     Int
+  idUtilisateur     Int
+  commentaire       String
+  dateCommentaire   DateTime @default(now())
+  Utilisateur       Utilisateur @relation(fields: [idUtilisateur], references: [id])
+  Maintenance      Maintenance @relation(fields: [idMaintenance], references: [id])
 }
 
 model ActionMaintenance {
@@ -231,7 +243,6 @@ model Intervention {
   dureeHeure        Int?
   dateFinInt        DateTime? 
   Heureint          DateTime?
-
   numero            Int?
   ficheInt          String?
   horsDelai             Boolean @default(false)
