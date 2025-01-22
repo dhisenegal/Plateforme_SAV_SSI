@@ -40,7 +40,8 @@ const MaintenancesPage = () => {
     idSite: 0,
     idTechnicien: 0,
     idContact: 0,
-    idInstallation: 0
+    idInstallation: 0,
+    dateMaintenance: ''
   });
   const [dateDebut, setDateDebut] = useState('');
   const [dateFin, setDateFin] = useState('');
@@ -222,6 +223,7 @@ const MaintenancesPage = () => {
             <TableHead>Site</TableHead>
             <TableHead>Système</TableHead>
             <TableHead>Date Prévue</TableHead>
+            <TableHead>Date Effectuée</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead>Technicien</TableHead>
             <TableHead>Actions</TableHead>
@@ -234,6 +236,11 @@ const MaintenancesPage = () => {
               <TableCell>{maintenance.Site.nom}</TableCell>
               <TableCell>{maintenance.Installation.Systeme.nom}</TableCell>
               <TableCell>{new Date(maintenance.datePlanifiee).toLocaleDateString()}</TableCell>
+              <TableCell>
+                {maintenance.dateMaintenance 
+                  ? new Date(maintenance.dateMaintenance).toLocaleDateString()
+                  : '-'}
+              </TableCell>
               <TableCell className={maintenance.statut === 'PLANIFIE' ? 'text-green-500' : maintenance.statut === 'TERMINE' ? 'text-red-500' : ''}>
                 {maintenance.statut}
               </TableCell>

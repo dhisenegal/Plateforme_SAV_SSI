@@ -22,6 +22,7 @@ const TechniciensPage = () => {
   const [selectedTechnicien, setSelectedTechnicien] = useState<Utilisateur | null>(null);
   const [prenom, setPrenom] = useState("");
   const [nom, setNom] = useState("");
+  const [email, setEmail] = useState("");
   const [numero, setNumero] = useState("");
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -52,7 +53,7 @@ const TechniciensPage = () => {
         numero,
         login,
         password,
-        email: prenom.toLowerCase() + "." + nom.toLowerCase() + "@dhisn.com",
+        email,
       });
 
       // Mise à jour de la liste des techniciens
@@ -64,6 +65,7 @@ const TechniciensPage = () => {
       setNumero("");
       setLogin("");
       setPassword("");
+      setEmail("");
     } catch (error) {
       toast.error("Erreur lors de l'ajout du technicien");
     }
@@ -82,6 +84,7 @@ const TechniciensPage = () => {
         numero: selectedTechnicien.numero,
         login: selectedTechnicien.login,
         password: selectedTechnicien.password,
+        email: selectedTechnicien.email,
         etatCompte: selectedTechnicien.etatCompte,
       });
 
@@ -165,6 +168,16 @@ const TechniciensPage = () => {
                     id="login"
                     value={login}
                     onChange={(e) => setLogin(prenom.toLowerCase() + "." + nom.toLowerCase())}
+                    placeholder="maty.seck"
+                    required
+                  />
+                </div>
+                <div className="grid grid-cols-1 gap-4">
+                  <Label htmlFor="login">Adresse email</Label>
+                  <Input
+                    id="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     placeholder="maty@dhisn.com"
                     required
                   />

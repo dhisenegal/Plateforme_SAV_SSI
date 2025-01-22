@@ -59,7 +59,7 @@ export default function AppSidebar() {
   console.log('Session:', session);
 
   // Get the user's role from the session
-  const userRole = session?.user?.role; // Default to 'guest' if no role is found
+  const userRole = session?.user?.role.nom; // Default to 'guest' if no role is found
   console.log("role user", userRole);
 
   // Get the navigation items for the user's role

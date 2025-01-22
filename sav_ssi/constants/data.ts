@@ -133,16 +133,9 @@ export const navItemsByRole: { [key: string]: NavItem[] } = {
       shortcut: ['p', 'p'],
       items: []
     },
+    
     {
       title: 'Rapports',
-      url: '/sav/rapports',
-      icon: FileText,
-      isActive: false,
-      shortcut: ['r', 'r'],
-      items: []
-    },
-    {
-      title: 'Reportings',
       url: '/sav/reportings',
       icon: BarChart,
       isActive: false,
