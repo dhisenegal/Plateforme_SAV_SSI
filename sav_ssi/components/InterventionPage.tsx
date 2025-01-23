@@ -6,86 +6,81 @@ import { fetchDetails } from "@/lib/fonctionas";
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { Image as PdfImage } from '@react-pdf/renderer';
 import Image from "next/image";
-
 const styles = StyleSheet.create({
   page: {
-    padding: 40,
-    fontFamily: 'Helvetica',
-    backgroundColor: '#ffffff'
+    padding: 30,
+    fontFamily: 'Times-Roman',
+    backgroundColor: '#ffffff',
+    position: 'relative',
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20
+    marginBottom: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#000',
+    paddingBottom: 10,
   },
   logoContainer: {
-    width: 150
+    width: 120
   },
   logo: {
-    width: 100,
-    height: 50
-  },
-  reference: {
-    padding: 4,
-    borderWidth: 1,
-    borderColor: '#000000',
-    fontSize: 10
+    width: '100%',
+    height: 'auto'
   },
   title: {
-    fontSize: 14,
+    fontSize: 18,
     textAlign: 'center',
     marginBottom: 20,
-    fontWeight: 'bold'
+    fontWeight: 'bold',
+    color: '#333'
   },
-  formContainer: {
-    gap: 8
+  section: {
+    marginBottom: 20,
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    boxShadow: '0px 0px 5px rgba(0, 0, 0, 0.1)'
   },
   row: {
     flexDirection: 'row',
-    gap: 40
-  },
-  leftColumn: {
-    flex: 1
-  },
-  rightColumn: {
-    flex: 1
-  },
-  field: {
-    marginBottom: 10
+    justifyContent: 'flex-start',
+    marginBottom: 8
   },
   label: {
-    fontSize: 11,
-    marginBottom: 2
+    fontSize: 12,
+    fontWeight: '900', // Plus gras
+    color: '#000', // Noir foncé
+    marginRight: 5,
   },
-  dotLine: {
-    borderBottomWidth: 1,
-    borderStyle: 'dotted',
-    borderColor: '#000000',
-    height: 20
+  value: {
+    fontSize: 12,
+    color: '#555',
   },
-  garantieSection: {
+  checkboxContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 10,
-    marginBottom: 10
+    marginTop: 5
   },
   checkbox: {
     width: 12,
     height: 12,
     border: 1,
-    borderColor: '#000000',
-    marginHorizontal: 5
+    borderColor: '#000',
+    marginRight: 5,
   },
-  multiLine: {
-    borderBottomWidth: 1,
-    borderStyle: 'dotted',
-    borderColor: '#000000',
-    minHeight: 60
+  checked: {
+    backgroundColor: '#000'
+  },
+  checkboxLabel: {
+    fontSize: 12,
+    marginLeft: 5,
+    color: '#555',
   },
   signatureSection: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginTop: 40
+    marginTop: 20
   },
   signatureBlock: {
     width: '45%'
@@ -93,109 +88,201 @@ const styles = StyleSheet.create({
   signatureBox: {
     height: 60,
     borderWidth: 1,
-    borderColor: '#000000',
+    borderColor: '#000',
     marginTop: 10
   },
-  checked: {
-  backgroundColor: '#000000'
-},
+  footer: {
+    position: 'absolute',
+    bottom: 10,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    fontSize: 10,
+    color: '#777',
+    padding: 5
+  },
+  clientAndInterventionContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 20
+  },
+  clientColumn: {
+    width: '48%'
+  },
+  interventionColumn: {
+    width: '48%'
+  },
+  sameCard: {
+    marginBottom: 20,
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    boxShadow: '0px 0px 5px rgba(0, 0, 0, 0.1)'
+  },
+  labelValueContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    marginBottom: 8,
+  },
+  sectionWithSpacing: {
+    marginBottom: 10,
+  },
+  diagnosticsObservationsCard: {
+    marginBottom: 20,
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    boxShadow: '0px 0px 5px rgba(0, 0, 0, 0.1)'
+  },
+  typePanneCard: {
+    marginTop: 15,
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 8,
+    boxShadow: '0px 0px 5px rgba(0, 0, 0, 0.1)',
+  },
+  labelOnNewLine: {
+    flexDirection: 'column',
+    marginBottom: 10,
+  },
+  rectangleFrame: {
+    borderWidth: 1,
+    borderColor: '#000',
+    paddingHorizontal: 10, // Ajuste pour ajouter du padding horizontal
+    paddingVertical: 5, // Ajuste le padding vertical
+    marginBottom: 10,
+    alignSelf: 'center', // Centre le cadre automatiquement
+  }
 });
 
-const InterventionPDF = ({ data }: { data: InterventionData }) => (
+const InterventionPDF = ({ data }: { data: any }) => (
   <Document>
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
         <View style={styles.logoContainer}>
           <PdfImage src="/logo.jpg" style={styles.logo} />
-          <Text style={{ fontSize: 8 }}>Solutions and Integrated Systems</Text>
         </View>
-        <View>
-          <Text style={styles.reference}>FMC-S19-MASE19</Text>
+        {/* FMC-S19-MASE19 avec cadre rectangle noir ajusté */}
+        <View style={styles.rectangleFrame}>
+          <Text style={{ fontSize: 10, fontWeight: 'bold', textAlign: 'center' }}>FMC-S19-MASE19</Text>
         </View>
       </View>
 
       <Text style={styles.title}>FICHE D'INTERVENTION</Text>
 
-      <View style={styles.formContainer}>
-        <View style={styles.row}>
-          <View style={styles.leftColumn}>
-            <View style={styles.field}>
-              <Text style={styles.label}>Client : {data.clientName || 'N/A'}</Text>
+      {/* Informations du Client et Détails de l'Intervention alignés sur la même ligne */}
+      <View style={styles.clientAndInterventionContainer}>
+        <View style={styles.clientColumn}>
+          <View style={styles.section}>
+            <View style={styles.row}>
+              <Text style={styles.label}>Client :</Text>
+              <Text style={styles.value}>{data.clientName || 'N/A'}</Text>
             </View>
-            <View style={styles.field}>
-              <Text style={styles.label}>Adresse : {data.adresse || 'N/A'}</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Adresse :</Text>
+              <Text style={styles.value}>{data.adresse || 'N/A'}</Text>
             </View>
-            <View style={styles.field}>
-              <Text style={styles.label}>Téléphone : {data.telephoneContact || 'N/A'}</Text>
-            </View>
-            <View style={styles.field}>
-              <Text style={styles.label}>Système : {data.systeme || 'N/A'}</Text>
-            </View>
-          </View>
-          <View style={styles.rightColumn}>
-            <View style={styles.field}>
-              <Text style={styles.label}>Date d'intervention : {formatDate(data.Heureint)}</Text>
-            </View>
-            <View style={styles.field}>
-              <Text style={styles.label}>Heure d'intervention : {formatHeure(data.Heureint)}</Text>
-            </View>
-            <View style={styles.field}>
-              <Text style={styles.label}>Durée d'intervention : {data.dureeHeure || 'N/A'} Hrs</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Téléphone :</Text>
+              <Text style={styles.value}>{data.telephoneContact || 'N/A'}</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.garantieSection}>
-          <Text style={styles.label}>Matériel sous garantie :</Text>
-          <Text>OUI</Text>
-          <View style={[styles.checkbox, data.sousGarantie === 1 && styles.checked]} />
-          <Text>NON</Text>
-          <View style={[styles.checkbox, data.sousGarantie === 0 && styles.checked]} />
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>Date de déclaration de panne : {formatDate(data.dateDeclaration)}</Text>
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>Type de panne déclarée :</Text>
-          <Text>{data.description || 'N/A'}</Text>
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>Diagnostics / Observations :</Text>
-          <Text>{data.diagnostics || 'N/A'}</Text>
-        </View>
-
-        <View style={styles.field}>
-          <Text style={styles.label}>Travaux réalisés / Pièces Fournies :</Text>
-          <Text>{data.travauxRealises || 'N/A'}</Text>
-        </View>
-
-        <View style={styles.signatureSection}>
-          <View style={styles.signatureBlock}>
-            <Text style={styles.label}>Technicien :</Text>
-            <Text>{data.technicienName || 'N/A'}</Text>
-            <Text style={styles.label}>Signature :</Text>
-            <View style={styles.signatureBox} />
-          </View>
-          <View style={styles.signatureBlock}>
-            <Text style={styles.label}>Nom Client :</Text>
-            <Text>{data.clientName || 'N/A'}</Text>
-            <Text style={styles.label}>Signature :</Text>
-            <View style={styles.signatureBox} />
+        <View style={styles.interventionColumn}>
+          <View style={styles.section}>
+            <View style={styles.row}>
+              <Text style={styles.label}>Date et heure Début  :</Text>
+              <Text style={styles.value}>{(formatDate(data.dateIntervention))}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Date et heure Fin :</Text>
+              <Text style={styles.value}>{(formatDate(data.dateFinInt))}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Durée d'intervention :</Text>
+              <Text style={styles.value}>{data.dureeHeure || 'N/A'} Hrs</Text>
+            </View>
           </View>
         </View>
       </View>
+
+      {/* Nouveau cadran pour système, matériel sous garantie et déclaration de panne */}
+      <View style={styles.sameCard}>
+        <View style={styles.sectionWithSpacing}>
+          <View style={styles.row}>
+            <Text style={styles.label}>Système :</Text>
+            <Text style={styles.value}>{data.systeme || 'N/A'}</Text>
+          </View>
+
+          <View style={styles.checkboxContainer}>
+            <Text style={styles.label}>Matériel sous garantie :</Text>
+            <View style={[styles.checkbox, data.sousGarantie === 1 ? styles.checked : {}]} />
+            <Text style={styles.checkboxLabel}>Oui</Text>
+            <View style={[styles.checkbox, data.sousGarantie === 0 ? styles.checked : {}]} />
+            <Text style={[styles.checkboxLabel, { marginLeft: 10 }]}>Non</Text>
+          </View>
+        </View>
+
+        {/* Déclaration de panne après "Matériel sous garantie" */}
+        <View style={styles.row}>
+          <Text style={styles.label}>Déclaration de panne :</Text>
+          <Text style={styles.value}>{formatDate(data.dateDeclaration)}</Text>
+        </View>
+      </View>
+
+      {/* Nouveau cadran séparé pour "Type de panne déclarée" sur une nouvelle ligne */}
+      <View style={styles.typePanneCard}>
+        <View style={styles.labelOnNewLine}>
+          <Text style={styles.label}>Type de panne déclarée :</Text>
+          <Text style={styles.value}>{data.description || 'N/A'}</Text>
+        </View>
+      </View>
+
+      {/* Diagnostics / Observations Section, avec information sur nouvelle ligne */}
+      <View style={styles.diagnosticsObservationsCard}>
+        <View style={styles.labelOnNewLine}>
+          <Text style={styles.label}>Diagnostics / Observations :</Text>
+          <Text style={styles.value}>{data.diagnostics || 'N/A'}</Text>
+        </View>
+      </View>
+
+      {/* Travaux Réalisés / Pièces Fournies Section, sur nouvelle ligne également */}
+      <View style={styles.diagnosticsObservationsCard}>
+        <View style={styles.labelOnNewLine}>
+          <Text style={styles.label}>Travaux Réalisés / Pièces Fournies :</Text>
+          <Text style={styles.value}>{data.travauxRealises || 'N/A'}</Text>
+        </View>
+      </View>
+
+      {/* Signatures Section */}
+      <View style={styles.signatureSection}>
+        <View style={styles.signatureBlock}>
+          <Text style={styles.label}>Technicien :</Text>
+          <Text style={styles.value}>{data.technicienName || 'N/A'}</Text>
+          <Text style={styles.label}>Signature :</Text>
+          <View style={styles.signatureBox} />
+        </View>
+        <View style={styles.signatureBlock}>
+          <Text style={styles.label}>Nom du Client :</Text>
+          <Text style={styles.value}>{data.clientName || 'N/A'}</Text>
+          <Text style={styles.label}>Signature :</Text>
+          <View style={styles.signatureBox} />
+        </View>
+      </View>
+
+      {/* Footer */}
+      <Text style={styles.footer}>Solutions and Integrated Systems - FMC</Text>
     </Page>
   </Document>
 );
+
 interface InterventionData {
   clientName?: string;
   adresse?: string;
   telephoneContact?: string;
   systeme?: string;
-  Heureint?: string; // Changé pour correspondre au nom du champ dans la BDD
+  Heureint?: string;
   dureeHeure?: string;
   sousGarantie?: number;
   dateDeclaration?: string;
@@ -208,10 +295,7 @@ interface InterventionData {
 const formatHeure = (dateTime: string | undefined): string => {
   if (!dateTime) return 'N/A';
   try {
-    // Créer un objet Date à partir de la chaîne de date
     const date = new Date(dateTime);
-    
-    // Formater l'heure en utilisant la locale 'fr-SN' et le fuseau horaire de Dakar
     return new Intl.DateTimeFormat('fr-SN', {
       hour: '2-digit',
       minute: '2-digit',
@@ -224,15 +308,28 @@ const formatHeure = (dateTime: string | undefined): string => {
   }
 };
 
-
 const formatDate = (dateTime: string | undefined): string => {
   if (!dateTime) return 'N/A';
+
   try {
-    return new Date(dateTime).toLocaleDateString("SN", {
+    const date = new Date(dateTime);
+
+    // Formatage de la date
+    const formattedDate = new Intl.DateTimeFormat('fr-SN', {
+      day: '2-digit',
+      month: '2-digit',
       year: 'numeric',
-      month: 'numeric',
-      day: 'numeric'
-    });
+    }).format(date);
+
+    // Formatage de l'heure
+    const formattedTime = new Intl.DateTimeFormat('fr-SN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false, // Format 24 heures
+    }).format(date);
+
+    // Combinaison de la date et de l'heure
+    return `${formattedDate} ${formattedTime}`;
   } catch (error) {
     console.error("Erreur lors du formatage de la date:", error);
     return 'N/A';
@@ -248,17 +345,10 @@ const InterventionPage = () => {
     const fetchData = async () => {
       try {
         const result = await fetchDetails(id, "intervention");
-        console.log('Données reçues:', result);
-        console.log('Valeur de sousGarantie:', result.sousGarantie);
-        console.log('Type de sousGarantie:', typeof result.sousGarantie);
-        
-        // Assurons-nous que sousGarantie est un nombre
-        const processedResult = {
+        setData({
           ...result,
           sousGarantie: Number(result.sousGarantie)
-        };
-        
-        setData(processedResult);
+        });
       } catch (err) {
         setError(err.message);
       }
@@ -271,7 +361,7 @@ const InterventionPage = () => {
 
   return (
     <div className="flex flex-col items-center mt-10">
-  <div className="w-full flex justify-end gap-4 mb-4 px-4">
+      <div className="w-full flex justify-end gap-4 mb-4 px-4">
         {data && (
           <PDFDownloadLink
             document={<InterventionPDF data={data} />}
@@ -286,9 +376,8 @@ const InterventionPage = () => {
         {error && <p className="text-red-500 mt-2">{error}</p>}
         {!data && !error && <p className="text-gray-500 mt-2">Chargement des données...</p>}
         {!data && error && <p className="text-red-500 mt-2">Erreur lors du chargement des données.</p>}
-
         {data && (
-          <div id="pdf-content" className="mt-4 p-4 bg-white rounded">
+          <div id="pdf-content" className="mt-4 p-4 bg-white rounded shadow-lg">
             <div className="mb-6">
               <Image
                 src="/logo.jpg"
@@ -297,59 +386,49 @@ const InterventionPage = () => {
                 height={100}
               />
             </div>
-            <h2 className="text-center text-xl font-bold">Fiche d'intervention</h2>
+            <h2 className="text-center text-2xl font-bold text-gray-800 mb-6">Fiche d'intervention</h2>
             <div className="flex justify-between mb-4">
-              <div>
+              <div className="w-1/2">
                 <p><strong>Client :</strong> {data.clientName || 'N/A'}</p>
                 <p><strong>Adresse :</strong> {data.adresse || 'N/A'}</p>
                 <p><strong>Téléphone :</strong> {data.telephoneContact || 'N/A'}</p>
                 <p><strong>Système :</strong> {data.systeme || 'N/A'}</p>
               </div>
-              <div>
-                <p><strong>Date Intervention :</strong> {formatDate(data.Heureint)}</p>
-                <p><strong>Heure Intervention :</strong> {formatHeure(data.Heureint)}</p>
+              <div className="w-1/2">
+                <p><strong>Date et heure Début  :</strong> {(formatDate(data.dateIntervention))}</p>
+                <p><strong>Date et heure Fin:</strong> {(formatDate(data.dateFinInt))}</p>
                 <p><strong>Durée Intervention (Hrs):</strong> {data.dureeHeure || 'N/A'}</p>
               </div>
             </div>
-            <div>
-          {/* Ajout de debug directement dans le rendu */}
-          <div style={{ display: 'none' }}>
-            Debug sousGarantie: {JSON.stringify({
-              value: data.sousGarantie,
-              type: typeof data.sousGarantie,
-              isZero: data.sousGarantie === 0,
-              isOne: data.sousGarantie === 1
-            })}
-          </div>
 
-          <div className="flex items-center mb-4">
-            <p className="mr-2"><strong>Matériel sous garantie :</strong></p>
-            <label className="mr-2 flex items-center">
-              Oui
-              <input
-                type="checkbox"
-                checked={Number(data.sousGarantie) === 1}
-                readOnly
-                className="ml-1"
-                disabled
-              />
-            </label>
-            <label className="flex items-center">
-              Non
-              <input
-                type="checkbox"
-                checked={Number(data.sousGarantie) === 0}
-                readOnly
-                className="ml-1"
-                disabled
-              />
-            </label>
-          </div>
+            <div className="mb-6">
+              <div className="flex items-center mb-4">
+                <strong>Matériel sous garantie :</strong>
+                <div className="flex ml-4">
+                  <div className="mr-2">
+                    <input
+                      type="checkbox"
+                      checked={Number(data.sousGarantie) === 1}
+                      disabled
+                      className="mr-2"
+                    /> Oui
+                  </div>
+                  <div>
+                    <input
+                      type="checkbox"
+                      checked={Number(data.sousGarantie) === 0}
+                      disabled
+                      className="mr-2"
+                    /> Non
+                  </div>
+                </div>
+              </div>
               <p><strong>Date de Déclaration :</strong> {formatDate(data.dateDeclaration)}</p>
               <p><strong>Type de Panne déclarée :</strong> {data.description || 'N/A'}</p>
               <p><strong>Diagnostic / Observations :</strong> {data.diagnostics || 'N/A'}</p>
               <p><strong>Travaux Réalisés/ Pièce Fournies :</strong> {data.travauxRealises || 'N/A'}</p>
             </div>
+
             <div className="flex justify-between mb-4">
               <div>
                 <p><strong>Technicien :</strong> {data.technicienName || 'N/A'}</p>

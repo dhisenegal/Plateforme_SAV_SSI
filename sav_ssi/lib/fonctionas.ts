@@ -47,7 +47,7 @@ export async function fetchDetails(id, type) {
         sousGarantie: intervention.sousGarantie,
         urgent: intervention.urgent,
         technicienName: intervention.Technicien?.prenom || null,
-        Heureint: intervention.Heureint,
+        dateFinInt: intervention.dateFinInt,
       };
     } else if (type === 'maintenance') {
       const maintenance = await prisma.maintenance.findUnique({
@@ -92,8 +92,8 @@ export async function fetchDetails(id, type) {
         description: maintenance.description,
         idInstallation: maintenance?.idInstallation,
         technicienName: maintenance.Technicien?.prenom || null,
-        Heuredebut: maintenance.Heuredebut,
-        Heuredefin: maintenance.Heuredefin,
+        dateMaintenance: maintenance.dateMaintenance,
+        dateFinMaint: maintenance.dateFinMaint,
         numero: maintenance.Contact?.Utilisateur?.numero || null,
       };
     } else {

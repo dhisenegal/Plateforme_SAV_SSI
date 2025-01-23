@@ -3,28 +3,34 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 import { FaEye, FaArrowLeft, FaArrowRight, FaExclamationTriangle } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getPlanning, formatDate, getClientName, getDescription, getType, getDateMaintenanceOrIntervention, getStatut, formatStatut, getEtatUrgence } from '@/actions/technicien/planning';
+import { getPlanning, getType } from '@/actions/technicien/planning'; // Importation de fetchDetails
+import { fetchDetails } from '@/lib/fonctionas';  // Fonction fetchDetails utilisée ici
 
-interface Planning {
-  id: number;
-  client: string;
-  description: string;
-  date: string;
-  type: string;
-  statut: string;
-  urgent: boolean;
-}
+// Fonction utilitaire pour formater les dates au format 'DD/MM/YYYY'
+const formatDate = (date: Date | string) => {
+  if (date instanceof Date) {
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',   // Affiche le jour sur 2 chiffres
+      month: '2-digit', // Affiche le mois sur 2 chiffres
+      year: 'numeric'   // Affiche l'année sur 4 chiffres
+    });
+  }
+  return date;  // Si la date est déjà une chaîne, on la retourne directement
+};
 
 const PlanningTabContent = () => {
   const router = useRouter();
-  const [currentPlanning, setCurrentPlanning] = useState<Planning[]>([]);
+  const [currentPlanning, setCurrentPlanning] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [totalPages, setTotalPages] = useState<number>(1);
+  const { data: session } = useSession();
+  const technicienId = session?.user?.id;
 
   useEffect(() => {
     fetchPlanning();
@@ -32,37 +38,53 @@ const PlanningTabContent = () => {
 
   const fetchPlanning = async () => {
     try {
-      const planning = await getPlanning();
+      // Récupérer le planning actuel pour le technicien
+      const planning = await getPlanning(technicienId);
 
+      // Ajouter les détails associés pour chaque plan
       const planningWithDetails = await Promise.all(
         planning.map(async (plan) => {
-          const clientName = await getClientName(plan);
-          const description = await getDescription(plan);
-          const type = await getType(plan);
-          const date = await getDateMaintenanceOrIntervention(plan.id, type.toLowerCase());
-          const formattedDate = await formatDate(date);
-          const rawStatut = await getStatut(plan.id, type.toLowerCase());
-          const statut = formatStatut(rawStatut);
-          const urgent = await getEtatUrgence(plan.id, type.toLowerCase());
+          const type = await getType(plan);  // Récupérer le type (Maintenance ou Intervention)
+          
+          if (!plan.id || !type || type !== 'Intervention') {
+            return null;  // Retourne null pour tout sauf les interventions
+          }
 
+          // Appel à fetchDetails pour récupérer les détails supplémentaires
+          const details = await fetchDetails(plan.id, type.toLowerCase());
+
+          // Ajouter les informations récupérées à chaque plan
           return {
-            id: plan.id,
-            client: clientName,
-            description,
-            date: formattedDate,
+            ...plan,
+            client: details.clientName,
+            description: details.description,
+            statut: details.statut,
+            date: formatDate(details.datePlanifiee),  // Formater la date ici
             type,
-            statut,
-            urgent
+            urgent: details.urgent,
+            horsDelai: details.horsDelai,  // Ajout de l'attribut "horsDelai"
+            technicienName: details.technicienName,
+            systeme: details.systeme,
+            Heureint: details.Heureint,
           };
         })
       );
 
-      const interventions = planningWithDetails.filter(plan => plan.type === "Intervention");
+      // Filtrer les plans qui ne sont pas des interventions
+      const interventions = planningWithDetails.filter(plan => plan !== null);
+
+      // Calculer le nombre d'interventions urgentes et hors délai
+      const urgentCount = interventions.filter((plan) => plan.urgent && plan.statut !== 'TERMINE').length;
+      const horsDelaiCount = interventions.filter((plan) => plan.horsDelai && plan.statut !== 'TERMINE').length;
+
+      // Enregistrer les comptages dans le localStorage
+      localStorage.setItem('urgentInterventionsCount', urgentCount.toString());
+      localStorage.setItem('horsDelaiInterventionsCount', horsDelaiCount.toString());
+
       setCurrentPlanning(interventions);
-      setTotalPages(Math.ceil(interventions.length / 10));
+      setTotalPages(1); // Vous pouvez ajuster cette logique pour calculer le nombre total de pages
     } catch (error) {
       console.error("Erreur lors de la récupération du planning :", error);
-      setCurrentPlanning([]);
     }
   };
 
@@ -79,7 +101,8 @@ const PlanningTabContent = () => {
             <TableHead>Client</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Statut</TableHead>
-            <TableHead>Urgent</TableHead>
+            <TableHead>Urgence</TableHead>
+            
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -87,7 +110,7 @@ const PlanningTabContent = () => {
           {currentPlanning.map((plan) => (
             <TableRow
               key={plan.id}
-              className={`cursor-pointer hover:bg-blue-100 ${plan.urgent ? 'bg-red-50' : ''}`}
+              className={`cursor-pointer hover:bg-blue-100 ${plan.urgent ? 'bg-red-50' : ''} ${plan.horsDelai ? 'bg-yellow-50' : ''}`}
               onClick={() => router.push(`/technicien/Planning/${plan.id}?type=${plan.type.toLowerCase()}`)}
             >
               <TableCell>{plan.date || 'Non défini'}</TableCell>
@@ -101,9 +124,10 @@ const PlanningTabContent = () => {
                     <span className="text-sm font-semibold">Urgent</span>
                   </div>
                 ) : (
-                  <span className="text-sm text-gray-500">Non urgent</span>
+                  <span className="text-sm text-gray-500">-</span>
                 )}
               </TableCell>
+              
               <TableCell className="flex justify-center">
                 <Link href={`/technicien/Planning/${plan.id}?type=${plan.type.toLowerCase()}`} passHref>
                   <FaEye 
@@ -118,19 +142,13 @@ const PlanningTabContent = () => {
       </Table>
 
       <div className="flex justify-end items-center mt-4 gap-2">
-        <span>Page {currentPage} / {totalPages}</span>
-        <Button 
-          onClick={() => setCurrentPage(currentPage - 1)} 
-          disabled={currentPage === 1} 
-          className="bg-blue-500"
-        >
+        <span>
+          Page {currentPage} / {totalPages}
+        </span>
+        <Button onClick={() => setCurrentPage(currentPage - 1)} disabled={currentPage === 1} className="bg-blue-500">
           <FaArrowLeft />
         </Button>
-        <Button 
-          onClick={() => setCurrentPage(currentPage + 1)} 
-          disabled={currentPage === totalPages} 
-          className="bg-blue-500"
-        >
+        <Button onClick={() => setCurrentPage(currentPage + 1)} disabled={currentPage === totalPages} className="bg-blue-500">
           <FaArrowRight />
         </Button>
       </div>

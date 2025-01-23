@@ -1,94 +1,145 @@
-"use client"; // Ajoute cette ligne pour indiquer que c'est un composant côté client
+'use client';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import { FaEye, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
+import { Button } from '@/components/ui/button';
+import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { getType, getPlanning } from '@/actions/technicien/planning';
+import { fetchDetails } from '@/lib/fonctionas'; // Assurez-vous que fetchDetails est importé
 
-import { useState, useEffect } from "react";
+const PlanningTabContent = () => {
+  const { data: session } = useSession();
+  const technicienId = session?.user?.id;
+  const router = useRouter();
+  const [currentPlanning, setCurrentPlanning] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [loading, setLoading] = useState(false);
 
-export default function Home() {
-  const [isClient, setIsClient] = useState(false);
+  const handleValidateClick = (id, type) => {
+    if (type === 'maintenance') {
+      router.push(`/technicien/Maintenances/${id}`);
+    } else if (type === 'intervention') {
+      router.push(`/technicien/Interventions/${id}`);
+    }
+  };
 
   useEffect(() => {
-    // Vérifie qu'on est en environnement client et non serveur
-    setIsClient(true);
-  }, []);
+    fetchPlanning();
+  }, [currentPage]);
+
+  const fetchPlanning = async () => {
+    setLoading(true); // Met l'état de chargement à true
+    try {
+      // Récupérer le planning pour la page actuelle
+      const planning = await getPlanning(technicienId, currentPage);
+
+      // Récupérer les détails associés à chaque élément du planning
+      const planningWithDetails = await Promise.all(
+        planning.map(async (plan) => {
+          // Déterminer le type en utilisant la fonction getType
+          const type = await getType(plan);
+          if (!plan.id || !type || type === 'Type inconnu') {
+            console.error(`Erreur: ID ou type manquant ou inconnu pour le plan ${JSON.stringify(plan)}`);
+            return {};  // Retourne un objet vide ou vous pouvez aussi faire un autre traitement.
+          }
+
+          // Appel de fetchDetails avec le type déterminé par getType
+          const { clientName, description, statut, urgent, technicienName, dateFinInt,dateFinMaint,  systeme } = await fetchDetails(plan.id, type.toLowerCase());
+
+          // Loguer le statut pour débogage
+          console.log('Statut récupéré:', statut);
+
+          return {
+            ...plan,
+            client: clientName,
+            description,
+            statut,
+            dateFin: dateFinInt || dateFinMaint,
+            urgent,
+            technicienName,
+            systeme,
+            type // Ajout du type pour pouvoir l'afficher dans la table
+          };
+        })
+      );
+
+      // Filtrer les plans dont le statut est "TERMINE" (afficher toutes les interventions et maintenances terminées)
+      const filteredPlanning = planningWithDetails.filter(plan => plan.statut === 'TERMINE');
+
+      // Mettre à jour l'état avec les données filtrées
+      setCurrentPlanning(filteredPlanning);
+    } catch (error) {
+      console.error("Erreur lors de la récupération du planning :", error);
+    } finally {
+      setLoading(false); // Met l'état de chargement à false une fois les données récupérées
+    }
+  };
 
   return (
-    <div className="h-[75vh] bg-gradient-to-r from-blue-50 to-green-50 flex flex-col">
-      {/* En-tête */}
-      <header className="flex-grow-0 flex-shrink-0 p-4 text-center bg-white shadow-md">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-gray-800">
-          RAPPORTS TECHNIQUES
-        </h1>
-        <p className="text-base text-gray-600 mt-1">Sélectionnez une option</p>
-      </header>
+    <div>
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold">RAPPORT</h2>
+      </div>
 
-      {/* Contenu principal */}
-      <main className="flex-grow flex items-center justify-center">
-        {isClient && (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl p-3">
-            {/* Carte 1 : Intervention */}
-            <a
-              href="./Rapport/FicheIntervention"
-              className="group flex flex-col items-center justify-center bg-white shadow-md rounded-md p-5 hover:shadow-lg transition transform hover:scale-105"
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Date</TableHead>
+            <TableHead>Client</TableHead>
+            <TableHead>Description</TableHead>
+            <TableHead>Type</TableHead>
+            <TableHead>Statut</TableHead>
+            <TableHead>Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {currentPlanning.map((plan, index) => (
+            <TableRow
+              key={`${plan.id}-${index}`}  // Utiliser une combinaison de l'id et de l'index pour garantir l'unicité
             >
-              <div className="bg-blue-500 text-white p-3 rounded-full mb-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M19 11c0-4.418-3.582-8-8-8S3 6.582 3 11c0 2.635 1.613 5.648 2.873 8.19.686 1.368 2.208 2.534 3.82 2.534h4.614c1.612 0 3.134-1.166 3.82-2.534C17.387 16.648 19 13.635 19 11z"
-                  />
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M13 16h-1v-4h-1m3-3h.01"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-lg font-bold text-gray-800 mb-1">
-                Fiche d'intervention
-              </h2>
-              <p className="text-sm text-gray-600 text-center">
-                Saisissez les détails pour une intervention.
-              </p>
-            </a>
+              <TableCell>{plan.dateFin ? new Date(plan.dateFin).toLocaleDateString() : 'Non défini'}</TableCell>
+              <TableCell>{plan.client}</TableCell>
+              <TableCell>{plan.description}</TableCell>
+              <TableCell>{plan.type}</TableCell>
+              <TableCell>{plan.statut || 'Non défini'}</TableCell>
+              <TableCell className="flex justify-center">
+                <FaEye 
+                  className="text-blue-500 cursor-pointer" 
+                  onClick={(e) => {
+                    e.stopPropagation(); 
+                    handleValidateClick(plan.id, plan.type.toLowerCase());  // Redirige vers la page de détail
+                  }} 
+                />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
-            {/* Carte 2 : Maintenance */}
-            <a
-              href="./Rapport/FicheMaintenance"
-              className="group flex flex-col items-center justify-center bg-white shadow-md rounded-md p-5 hover:shadow-lg transition transform hover:scale-105"
-            >
-              <div className="bg-green-500 text-white p-3 rounded-full mb-3">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-6 w-6"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth={2}
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V12m-6 5v.01M3 12v2.158a2.032 2.032 0 01-.595 1.437L1 17h5l1.405-1.405A2.032 2.032 0 007 14.158V12m-4 0h16m-4 0V9.842a2.032 2.032 0 00-.595-1.437L15 7H9l-1.405 1.405A2.032 2.032 0 007 9.842V12m4-4v-.01"
-                  />
-                </svg>
-              </div>
-              <h2 className="text-lg font-bold text-gray-800 mb-1">
-                Fiche de maintenance
-              </h2>
-              <p className="text-sm text-gray-600 text-center">
-                Renseignez les informations pour une maintenance.
-              </p>
-            </a>
-          </div>
-        )}
-      </main>
+      <div className="flex justify-end items-center mt-4 gap-2">
+        <span>Page {currentPage}</span>
+        <Button 
+          onClick={() => setCurrentPage(currentPage - 1)} 
+          disabled={currentPage === 1} 
+          className="bg-blue-500"
+        >
+          <FaArrowLeft />
+        </Button>
+        <Button 
+          onClick={() => setCurrentPage(currentPage + 1)} 
+          className="bg-blue-500"
+        >
+          <FaArrowRight />
+        </Button>
+      </div>
+
+      <ToastContainer />
     </div>
   );
-}
+};
+
+export default PlanningTabContent;
