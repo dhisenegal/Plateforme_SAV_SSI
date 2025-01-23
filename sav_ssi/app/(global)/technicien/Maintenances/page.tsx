@@ -62,7 +62,7 @@ const PlanningTabContent = () => {
             urgent: details.urgent,
             technicienName: details.technicienName,
             systeme: details.systeme,
-            Heureint: details.Heureint,
+            
           };
         })
       );

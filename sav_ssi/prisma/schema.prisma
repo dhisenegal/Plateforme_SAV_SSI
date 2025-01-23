@@ -176,12 +176,11 @@ model Maintenance {
   id                Int      @id @default(autoincrement())
   numero            String
   dateMaintenance   DateTime?
+  dateFinMaint      DateTime?
   description       String
   statut            EnumStatut_m @default(PLANIFIE)
   typeMaintenance   String
   datePlanifiee     DateTime?
-  Heuredebut        DateTime?
-  Heuredefin        DateTime?
   idTechnicien      Int
   idSite            Int
   idInstallation    Int
@@ -225,15 +224,11 @@ model Intervention {
   Site              Site?        @relation(fields: [idSite], references: [id])
   diagnostics       String?
   travauxRealises   String?
-  pieceFournies     String?
   datePlanifiee     DateTime?
   dateIntervention  DateTime?
   dureeHeure        Int?
   dateFinInt        DateTime? 
-  Heureint          DateTime?
-
   numero            Int?
-  ficheInt          String?
   horsDelai             Boolean @default(false)
   idTechnicien      Int?
   prenomContact     String?

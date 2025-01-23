@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useSession } from 'next-auth/react';
-import { FaEye, FaArrowLeft, FaArrowRight,FaExclamationTriangle } from 'react-icons/fa';
+import { FaEye, FaArrowLeft, FaArrowRight, FaExclamationTriangle } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { ToastContainer } from 'react-toastify';
@@ -62,6 +62,7 @@ const PlanningTabContent = () => {
             date: formatDate(details.datePlanifiee),  // Formater la date ici
             type,
             urgent: details.urgent,
+            horsDelai: details.horsDelai,  // Ajout de l'attribut "horsDelai"
             technicienName: details.technicienName,
             systeme: details.systeme,
             Heureint: details.Heureint,
@@ -71,6 +72,14 @@ const PlanningTabContent = () => {
 
       // Filtrer les plans qui ne sont pas des interventions
       const interventions = planningWithDetails.filter(plan => plan !== null);
+
+      // Calculer le nombre d'interventions urgentes et hors délai
+      const urgentCount = interventions.filter((plan) => plan.urgent && plan.statut !== 'TERMINE').length;
+      const horsDelaiCount = interventions.filter((plan) => plan.horsDelai && plan.statut !== 'TERMINE').length;
+
+      // Enregistrer les comptages dans le localStorage
+      localStorage.setItem('urgentInterventionsCount', urgentCount.toString());
+      localStorage.setItem('horsDelaiInterventionsCount', horsDelaiCount.toString());
 
       setCurrentPlanning(interventions);
       setTotalPages(1); // Vous pouvez ajuster cette logique pour calculer le nombre total de pages
@@ -93,6 +102,7 @@ const PlanningTabContent = () => {
             <TableHead>Description</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead>Urgence</TableHead>
+            
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -100,7 +110,7 @@ const PlanningTabContent = () => {
           {currentPlanning.map((plan) => (
             <TableRow
               key={plan.id}
-              className={`cursor-pointer hover:bg-blue-100 ${plan.urgent ? 'bg-red-50' : ''}`}
+              className={`cursor-pointer hover:bg-blue-100 ${plan.urgent ? 'bg-red-50' : ''} ${plan.horsDelai ? 'bg-yellow-50' : ''}`}
               onClick={() => router.push(`/technicien/Planning/${plan.id}?type=${plan.type.toLowerCase()}`)}
             >
               <TableCell>{plan.date || 'Non défini'}</TableCell>
@@ -117,6 +127,7 @@ const PlanningTabContent = () => {
                   <span className="text-sm text-gray-500">-</span>
                 )}
               </TableCell>
+              
               <TableCell className="flex justify-center">
                 <Link href={`/technicien/Planning/${plan.id}?type=${plan.type.toLowerCase()}`} passHref>
                   <FaEye 

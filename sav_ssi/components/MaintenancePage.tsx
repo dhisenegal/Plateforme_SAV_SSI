@@ -174,21 +174,21 @@ const MaintenancePDF = ({ data, actions }) => (
 
         <View style={styles.infoGroup}>
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Date : </Text>
-            <Text style={styles.value}>{formatDate(data.Heuredebut)}</Text>
+            <Text style={styles.label}>Date Prévu: </Text>
+            <Text style={styles.value}>{formatDate1(data.datePlanifiee)}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Heure Début : </Text>
-            <Text style={styles.value}>{formatHeure(data.Heuredebut)}</Text>
+            <Text style={styles.label}>Date et Heure Début : </Text>
+            <Text style={styles.value}>{formatDate(data.dateMaintenance)}</Text>
           </View>
           <View style={styles.infoRow}>
-            <Text style={styles.label}>Heure Fin : </Text>
-            <Text style={styles.value}>{formatHeure(data.Heuredefin)}</Text>
+            <Text style={styles.label}>Date et Heure Fin : </Text>
+            <Text style={styles.value}>{formatDate(data.dateFinMaint)}</Text>
           </View>
         </View>
       </View>
 
-      <Text style={styles.sectionTitle}>Liste des vérifications</Text>
+      <Text style={styles.sectionTitle}>{(data.systeme)}</Text>
 
       <View style={styles.table}>
         <View style={styles.tableHeader}>
@@ -228,7 +228,7 @@ const MaintenancePDF = ({ data, actions }) => (
   </Document>
 );
 
-const formatDate = (dateTime: string | undefined): string => {
+const formatDate1 = (dateTime: string | undefined): string => {
   if (!dateTime) return 'N/A';
   try {
     return new Date(dateTime).toLocaleDateString("fr-SN", {
@@ -241,7 +241,45 @@ const formatDate = (dateTime: string | undefined): string => {
     return 'N/A';
   }
 };
+const formatDate = (dateTime: string | undefined): string => {
+  if (!dateTime || dateTime === 'N/A') return 'N/A'; // Vérifie si la valeur est 'N/A' ou undefined
 
+  // Si la date est au format "DD/MM/YYYY", on la convertit en "YYYY-MM-DD"
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(dateTime)) {
+    const [day, month, year] = dateTime.split('/');
+    dateTime = `${year}-${month}-${day}`; // Conversion vers "YYYY-MM-DD"
+  }
+
+  const date = new Date(dateTime);
+
+  // Vérifiez si la date est valide
+  if (isNaN(date.getTime())) {
+    console.error("Date invalide:", dateTime);
+    return 'N/A';
+  }
+
+  try {
+    // Formatage de la date
+    const formattedDate = new Intl.DateTimeFormat('fr-SN', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(date);
+
+    // Formatage de l'heure
+    const formattedTime = new Intl.DateTimeFormat('fr-SN', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false, // Format 24 heures
+    }).format(date);
+
+    // Combinaison de la date et de l'heure
+    return `${formattedDate} ${formattedTime}`;
+  } catch (error) {
+    console.error("Erreur lors du formatage de la date:", error);
+    return 'N/A';
+  }
+};
 const formatHeure = (dateTime: string | undefined): string => {
   if (!dateTime) return 'N/A';
   try {
@@ -286,7 +324,7 @@ const MaintenancePage = () => {
         setData({
           ...maintenanceData,
           dateMaintenance: maintenanceData.dateMaintenance 
-            ? new Date(maintenanceData.dateMaintenance).toLocaleDateString()
+            ? new Date(maintenanceData.dateMaintenance)
             : ''
         });
         setActions(actionsData);
@@ -363,9 +401,9 @@ const MaintenancePage = () => {
                 <p><strong>Téléphone :</strong> {data.numero || 'N/A'}</p>
               </div>
               <div className="space-y-2">
-                <p><strong>Date :</strong> {(formatDate(data.Heuredebut)|| 'N/A')}</p>
-                <p><strong>Heure Début :</strong> {formatHeure(data.Heuredebut || 'N/A' )}</p>
-                <p><strong>Heure Fin :</strong> {formatHeure(data.Heuredefin || 'N/A')}</p>
+                <p><strong>Date Prévu:</strong> {(formatDate1(data.datePlanifiee)|| 'N/A')}</p>
+                <p><strong>Date et Heure Début :</strong> {formatDate(data.dateMaintenance || 'N/A' )}</p>
+                <p><strong>Date et Heure Fin :</strong> {formatDate(data.dateFinMaint || 'N/A')}</p>
               </div>
             </div>
 

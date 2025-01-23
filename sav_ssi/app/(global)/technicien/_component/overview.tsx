@@ -1,4 +1,5 @@
 'use client';
+
 import { AreaGraph } from './area-graph';
 import { BarGraph } from './bar-graph';
 import { PieGraph } from './pie-graph';
@@ -14,8 +15,7 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getInterventionsActives, getMaintenancesActives, getInterventionsHorsDelai,getNextInterventionsAndMaintenances } from '@/actions/technicien/acceuil';
-
+import { getInterventionsActives, getMaintenancesActives, getInterventionsHorsDelai, getNextInterventionsAndMaintenances } from '@/actions/technicien/acceuil';
 
 export default function OverViewPage() {
   const { data: session } = useSession();
@@ -23,10 +23,23 @@ export default function OverViewPage() {
   const [maintenancesCount, setMaintenancesCount] = useState(0);
   const [interventionsHorsDelaiCount, setInterventionsHorsDelaiCount] = useState<number>(0);
   const [upcomingPlans, setUpcomingPlans] = useState<Plan[]>([]); // Initialize with an empty array
+  const [urgentInterventionsCount, setUrgentInterventionsCount] = useState<number>(0); // State for urgent interventions count
 
   const technicienId = Number(session?.user?.id);
 
   useEffect(() => {
+    // Récupérer le nombre d'interventions urgentes depuis localStorage
+    const storedUrgentInterventionsCount = localStorage.getItem('urgentInterventionsCount');
+    if (storedUrgentInterventionsCount) {
+      setUrgentInterventionsCount(parseInt(storedUrgentInterventionsCount));
+    }
+
+    const storedHorsDelaiCount = localStorage.getItem('interventionsHorsDelaiCount');
+  if (storedHorsDelaiCount) {
+    setInterventionsHorsDelaiCount(parseInt(storedHorsDelaiCount));
+  }
+
+    // Fetch the data for interventions and maintenances
     async function fetchData() {
       try {
         const [interventions, maintenances, interventionsHorsDelai, nextPlans] = await Promise.all([
@@ -47,7 +60,6 @@ export default function OverViewPage() {
     fetchData();
   }, [technicienId]);
 
-  
   return (
     <PageContainer scrollable>
       <div className="space-y-2">
@@ -74,7 +86,7 @@ export default function OverViewPage() {
                 <CardContent>
                   <div className="text-2xl font-bold">{interventionsCount}</div>
                   <p className="text-xs text-muted-foreground">
-                    
+                    {/* Additional description if needed */}
                   </p>
                 </CardContent>
               </Card>
@@ -86,7 +98,7 @@ export default function OverViewPage() {
                 <CardContent>
                   <div className="text-2xl font-bold">{interventionsHorsDelaiCount}</div>
                   <p className="text-xs text-muted-foreground">
-                    
+                    {/* Additional description if needed */}
                   </p>
                 </CardContent>
               </Card>
@@ -96,9 +108,9 @@ export default function OverViewPage() {
                   <CardTitle className="text-sm font-medium">Interventions Urgentes</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{interventionsHorsDelaiCount}</div>
+                  <div className="text-2xl font-bold">{urgentInterventionsCount}</div>
                   <p className="text-xs text-muted-foreground">
-                    
+                    {/* Additional description if needed */}
                   </p>
                 </CardContent>
               </Card>
@@ -111,17 +123,15 @@ export default function OverViewPage() {
                 <CardContent>
                   <div className="text-2xl font-bold">{maintenancesCount}</div>
                   <p className="text-xs text-muted-foreground">
-                    
+                    {/* Additional description if needed */}
                   </p>
                 </CardContent>
               </Card>
             </div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7">
-             
               <Card className="col-span-4 md:col-span-3">
                 <CardHeader>
                   <CardTitle>PROCHAINES MAINTENANCES  </CardTitle>
-                 
                 </CardHeader>
                 <CardContent>
                   <RecentInterventions plans={upcomingPlans}/>

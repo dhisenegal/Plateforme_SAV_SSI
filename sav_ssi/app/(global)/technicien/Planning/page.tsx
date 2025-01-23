@@ -41,7 +41,7 @@ const PlanningTabContent = () => {
           }
 
           // Appel de fetchDetails avec le type déterminé par getType
-          const { clientName, description, statut, urgent, technicienName, Heureint, datePlanifiee, systeme } = await fetchDetails(plan.id, type.toLowerCase());
+          const { clientName, description, statut, urgent, technicienName, datePlanifiee, systeme } = await fetchDetails(plan.id, type.toLowerCase());
 
           // Loguer le statut pour débogage
           console.log('Statut récupéré:', statut);
@@ -55,7 +55,7 @@ const PlanningTabContent = () => {
             urgent,
             technicienName,
             systeme,
-            Heureint,
+            
             type // Ajout du type pour pouvoir l'afficher dans la table
           };
         })

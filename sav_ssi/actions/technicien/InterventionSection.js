@@ -16,7 +16,7 @@ const InterventionSection = ({ form, isEditable }) => {
         name="dureeHeure"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Durée de l'intervention :</FormLabel>
+            <FormLabel>Durée de l'intervention (hrs) :</FormLabel>
             <FormControl>
               <input
                 {...field}

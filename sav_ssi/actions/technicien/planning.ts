@@ -97,8 +97,8 @@ interface UpdateInterventionData {
   diagnostics: string;
   travauxRealises: string;
   dureeHeure: number;
-  Heureint: Date;
   dateIntervention: Date;
+  dateFinInt: Date;
 }
 
 
@@ -113,8 +113,8 @@ export const updateIntervention = async (id: number, data: UpdateInterventionDat
         diagnostics: data.diagnostics,
         travauxRealises: data.travauxRealises,
         dureeHeure: data.dureeHeure,
-        Heureint: data.Heureint,
         dateIntervention: data.dateIntervention,
+        dateFinInt: data.dateFinInt,
       },
     });
     return result;
@@ -132,8 +132,8 @@ export const updateMaintenance = async (id: number, data: UpdateMaintenanceData)
     const result = await prisma.maintenance.update({
       where: { id: id }, // Utilisation de l'id de la maintenance pour la mise à jour
       data: {
-        Heuredebut: data.Heuredebut, // Mise à jour de l'heure de début
-        Heuredefin: data.Heuredefin, // Mise à jour de l'heure de fin
+        dateMaintenance: data.dateMaintenance, // Mise à jour de l'heure de début
+        dateFinMaint: data.dateFinMaint, // Mise à jour de l'heure de fin
       },
     });
 
@@ -292,10 +292,10 @@ export async function getNextMaintenance() {
           datePlanifiee: true,
           diagnostics: true,
           travauxRealises: true,
-          pieceFournies: true,
+          
           dureeHeure: true,
           numero: true,
-          ficheInt: true,
+          
           prenomContact: true,
           telephoneContact: true,
           adresse: true,
