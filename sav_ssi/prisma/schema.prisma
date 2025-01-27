@@ -109,8 +109,28 @@ model Equipement {
   ModeleSsi         ModeleSsi @relation(fields: [idModeleSsi], references: [id])
   Systeme           Systeme   @relation(fields: [idSysteme], references: [id])
   InstallationsEquipement InstallationEquipement[]
+  Extincteurs       Extincteur[] 
 }
-
+model Extincteur{
+  id                Int      @id @default(autoincrement())
+  idEquipement      Int
+  typePression      Type_Pression
+  modeVerification  Mode_Verification
+  chargeReference   Int?
+  tare              Int?
+  sparklet         Boolean @default(false)
+  chargeReferenceSparklet Int?
+  poidsMax          Int?
+  poidsMin          Int?
+  idTypeExtincteur Int
+  TypeExtincteur    TypeExtincteur @relation(fields: [idTypeExtincteur], references: [id])
+  Equipement        Equipement @relation(fields: [idEquipement], references: [id], onDelete: Cascade)
+}
+model TypeExtincteur{
+  id                Int      @id @default(autoincrement())
+  nom               String
+  Extincteurs   Extincteur[]
+}
 model MarqueSsi {
   id                Int         @id @default(autoincrement())
   nom               String
@@ -141,16 +161,29 @@ model Installation {
 
 model InstallationEquipement {
   id                Int      @id @default(autoincrement())
-  statut            String
+  statut            EnumStatut_Statut_Equipement @default(OK)
+  Numero            String?
+  Emplacement       String?
+  Commentaires      String?
+  HorsService       Boolean @default(false)
   dateInstallation  DateTime
   dateMaintenance   DateTime?
   idEquipement      Int
   idInstallation    Int
-  quantite          Int
   estGaranti        Boolean  @default(true)
   Equipement        Equipement   @relation(fields: [idEquipement], references: [id], onDelete: Cascade)
   Installation      Installation @relation(fields: [idInstallation], references: [id], onDelete: Cascade)
   Garanties         Garantie[]
+  InstallationExtincteur InstallationExtincteur[]
+}
+model InstallationExtincteur{
+  id                Int      @id @default(autoincrement())
+  idInstallationEquipement Int
+  DateFabrication   DateTime
+  DatePremierChargement DateTime
+  DateDerniereVerification DateTime
+  InstallationEquipement InstallationEquipement @relation(fields: [idInstallationEquipement], references: [id])
+  MaintenanceActionExtincteur MaintenanceActionExtincteur[]
 }
 
 model Contrat {
@@ -192,6 +225,7 @@ model Maintenance {
   Technicien        Utilisateur  @relation("TechnicienMaintenance", fields: [idTechnicien], references: [id])
   Actions           MaintenanceAction[]
   CommentairesMaintenances CommentaireMaintenance[]
+  MaintenanceActionExtincteur MaintenanceActionExtincteur[]
 }
 
 model CommentaireMaintenance {
@@ -221,6 +255,22 @@ model MaintenanceAction {
   Maintenance       Maintenance       @relation(fields: [idMaintenance], references: [id])
   Action            ActionMaintenance @relation(fields: [idAction], references: [id])
 }
+model MaintenanceActionExtincteur {
+  id                Int      @id @default(autoincrement())
+  idMaintenance     Int
+  idActionMaintenanceExtincteur Int
+  idInstallationExtincteur Int
+  InstallationExtincteur InstallationExtincteur @relation(fields: [idInstallationExtincteur], references: [id])
+  Maintenance       Maintenance       @relation(fields: [idMaintenance], references: [id])
+  ActionMaintenanceExtincteur ActionMaintenanceExtincteur @relation(fields: [idActionMaintenanceExtincteur], references: [id])
+  statut            Boolean
+  observation       String
+}
+model ActionMaintenanceExtincteur {
+  id                Int      @id @default(autoincrement())
+  libeleAction      String
+  MaintenanceActionExtincteur MaintenanceActionExtincteur[]
+  }
 model Intervention {
   id                Int      @id @default(autoincrement())
   statut            EnumStatut_i @default(NON_PLANIFIE)
@@ -272,4 +322,18 @@ enum EnumStatut_m {
   SUSPENDU
   TERMINE
   PLANIFIE
+}
+enum EnumStatut_Statut_Equipement {
+A_REPARER
+A_CHANGER
+OK
+}
+
+enum Type_Pression{
+  PP
+  PA
+}
+enum Mode_Verification{
+  V5
+  V10
 }

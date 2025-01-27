@@ -60,6 +60,12 @@ export const navItemsByRole: { [key: string]: NavItem[] } = {
           items: []
         },
         {
+          title:'Types extincteurs',
+          url: '/admin/equipements/type',
+          isActive: false,
+          items: []
+        },
+        {
           title: 'Equipements',
           url: '/admin/equipements',
           isActive: false,

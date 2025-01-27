@@ -1,7 +1,12 @@
 "use server";
 import { prisma } from "@/prisma";
-import { ActionMaintenance } from "@prisma/client";
+import { ActionMaintenance, ActionMaintenanceExtincteur } from "@prisma/client";
 
+export const getSystemById = async (systemId: number): Promise<Systeme | null> => {
+  return await prisma.systeme.findUnique({  
+    where: { id: systemId }
+  });
+};
 // Fetch all maintenance actions for a specific system
 export const getActionsBySystem = async (systemId: number): Promise<ActionMaintenance[]> => {
   console.log("Fetching actions for system ID:", systemId); // Log the system ID
@@ -45,4 +50,27 @@ export const deleteAction = async (id: number): Promise<ActionMaintenance> => {
   return await prisma.actionMaintenance.delete({
     where: { id },
   });
+};
+/*actions maintenances des extincteurs*/
+export const addActionExtincteur = async (libeleAction: string): Promise<ActionMaintenanceExtincteur> => {
+  return await prisma.actionMaintenanceExtincteur.create({
+    data: {
+      libeleAction,
+    },
+  });
+};
+
+export const updateActionExtincteur = async (id: number, libeleAction: string): Promise<ActionMaintenanceExtincteur> => {
+  return await prisma.actionMaintenanceExtincteur.update({
+    where: { id },
+    data: { libeleAction },
+  });
+};
+export const deleteActionExtincteur = async (id: number): Promise<ActionMaintenanceExtincteur> => {
+  return await prisma.actionMaintenanceExtincteur.delete({
+    where: { id },
+  });
+};
+export const getActionExtincteurs = async (): Promise<ActionMaintenanceExtincteur[]> => {
+  return await prisma.actionMaintenanceExtincteur.findMany();
 };

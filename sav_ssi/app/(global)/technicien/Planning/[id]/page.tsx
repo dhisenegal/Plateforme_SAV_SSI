@@ -17,15 +17,13 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { updateIntervention, updateInterventionStatus,updateMaintenanceStatus,  updateMaintenanceAction,updateMaintenance, formatHeure } from '@/actions/technicien/planning';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@radix-ui/react-dialog';
 import InterventionSection from '@/actions/technicien/InterventionSection';
-import html2canvas from 'html2canvas';
-import jsPDF from 'jspdf';
 
 const formSchema = z.object({
   diagnostic: z.string().min(1, {
-    message: 'Diagnostic is required.'
+    message: 'Diagnostic est requis pour valider.'
   }),
   travauxRealises: z.string().min(1, {
-    message: 'Travaux réalisés are required.'
+    message: 'Travaux réalisés est requis.'
   }),
   dureeHeure: z.string().min(1, {
     message: 'La durée de l\'intervention est requise.'
@@ -61,6 +59,12 @@ interface MaintenanceAction {
   libeleAction: string;
   idSysteme: number;
 }
+
+const formatDateTimeForInput = (date: Date | string | null) => {
+  if (!date) return '';
+  const d = new Date(date);
+  return d.toISOString().slice(0, 16); // Format: "YYYY-MM-DDThh:mm"
+};
 
 const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
   const params = useParams();
@@ -131,47 +135,23 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
           const fetchedDetails = await fetchDetails(parseInt(id), type);
           setDetails(fetchedDetails);
           
-          // Set suspended state based on status
-          if (fetchedDetails.statut === 'SUSPENDU') {
-            setIsSuspended(true);
-          }
-
-          // Initialize form with fetched data
+          // Format dates for form
           form.reset({
-            diagnostic: fetchedDetails.diagnostics || '',
-            travauxRealises: fetchedDetails.travauxRealises || '',
-            dureeHeure: fetchedDetails.dureeHeure?.toString() || '',
-            
-            dateIntervention: fetchedDetails.dateIntervention ? new Date(fetchedDetails.dateIntervention).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
-            dateFinInt: fetchedDetails.dateFinInt ? new Date(fetchedDetails.dateFinInt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
-            dateMaintenance: fetchedDetails.dateMaintenance ? new Date(fetchedDetails.dateMaintenance).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
-            dateFinMaint: fetchedDetails.dateFinMaint ? new Date(fetchedDetails.dateFinMaint).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
+            ...form.getValues(),
+            dateIntervention: formatDateTimeForInput(fetchedDetails.dateIntervention),
+            dateFinInt: formatDateTimeForInput(fetchedDetails.dateFinInt),
+            dateMaintenance: formatDateTimeForInput(fetchedDetails.dateMaintenance),
+            dateFinMaint: formatDateTimeForInput(fetchedDetails.dateFinMaint),
           });
-
-          // For maintenance type, load saved actions status if available
-          if (type === 'maintenance' && fetchedDetails.actions) {
-            const savedStatus: Record<number, string> = {};
-            const savedObservations: Record<number, string> = {};
-            
-            fetchedDetails.actions.forEach((action: any, index: number) => {
-              savedStatus[index] = action.statut ? 'valide' : 'non-valide';
-              savedObservations[index] = action.observation || '';
-            });
-            
-            setSelectedStatus(savedStatus);
-            setObservations(savedObservations);
-          }
         } catch (err) {
           console.error('Error fetching details:', err);
-          setDetails(null);
         } finally {
           setLoading(false);
         }
       };
-
       fetchData();
     }
-  }, [id, type, form]);
+  }, [id, type]); 
   useEffect(() => {
     const fetchSystemAndActions = async () => {
       if (details?.idInstallation && type === 'maintenance') {
@@ -273,32 +253,19 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         console.log('Maintenance saved successfully');
       }
 
-      // Refresh the data after saving
       const updatedDetails = await fetchDetails(parseInt(id), type);
-      setDetails(updatedDetails);
+        form.reset({
+          ...data,
+          dateIntervention: formatDateTimeForInput(updatedDetails.dateIntervention),
+          dateFinInt: formatDateTimeForInput(updatedDetails.dateFinInt),
+          dateMaintenance: formatDateTimeForInput(updatedDetails.dateMaintenance),
+          dateFinMaint: formatDateTimeForInput(updatedDetails.dateFinMaint),
+        })
+      
 
       // Show success message
       alert('Changes saved successfully');
       
-      // Update form with new data
-      form.reset({
-        ...data,
-        diagnostic: updatedDetails.diagnostics || data.diagnostic,
-        travauxRealises: updatedDetails.travauxRealises || data.travauxRealises,
-        dureeHeure: updatedDetails.dureeHeure?.toString() || data.dureeHeure,
-        dateIntervention: updatedDetails.dateIntervention instanceof Date
-            ? updatedDetails.dateIntervention.toISOString() 
-            : updatedDetails.dateIntervention || data.dateIntervention,
-        dateFinInt: updatedDetails.dateFinInt instanceof Date
-            ? updatedDetails.dateFinInt.toISOString() 
-            : updatedDetails.dateFinInt || data.dateFinInt,
-        dateMaintenance: updatedDetails.dateMaintenance instanceof Date
-            ? updatedDetails.dateMaintenance.toISOString() 
-            : updatedDetails.dateMaintenance || data.dateMaintenance,
-        dateFinMaint: updatedDetails.dateFinMaint instanceof Date
-            ? updatedDetails.dateFinMaint.toISOString() 
-            : updatedDetails.dateFinMaint || data.dateFinMaint,
-    });
     
     } catch (err) {
       console.error('Error while saving:', err);
@@ -728,13 +695,18 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                   {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
                 </Button>
                 <Button
-                  type="button"
-                  onClick={() => setIsConfirmDialogOpen(true)}
-                  disabled={isSaving || isSuspended}
-                  className="bg-green-500 hover:bg-green-600"
-                >
-                  {isSaving ? 'Validation...' : 'Valider'}
-                </Button>
+                type="button"
+                onClick={() => {
+                  form.trigger(); // Trigger validation
+                  if (form.formState.isValid) {
+                    setIsConfirmDialogOpen(true);
+                  }
+                }}
+                disabled={isSaving || isSuspended}
+                className="bg-green-500 hover:bg-green-600"
+              >
+                {isSaving ? 'Validation...' : 'Valider'}
+              </Button>
               </div>
             </form>
           </Form>

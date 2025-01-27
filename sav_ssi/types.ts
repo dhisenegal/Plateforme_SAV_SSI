@@ -73,9 +73,25 @@ export interface Modele {
 }
 
 export interface Equipement {
-  id: number;
   nom: string;
   idSysteme: number;
   idMarqueSsi: number;
   idModeleSsi: number;
 }
+
+export type TypeExtincteur = {
+  id: number;
+  nom: string;
+};
+
+export type ExtincteurData = {
+  typePression: 'PP' | 'PA';
+  modeVerification: 'V5' | 'V10';
+  chargeReference: number | null;
+  tare: number | null;
+  sparklet: boolean;
+  chargeReferenceSparklet: number | null;
+  poidsMax: number | null;
+  poidsMin: number | null;
+  idTypeExtincteur: number;
+};
