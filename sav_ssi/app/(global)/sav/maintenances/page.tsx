@@ -22,6 +22,7 @@ import { FaComment } from "react-icons/fa";
 import { useSession } from "next-auth/react";
 import ModifierMaintenanceDialog from "@/components/sav/ModifierMaintenanceDialog";
 import Link from "next/link";
+import { toast } from "react-toastify";
 
 const MaintenancesPage = () => {
   const [maintenances, setMaintenances] = useState<any[]>([]);
@@ -178,21 +179,27 @@ const handleModificationSubmit = async (formData) => {
     setFormData(prev => ({ ...prev, idInstallation: parseInt(installationId) }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      await planifierMaintenanceGlobal({
+      // Formatage de la date en ISO string
+      const formattedData = {
         ...formData,
-        statut: 'PLANIFIE',
         datePlanifiee: new Date(formData.datePlanifiee).toISOString()
+      };
+  
+      await planifierMaintenanceGlobal({
+        ...formattedData,
+        statut: 'PLANIFIE'
       });
       setIsOpen(false);
-      // Refresh the list of maintenances
       fetchMaintenances();
+      toast.success("Maintenance planifiée avec succès");
     } catch (error) {
       console.error("Erreur lors de la planification:", error);
+      // Afficher un message d'erreur à l'utilisateur
     }
   };
-
   const handlePause = async (id: number, currentStatus: string) => {
     try {
       const newStatus = currentStatus === 'SUSPENDU' ? 'PLANIFIE' : 'SUSPENDU';
