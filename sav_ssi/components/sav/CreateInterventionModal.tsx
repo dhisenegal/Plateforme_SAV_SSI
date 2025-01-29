@@ -7,11 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { getClientById } from "@/actions/sav/client";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { getAllClients, getSitesByClient } from "@/actions/sav/site";
 import { getAllSystemes } from "@/actions/admin/equipement";
-import { getAllTechniciens } from "@/actions/sav/technicien";
+import { getAllTechniciens, getTechnicienById } from "@/actions/sav/technicien";
 import { createIntervention } from "@/actions/sav/intervention";
+import { sendUrgentInterventionNotification } from "@/lib/send-email";
 import { toast } from "react-toastify";
 
 interface FormData {
@@ -135,6 +137,27 @@ const CreateInterventionModal = ({ onCreate }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
+      // Récupérer d'abord le technicien si une planification est faite
+      let technicien = null;
+      let client = null;
+      
+      if (planificationData.planifierMaintenant && planificationData.idTechnicien) {
+        technicien = await getTechnicienById(parseInt(planificationData.idTechnicien));
+        if (!technicien) {
+          toast.error("Technicien non trouvé");
+          return;
+        }
+      }
+
+      // Récupérer les informations du client si l'intervention est urgente
+      if (formData.urgent) {
+        client = await getClientById(parseInt(formData.idClient));
+        if (!client) {
+          toast.error("Client non trouvé");
+          return;
+        }
+      }
+
       const interventionData = {
         ...formData,
         idClient: parseInt(formData.idClient),
@@ -152,13 +175,37 @@ const CreateInterventionModal = ({ onCreate }) => {
       };
 
       const newIntervention = await createIntervention(interventionData);
+
+      // Si l'intervention est urgente et qu'un technicien est assigné
+      if (formData.urgent && technicien && client) {
+        try {
+          await sendUrgentInterventionNotification(
+            {
+              email: technicien.email,
+              nom: technicien.nom,
+              prenom: technicien.prenom
+            }, 
+            {
+              description: newIntervention.typePanneDeclare,
+              Client: client,
+              datePlanifiee: newIntervention.datePlanifiee,
+              urgent: true
+            }
+          );
+          toast.success("Email d'urgence envoyé au technicien");
+        } catch (error) {
+          console.error("Erreur lors de l'envoi de l'email:", error);
+          toast.warning("L'intervention a été créée mais l'email n'a pas pu être envoyé");
+        }
+      }
+
       toast.success("Intervention créée avec succès");
       onCreate(newIntervention);
       setIsOpen(false);
       resetForm();
     } catch (error) {
+      console.error("Erreur complète:", error);
       toast.error("Erreur lors de la création de l'intervention");
-      console.error(error);
     }
   };
 

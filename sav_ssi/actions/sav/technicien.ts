@@ -22,7 +22,7 @@ export const createTechnicien = async (data: {
       password: await bcrypt.hash(data.password, 10),
       idRole: 3, // Rôle technicien
       etatCompte: "actif",
-      email: data.prenom.toLowerCase() + "." + data.nom.toLowerCase() + "@dhisn.com",
+      email: data.email,
     },
   });
 };
@@ -34,6 +34,7 @@ export const updateTechnicien = async (id: number, data: {
   numero?: string;
   login?: string;
   password?: string;
+  email?: string;
   etatCompte?: string;
 }): Promise<Utilisateur> => {
   return await prisma.utilisateur.update({
@@ -74,4 +75,17 @@ export const getAllTechniciens = async (): Promise<Utilisateur[]> => {
   });
 
   return techniciens;
+};
+
+export const getTechnicienById = async (id: number): Promise<Utilisateur | null> => {
+  if (!id) return null;
+  
+  const technicien = await prisma.utilisateur.findFirst({
+    where: {
+      id: id,
+      idRole: 3
+    }
+  });
+  
+  return technicien;
 };

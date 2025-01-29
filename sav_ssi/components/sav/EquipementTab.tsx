@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FaPlus, FaEdit, FaTrash } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaCheckCircle } from "react-icons/fa";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,17 +10,28 @@ import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getAllEquipements, getEquipementsBySiteId, createInstallationEquipement, updateInstallationEquipement, deleteInstallationEquipement } from "@/actions/sav/equipement";
-import { getAllSystemes } from "@/actions/admin/equipement"; // Assurez-vous d'avoir cette fonction pour récupérer les systèmes
+import UpdateEquipmentDialog from "@/components/sav/UpdateEquipementDialog";
+import { getAllSystemes } from "@/actions/admin/equipement"; 
+import {Label} from "@/components/ui/label";
 
 const EquipementTab = ({ id }) => {
   const [equipments, setEquipments] = useState([]);
   const [availableEquipments, setAvailableEquipments] = useState([]);
   const [systemes, setSystemes] = useState([]);
   const [selectedSysteme, setSelectedSysteme] = useState("");
+  const [extincteurData, setExtincteurData] = useState({
+    dateFabrication: "",
+    datePremierChargement: "",
+    dateDernierChargement: ""
+  });
+
   const [newEquipment, setNewEquipment] = useState({
     idEquipement: "",
     idSysteme: "",
-    quantite: 1,
+    Emplacement: "",
+    HorsService: false,
+    Commentaires: "",
+    Numero: "",
     dateInstallation: "",
     observations: ""
   });
@@ -70,6 +81,11 @@ const EquipementTab = ({ id }) => {
     const date = new Date(dateString);
     return date instanceof Date && !isNaN(date.getTime());
   };
+
+  const isExtincteurSystem = (systemeId) => {
+    const systeme = systemes.find(s => s.id === parseInt(systemeId));
+    return systeme?.nom === "MOYENS DE SECOURS EXTINCTEURS";
+  };
   
   const handleAddEquipment = async () => {
     try {
@@ -82,20 +98,41 @@ const EquipementTab = ({ id }) => {
         toast.error("Date d'installation invalide");
         return;
       }
+
+      // Vérifier les champs d'extincteur si nécessaire
+      if (isExtincteurSystem(selectedSysteme)) {
+        if (!extincteurData.dateFabrication || !isValidDate(extincteurData.dateFabrication)) {
+          toast.error("Date de fabrication de l'extincteur invalide");
+          return;
+        }
+      }
       
       const newEquip = await createInstallationEquipement({
         ...newEquipment,
         idSite: parseInt(id),
-        idSysteme: parseInt(selectedSysteme)
+        idSysteme: parseInt(selectedSysteme),
+        extincteurData: isExtincteurSystem(selectedSysteme) ? {
+          dateFabrication: new Date(extincteurData.dateFabrication),
+          datePremierChargement: extincteurData.datePremierChargement ? new Date(extincteurData.datePremierChargement) : undefined,
+          dateDernierChargement: extincteurData.dateDernierChargement ? new Date(extincteurData.dateDernierChargement) : undefined
+        } : undefined
       });
       
       setEquipments([...equipments, newEquip]);
       setNewEquipment({
         idEquipement: "",
         idSysteme: "",
-        quantite: 1,
+        Emplacement: "",
+        HorsService: false,
+        Commentaires: "",
+        Numero: "",
         dateInstallation: "",
         observations: ""
+      });
+      setExtincteurData({
+        dateFabrication: "",
+        datePremierChargement: "",
+        dateDernierChargement: ""
       });
       toast.success("Équipement ajouté avec succès");
     } catch (error) {
@@ -103,19 +140,15 @@ const EquipementTab = ({ id }) => {
       toast.error("Erreur lors de l'ajout de l'équipement");
     }
   };
+
   const handleEditEquipment = (id) => {
     const equipment = equipments.find(e => e.id === id);
     setSelectedEquipment(equipment);
   };
 
-  const handleUpdateEquipment = async () => {
+  const handleUpdateEquipment = async (updateData) => {
     try {
-      const updatedEquip = await updateInstallationEquipement(selectedEquipment.id, {
-        idEquipement: selectedEquipment.idEquipement,
-        quantite: selectedEquipment.quantite,
-        dateInstallation: selectedEquipment.dateInstallation,
-        observations: selectedEquipment.observations,
-      });
+      const updatedEquip = await updateInstallationEquipement(selectedEquipment.id, updateData);
       setEquipments(equipments.map(e => e.id === selectedEquipment.id ? updatedEquip : e));
       setSelectedEquipment(null);
       toast.success("Équipement modifié avec succès");
@@ -124,7 +157,6 @@ const EquipementTab = ({ id }) => {
       toast.error("Erreur lors de la modification de l'équipement");
     }
   };
-
   const handleDeleteEquipment = (id) => {
     setIsDeleteDialogOpen(true);
     setEquipmentToDelete(id);
@@ -177,66 +209,146 @@ const EquipementTab = ({ id }) => {
               Associer un équipement
             </Button>
           </DialogTrigger>
-          <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
-            <DialogHeader>
+          <DialogContent className="w-[500px] max-h-[80vh] bg-white rounded-lg shadow-lg">
+            <DialogHeader className="px-6 py-4 border-b">
               <DialogTitle>Ajouter un Nouvel Équipement</DialogTitle>
               <DialogDescription>Entrez les détails du nouvel équipement.</DialogDescription>
             </DialogHeader>
-            <div>
-              <Select
-                value={selectedSysteme}
-                onValueChange={handleSystemeChange}
-              >
-                <SelectTrigger className="w-full mb-4">
-                  <SelectValue placeholder="Sélectionnez un système" />
-                </SelectTrigger>
-                <SelectContent>
-                  {systemes.map((systeme) => (
-                    <SelectItem key={systeme.id} value={systeme.id}>
-                      {systeme.nom}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={newEquipment.idEquipement}
-                onValueChange={(value) => setNewEquipment({ ...newEquipment, idEquipement: value })}
-                disabled={!selectedSysteme}
-              >
-                <SelectTrigger className="w-full mb-4">
-                  <SelectValue placeholder="Sélectionnez un équipement" />
-                </SelectTrigger>
-                <SelectContent>
-                  {filteredEquipments.map((equip) => (
-                    <SelectItem key={equip.id} value={equip.id}>
-                      {equip.nom}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                name="quantite"
-                type="number"
-                placeholder="Quantité"
-                onChange={(e) => setNewEquipment({ ...newEquipment, quantite: Number(e.target.value) })} 
-                value={newEquipment.quantite}
-                className="mb-4"
-              />
-              <Input
-                name="dateInstallation"
-                type="date"
-                placeholder="Date d'installation"
-                onChange={(e) => setNewEquipment({ ...newEquipment, dateInstallation: e.target.value })}
-                value={newEquipment.dateInstallation}
-                className="mb-4"
-              />
-              <Input
-                name="observations"
-                placeholder="Observations"
-                onChange={(e) => setNewEquipment({ ...newEquipment, observations: e.target.value })}
-                value={newEquipment.observations}
-                className="mb-4"
-              />
+
+            {/* Ajout d'un conteneur scrollable */}
+            <div className="px-6 py-4 overflow-y-auto max-h-[calc(80vh-160px)]">
+              <div className="grid grid-cols-2 gap-4">
+                {/* Système et Équipement - Pleine largeur */}
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="systeme">Système</Label>
+                  <Select
+                    value={selectedSysteme}
+                    onValueChange={handleSystemeChange}
+                  >
+                    <SelectTrigger className="w-full" id="systeme">
+                      <SelectValue placeholder="Sélectionnez un système" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {systemes.map((systeme) => (
+                        <SelectItem key={systeme.id} value={systeme.id}>
+                          {systeme.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="equipement">Équipement</Label>
+                  <Select
+                    value={newEquipment.idEquipement}
+                    onValueChange={(value) => setNewEquipment({ ...newEquipment, idEquipement: value })}
+                    disabled={!selectedSysteme}
+                  >
+                    <SelectTrigger className="w-full" id="equipement">
+                      <SelectValue placeholder="Sélectionnez un équipement" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filteredEquipments.map((equip) => (
+                        <SelectItem key={equip.id} value={equip.id}>
+                          {equip.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Informations générales - Deux colonnes */}
+                <div className="space-y-2">
+                  <Label htmlFor="dateInstallation">Date d'installation</Label>
+                  <Input 
+                    id="dateInstallation"
+                    type="date" 
+                    name="dateInstallation" 
+                    onChange={(e) => setNewEquipment({ ...newEquipment, dateInstallation: e.target.value })}
+                    value={newEquipment.dateInstallation}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="numero">Numéro</Label>
+                  <Input
+                    id="numero"
+                    name="numero"
+                    placeholder="Numéro"
+                    onChange={(e) => setNewEquipment({ ...newEquipment, Numero: e.target.value })}
+                    value={newEquipment.Numero}
+                  />
+                </div>
+
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="emplacement">Emplacement</Label>
+                  <Input
+                    id="emplacement"
+                    name="emplacement"
+                    placeholder="Emplacement"
+                    onChange={(e) => setNewEquipment({ ...newEquipment, Emplacement: e.target.value })}
+                    value={newEquipment.Emplacement}
+                  />
+                </div>
+
+                {/* Section Extincteur conditionnelle */}
+                {isExtincteurSystem(selectedSysteme) && (
+                  <div className="col-span-2 space-y-4 border-t pt-4">
+                    <h3 className="font-medium text-sm">Informations Extincteur</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="dateFabrication">Date de fabrication</Label>
+                        <Input
+                          id="dateFabrication"
+                          type="date"
+                          name="dateFabrication"
+                          onChange={(e) => setExtincteurData({ ...extincteurData, dateFabrication: e.target.value })}
+                          value={extincteurData.dateFabrication}
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="datePremierChargement">Premier chargement</Label>
+                        <Input
+                          id="datePremierChargement"
+                          type="date"
+                          name="datePremierChargement"
+                          onChange={(e) => setExtincteurData({ ...extincteurData, datePremierChargement: e.target.value })}
+                          value={extincteurData.datePremierChargement}
+                        />
+                      </div>
+
+                      <div className="col-span-2 space-y-2">
+                        <Label htmlFor="dateDernierChargement">Dernier chargement</Label>
+                        <Input
+                          id="dateDernierChargement"
+                          type="date"
+                          name="dateDernierChargement"
+                          onChange={(e) => setExtincteurData({ ...extincteurData, dateDernierChargement: e.target.value })}
+                          value={extincteurData.dateDernierChargement}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Commentaires - Pleine largeur */}
+                <div className="col-span-2 space-y-2">
+                  <Label htmlFor="commentaires">Commentaires</Label>
+                  <Input
+                    id="commentaires"
+                    name="commentaires"
+                    placeholder="Commentaires"
+                    onChange={(e) => setNewEquipment({ ...newEquipment, Commentaires: e.target.value })}
+                    value={newEquipment.Commentaires}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Footer avec bouton - Fixe en bas */}
+            <div className="px-6 py-4 border-t mt-auto">
               <Button onClick={handleAddEquipment} className="w-full bg-blue-500 text-white hover:bg-blue-600">
                 Ajouter
               </Button>
@@ -248,7 +360,7 @@ const EquipementTab = ({ id }) => {
         <TableHeader>
           <TableRow>
             <TableHead>Nom de l'équipement</TableHead>
-            <TableHead>Quantité</TableHead>
+            <TableHead>Etat</TableHead>
             <TableHead>Date d'installation</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -257,7 +369,7 @@ const EquipementTab = ({ id }) => {
           {currentEquipments.map((equipment) => (
             <TableRow key={equipment.id} className="cursor-pointer">
               <TableCell>{equipment.Equipement.nom}</TableCell>
-              <TableCell>{equipment.quantite}</TableCell>
+              <TableCell>{equipment.HorsService ? <FaCheckCircle className="text-red-600"/> : <FaCheckCircle className="text-green-600"/>}</TableCell>
               <TableCell>{new Date(equipment.dateInstallation).toLocaleDateString()}</TableCell>
               <TableCell>
                 <div className="flex space-x-2">
@@ -277,65 +389,14 @@ const EquipementTab = ({ id }) => {
         ))}
       </div>
 
-      {selectedEquipment && (
-        <Dialog open={selectedEquipment !== null} onOpenChange={() => setSelectedEquipment(null)}>
-          <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
-            <DialogHeader>
-              <DialogTitle>Modifier l'Équipement</DialogTitle>
-              <DialogDescription>Modifiez les détails de l'équipement.</DialogDescription>
-            </DialogHeader>
-            <div>
-              <Select
-                value={selectedEquipment.idEquipement}
-                onValueChange={(value) => setSelectedEquipment({ ...selectedEquipment, idEquipement: value })}
-              >
-                <SelectTrigger className="w-full mb-4">
-                  <SelectValue placeholder="Sélectionnez un équipement" />
-                </SelectTrigger>
-                <SelectContent>
-                  {availableEquipments.map((equip) => (
-                    <SelectItem key={equip.id} value={equip.id}>
-                      {equip.nom}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Input
-                name="quantite"
-                type="number"
-                placeholder="Quantité"
-                onChange={(e) => setSelectedEquipment({ ...selectedEquipment, quantite: Number(e.target.value) })} 
-                value={selectedEquipment.quantite}
-                className="mb-4"
-              />
-              <Input
-                name="dateInstallation"
-                type="date"
-                placeholder="Date d'installation"
-                onChange={(e) => setSelectedEquipment({ ...selectedEquipment, dateInstallation: e.target.value })} 
-                value={selectedEquipment.dateInstallation}
-                className="mb-4"
-              />
-              <Input
-                name="observations"
-                placeholder="Observations"
-                onChange={(e) => setSelectedEquipment({ ...selectedEquipment, observations: e.target.value })} 
-                value={selectedEquipment.observations}
-                className="mb-4"
-              />
-              <div className="flex justify-between">
-                <Button onClick={handleUpdateEquipment} className="bg-blue-500 text-white hover:bg-blue-600">
-                  Modifier
-                </Button>
-                <Button onClick={() => handleDeleteEquipment(selectedEquipment.id)} className="bg-red-500 text-white hover:bg-red-600">
-                  Supprimer
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
-
+      <UpdateEquipmentDialog
+        isOpen={selectedEquipment !== null}
+        onClose={() => setSelectedEquipment(null)}
+        equipment={selectedEquipment}
+        onUpdate={handleUpdateEquipment}
+        availableEquipments={availableEquipments}
+        systemes={systemes}
+      />
       <Dialog open={isDeleteDialogOpen} onOpenChange={cancelDeleteEquipment}>
         <DialogContent className="w-[500px] p-6 bg-white rounded-lg shadow-lg">
           <DialogHeader>

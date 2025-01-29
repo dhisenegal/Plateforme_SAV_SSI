@@ -10,7 +10,7 @@ import { FaPlus, FaEdit, FaHammer } from "react-icons/fa";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { getAllSystemes, addSysteme, updateSysteme } from "@/actions/admin/equipement";
-import { addAction } from "@/actions/admin/maintenanceAction";
+import { addAction, addActionExtincteur } from "@/actions/admin/maintenanceAction";
 import { Systeme } from "@/types";
 import { useRouter } from 'next/navigation';
 
@@ -22,6 +22,8 @@ const SystemePage = () => {
   const [newAction, setNewAction] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [currentPage, setCurrentPage] = useState<number>(1);
+  const [isExtincteurSystem, setIsExtincteurSystem] = useState(false);
+
   const itemsPerPage = 10;
   const router = useRouter();
 
@@ -76,10 +78,21 @@ const SystemePage = () => {
   };
 
   const handleAddAction = async () => {
-    if (selectedSysteme) {
-      const createdAction = await addAction(selectedSysteme.id, newAction);
-      setNewAction("");
-      toast.success("Action ajoutée avec succès");
+    if (selectedSysteme && newAction) {
+      try {
+        if (isExtincteurSystem) {
+          // Add action to ActionMaintenanceExtincteur table
+          const createdAction = await addActionExtincteur(newAction);
+        } else {
+          // Add action to regular ActionMaintenance table
+          const createdAction = await addAction(selectedSysteme.id, newAction);
+        }
+        setNewAction("");
+        toast.success("Action ajoutée avec succès");
+      } catch (error) {
+        console.error("Erreur lors de l'ajout de l'action:", error);
+        toast.error("Erreur lors de l'ajout de l'action");
+      }
     }
   };
 
@@ -87,6 +100,7 @@ const SystemePage = () => {
     const systeme = systemes.find(s => s.id === id);
     if (systeme) {
       setSelectedSysteme(systeme);
+      setIsExtincteurSystem(systeme.nom === "MOYENS DE SECOURS EXTINCTEURS");
     }
   };
 
@@ -196,7 +210,11 @@ const SystemePage = () => {
                 </Button>
               </div>
               <div className="mt-6">
-                <h3 className="text-lg font-bold mb-2">Ajouter une Action de Maintenance</h3>
+              <h3 className="text-lg font-bold mb-2">
+                  {isExtincteurSystem 
+                    ? "Ajouter une Action de Maintenance Extincteur" 
+                    : "Ajouter une Action de Maintenance"}
+                </h3>
                 <div className="flex space-x-4 mb-4">
                   <Input
                     placeholder="Nouvelle action"

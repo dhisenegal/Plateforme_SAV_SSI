@@ -152,15 +152,6 @@ const SiteDetailsPage = () => {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block mb-2">Numéro</label>
-                <Input
-                  value={formData.numero}
-                  onChange={(e) => setFormData(prev => ({ ...prev, numero: e.target.value }))}
-                  placeholder="Numéro de maintenance"
-                />
-              </div>
-
-              <div>
                 <label className="block mb-2">Date prévue</label>
                 <Input
                   type="date"
@@ -238,30 +229,6 @@ const SiteDetailsPage = () => {
         </DialogContent>
       </Dialog>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="flex flex-col items-center p-4 bg-white shadow rounded-lg">
-            <div className="bg-blue-500 p-3 rounded-full mb-2">
-              <FaCalendarAlt className="text-white w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-center">Prochaine maintenance</h3>
-            <p className="text-lg font-semibold text-center mt-2">12/12/2023</p>
-          </div>
-          <div className="flex flex-col items-center p-4 bg-white shadow rounded-lg">
-            <div className="bg-blue-500 p-3 rounded-full mb-2">
-              <FaClock className="text-white w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-center">Dernière maintenance</h3>
-            <p className="text-lg font-semibold text-center mt-2">10/10/2023</p>
-          </div>
-          <div className="flex flex-col items-center p-4 bg-white shadow rounded-lg">
-            <div className="bg-blue-500 p-3 rounded-full mb-2">
-              <FaFileAlt className="text-white w-6 h-6" />
-            </div>
-            <h3 className="text-lg font-bold text-center">Rapports générés</h3>
-            <p className="text-lg font-semibold text-center mt-2">5 Rapports</p>
-          </div>
-        </div>
-
         <div className="flex space-x-4 mb-6 border-b-2 border-gray-200">
           <button
             className={`py-2 px-4 ${activeTab === "interventions" ? "border-b-4 border-blue-500 text-blue-500" : "border-b-4 border-transparent text-gray-500"}`}

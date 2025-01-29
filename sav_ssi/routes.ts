@@ -6,8 +6,6 @@
 export const publicRoutes = (() =>{
   const routes = ["/"];
 
-  routes.push("/technicien/*");
-
   return routes;
 })();
   
@@ -21,7 +19,6 @@ export const publicRoutes = (() =>{
 
 export const authRoutes = [
   "/auth/login",
-  "/auth/register",
 ];
 /**
  * un string qui contient le préfixe des routes 
@@ -34,4 +31,12 @@ export const apiAuthPrefix = "/api/auth"
  * utilisateurs aprés authentification
  * @type {string}
  */
-export const DEFAULT_LOGIN_REDIRECT = "/admin"
+// Remove DEFAULT_LOGIN_REDIRECT export and replace with role mappings
+export const ROLE_REDIRECTS = {
+  admin: "/admin",
+  technicien: "/technicien",
+  sav: "/sav",
+  client: "/client"
+} as const;
+
+export const DEFAULT_LOGIN_REDIRECT = "/admin";

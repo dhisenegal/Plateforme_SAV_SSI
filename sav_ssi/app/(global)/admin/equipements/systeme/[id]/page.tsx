@@ -10,24 +10,50 @@ import { FaEdit, FaTrash } from "react-icons/fa";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { getActionsBySystem, updateAction, deleteAction } from "@/actions/admin/maintenanceAction";
-import { ActionMaintenance } from "@/types";
+import { ActionMaintenance, ActionMaintenanceExtincteur } from "@prisma/client";
+import { getSystemById, getActionsBySystem, updateAction, deleteAction, updateActionExtincteur, deleteActionExtincteur, getActionExtincteurs } from "@/actions/admin/maintenanceAction";
 
+type CombinedAction = ActionMaintenance | ActionMaintenanceExtincteur;
 const ActionsPage = () => {
   const router = useRouter();
   const params = useParams();
   const systemId = Number(params?.id);
-  const [actions, setActions] = useState<ActionMaintenance[]>([]);
-  const [selectedAction, setSelectedAction] = useState<ActionMaintenance | null>(null);
-  const [newAction, setNewAction] = useState<string>("");
+  const [actions, setActions] = useState<CombinedAction[]>([]);
+  const [selectedAction, setSelectedAction] = useState<CombinedAction | null>(null);
+  const [isExtincteurSystem, setIsExtincteurSystem] = useState(false);
 
   useEffect(() => {
-    const fetchActions = async () => {
-      const actions = await getActionsBySystem(systemId);
-      setActions(actions);
+    const fetchData = async () => {
+      try {
+        console.log("Fetching data for systemId:", systemId);
+        
+        // Fetch system info first
+        const system = await getSystemById(systemId);
+        console.log("System:", system);
+        
+        const isExtincteur = system?.nom === "MOYENS DE SECOURS EXTINCTEURS";
+        setIsExtincteurSystem(isExtincteur);
+        console.log("Is Extincteur System:", isExtincteur);
+  
+        // Fetch actions based on system type
+        let fetchedActions;
+        if (isExtincteur) {
+          fetchedActions = await getActionExtincteurs();
+          console.log("Extincteur Actions:", fetchedActions);
+        } else {
+          fetchedActions = await getActionsBySystem(systemId);
+          console.log("Regular Actions:", fetchedActions);
+        }
+        
+        setActions(fetchedActions || []);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+        toast.error("Erreur lors du chargement des actions");
+      }
     };
-    fetchActions();
-  }, [systemId]);
+  
+    fetchData();
+  }, [systemId, isExtincteurSystem]);
 
   const handleEditAction = (id: number) => {
     const action = actions.find(a => a.id === id);
@@ -38,23 +64,40 @@ const ActionsPage = () => {
 
   const handleUpdateAction = async () => {
     if (selectedAction) {
-      const updatedAction = await updateAction(selectedAction.id, selectedAction.libeleAction);
-      setActions(actions.map(a => a.id === selectedAction.id ? updatedAction : a));
-      setSelectedAction(null);
-      toast.success("Action modifiée avec succès");
+      try {
+        const updatedAction = isExtincteurSystem 
+          ? await updateActionExtincteur(selectedAction.id, selectedAction.libeleAction)
+          : await updateAction(selectedAction.id, selectedAction.libeleAction);
+
+        setActions(actions.map(a => a.id === selectedAction.id ? updatedAction : a));
+        setSelectedAction(null);
+        toast.success("Action modifiée avec succès");
+      } catch (error) {
+        toast.error("Erreur lors de la modification");
+      }
     }
   };
 
   const handleDeleteAction = async (id: number) => {
-    await deleteAction(id);
-    setActions(actions.filter(a => a.id !== id));
-    toast.success("Action supprimée avec succès");
+    try {
+      if (isExtincteurSystem) {
+        await deleteActionExtincteur(id);
+      } else {
+        await deleteAction(id);
+      }
+      setActions(actions.filter(a => a.id !== id));
+      toast.success("Action supprimée avec succès");
+    } catch (error) {
+      toast.error("Erreur lors de la suppression");
+    }
   };
 
   return (
     <>
       <div className="p-6">
-        <h2 className="text-xl text-gray-800 font-bold mb-4">Actions de Maintenance</h2>
+        <h2 className="text-xl text-gray-800 font-bold mb-4">
+          {isExtincteurSystem ? "Actions de Maintenance Extincteur" : "Actions de Maintenance"}
+        </h2>        
         <Table>
           <TableHeader>
             <TableRow>

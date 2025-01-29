@@ -8,6 +8,23 @@ import { AuthError } from "next-auth";
 import { prisma } from "@/prisma";
 import bcryptjs from "bcryptjs";
 
+// Schéma de validation pour le changement de mot de passe
+const PasswordUpdateSchema = z.object({
+  oldPassword: z
+    .string()
+    .min(1, "L'ancien mot de passe est requis")
+    .max(100, "L'ancien mot de passe est trop long"),
+  newPassword: z
+    .string()
+    .min(8, "Le nouveau mot de passe doit contenir au moins 8 caractères")
+    .max(100, "Le nouveau mot de passe est trop long")
+    .regex(
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+      "Le mot de passe doit contenir au moins une majuscule, une minuscule et un chiffre"
+    ),
+  login: z.string().min(1, "Login requis"),
+});
+
 export const login = async (values: z.infer<typeof LoginSchema>) => {
   const validatedFields = LoginSchema.safeParse(values);
 
@@ -59,7 +76,6 @@ export const login = async (values: z.infer<typeof LoginSchema>) => {
 
     // Redirection manuelle côté client
     return { success: `Vous êtes maintenant connecté en tant que ${user.Role.nom}`, redirectTo };
-
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
@@ -70,5 +86,97 @@ export const login = async (values: z.infer<typeof LoginSchema>) => {
       }
     }
     throw error;
+  }
+};
+
+export const updatePassword = async (
+  values: z.infer<typeof PasswordUpdateSchema>
+) => {
+  try {
+    // Validation détaillée des champs
+    if (!values.oldPassword) {
+      return { 
+        error: "L'ancien mot de passe est obligatoire",
+        field: "oldPassword" 
+      };
+    }
+
+    if (!values.newPassword) {
+      return { 
+        error: "Le nouveau mot de passe est obligatoire",
+        field: "newPassword"
+      };
+    }
+
+    if (!values.login) {
+      return { 
+        error: "Une erreur est survenue : login manquant",
+        field: "login"
+      };
+    }
+
+    // Validation avec Zod pour les règles complexes
+    const validatedFields = PasswordUpdateSchema.safeParse(values);
+
+    if (!validatedFields.success) {
+      // Récupérer la première erreur de validation
+      const error = validatedFields.error.errors[0];
+      return {
+        error: error.message,
+        field: error.path[0].toString()
+      };
+    }
+
+    const { login, oldPassword, newPassword } = validatedFields.data;
+
+    // Récupération de l'utilisateur
+    const user = await prisma.utilisateur.findUnique({
+      where: { login },
+    });
+
+    if (!user) {
+      return { 
+        error: "Utilisateur non trouvé",
+        field: "login"
+      };
+    }
+
+    // Vérification de l'ancien mot de passe
+    const isValidPassword = await bcryptjs.compare(oldPassword, user.password);
+
+    if (!isValidPassword) {
+      return { 
+        error: "L'ancien mot de passe est incorrect",
+        field: "oldPassword"
+      };
+    }
+
+    // Vérification que le nouveau mot de passe est différent de l'ancien
+    if (oldPassword === newPassword) {
+      return {
+        error: "Le nouveau mot de passe doit être différent de l'ancien",
+        field: "newPassword"
+      };
+    }
+
+    // Hashage du nouveau mot de passe
+    const hashedNewPassword = await bcryptjs.hash(newPassword, 10);
+
+    // Mise à jour du mot de passe
+    await prisma.utilisateur.update({
+      where: { login },
+      data: { password: hashedNewPassword },
+    });
+
+    return { 
+      success: "Votre mot de passe a été modifié avec succès",
+      field: null
+    };
+  } catch (error) {
+    console.error("Erreur lors de la modification du mot de passe:", error);
+    return { 
+      error: "Une erreur inattendue est survenue lors de la modification du mot de passe",
+      field: null
+    };
   }
 };

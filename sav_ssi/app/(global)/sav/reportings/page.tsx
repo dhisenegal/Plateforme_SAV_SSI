@@ -8,8 +8,35 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { FaCheckCircle, FaTimesCircle } from "react-icons/fa";
 import { getInterventionDelayAnalytics, DelayAnalytics } from "@/actions/sav/analytic";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { MessageSquare } from "lucide-react";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
+
+const CommentsList = ({ comments }: { comments: any[] }) => (
+  <div className="space-y-4">
+    {comments.map((comment) => (
+      <div key={comment.id} className="bg-gray-50 p-4 rounded-lg">
+        <div className="flex justify-between items-start mb-2">
+          <span className="font-medium">{comment.auteur}</span>
+          <span className="text-sm text-gray-500">
+            {new Date(comment.dateCommentaire).toLocaleDateString('fr-FR', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </span>
+        </div>
+        <p className="text-gray-700">{comment.commentaire}</p>
+      </div>
+    ))}
+    {comments.length === 0 && (
+      <p className="text-gray-500 text-center py-4">Aucun commentaire pour cette intervention</p>
+    )}
+  </div>
+);
 
 const ReportingsPage = () => {
   const [startDate, setStartDate] = useState<string>("");
@@ -149,6 +176,25 @@ const ReportingsPage = () => {
                 ) : (
                   <FaTimesCircle className="text-red-500" />
                 )}
+              </TableCell>
+              <TableCell>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <MessageSquare className="h-4 w-4 mr-2" />
+                      {intervention.commentaires.length}
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-2xl">
+                    <DialogHeader>
+                      <DialogTitle>
+                        Commentaires de l'intervention
+                        {intervention.client && ` - ${intervention.client}`}
+                      </DialogTitle>
+                    </DialogHeader>
+                    <CommentsList comments={intervention.commentaires} />
+                  </DialogContent>
+                </Dialog>
               </TableCell>
             </TableRow>
           ))}

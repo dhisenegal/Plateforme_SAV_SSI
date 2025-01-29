@@ -109,23 +109,22 @@ model Equipement {
   ModeleSsi         ModeleSsi @relation(fields: [idModeleSsi], references: [id])
   Systeme           Systeme   @relation(fields: [idSysteme], references: [id])
   InstallationsEquipement InstallationEquipement[]
-  Extincteurs       Extincteur[]
+  Extincteurs       Extincteur[] 
 }
 model Extincteur{
   id                Int      @id @default(autoincrement())
   idEquipement      Int
   typePression      Type_Pression
   modeVerification  Mode_Verification
-  chargeReference   String
-  tare              String
+  chargeReference   Int?
+  tare              Int?
   sparklet         Boolean @default(false)
-  chargeReferenceSparklet String
-  poidsMax          String
-  poidsMin          String
+  chargeReferenceSparklet Int?
+  poidsMax          Int?
+  poidsMin          Int?
   idTypeExtincteur Int
   TypeExtincteur    TypeExtincteur @relation(fields: [idTypeExtincteur], references: [id])
-  Equipement        Equipement @relation(fields: [idEquipement], references: [id])
-  
+  Equipement        Equipement @relation(fields: [idEquipement], references: [id], onDelete: Cascade)
 }
 model TypeExtincteur{
   id                Int      @id @default(autoincrement())
@@ -177,16 +176,14 @@ model InstallationEquipement {
   Garanties         Garantie[]
   InstallationExtincteur InstallationExtincteur[]
 }
-model InstallationExtincteur {
-  id                         Int                       @id @default(autoincrement())
-  idInstallationEquipement    Int
-  DateFabrication             DateTime
-  DatePremierChargement       DateTime
-  DateDerniereVerification    DateTime
-  
-  InstallationEquipement      InstallationEquipement    @relation(fields: [idInstallationEquipement], references: [id])
+model InstallationExtincteur{
+  id                Int      @id @default(autoincrement())
+  idInstallationEquipement Int
+  DateFabrication   DateTime
+  DatePremierChargement DateTime
+  DateDerniereVerification DateTime
+  InstallationEquipement InstallationEquipement @relation(fields: [idInstallationEquipement], references: [id])
   MaintenanceActionExtincteur MaintenanceActionExtincteur[]
-
 }
 
 model Contrat {

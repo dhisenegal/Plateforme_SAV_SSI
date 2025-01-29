@@ -122,7 +122,12 @@ export interface DelayAnalytics {
     horsDelai: boolean;
     isOnTime: boolean;
     delayInHours: number;
-
+    commentaires: {
+      id: number;
+      commentaire: string;
+      dateCommentaire: Date;
+      auteur: string;
+    }[];
   }[];
 }
 
@@ -130,8 +135,6 @@ export async function getInterventionDelayAnalytics(
   startDate: Date,
   endDate: Date
 ): Promise<DelayAnalytics> {
-  'use server';
-  
   try {
     const interventions = await prisma.intervention.findMany({
       where: {
@@ -169,6 +172,22 @@ export async function getInterventionDelayAnalytics(
             nom: true,
           },
         },
+        Commentaires: {
+          select: {
+            id: true,
+            commentaire: true,
+            dateCommentaire: true,
+            Utilisateur: {
+              select: {
+                nom: true,
+                prenom: true,
+              },
+            },
+          },
+          orderBy: {
+            dateCommentaire: 'desc',
+          },
+        },
       },
     });
 
@@ -198,9 +217,15 @@ export async function getInterventionDelayAnalytics(
         dateDeclaration: declarationDate,
         dateIntervention: interventionDate,
         systeme: intervention.Systeme?.nom || null,
-        horsDelai:!isOnTime,
+        horsDelai: !isOnTime,
         isOnTime,
         delayInHours,
+        commentaires: intervention.Commentaires.map(comment => ({
+          id: comment.id,
+          commentaire: comment.commentaire,
+          dateCommentaire: comment.dateCommentaire,
+          auteur: `${comment.Utilisateur.prenom} ${comment.Utilisateur.nom}`,
+        })),
       };
     });
 

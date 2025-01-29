@@ -4,7 +4,9 @@ import React, { useState, useEffect } from "react";
 import { FaFileExport } from "react-icons/fa";
 import { exportMaintenancesToExcel } from "@/utils/maintenance-export";
 import { FaSpinner, FaPause, FaEdit, FaPlus } from "react-icons/fa";
-import { getAllMaintenances, updateMaintenanceStatus, planifierMaintenanceGlobal } from "@/actions/sav/maintenance";
+import { getAllMaintenances, updateMaintenanceStatus,
+   planifierMaintenanceGlobal, ajouterCommentaireMaintenance,
+    getCommentairesMaintenance, updateMaintenanceWithComment } from "@/actions/sav/maintenance";
 import { getClients } from "@/actions/sav/client";
 import { getSitesByClient } from "@/actions/sav/site";
 import { getAllTechniciens } from "@/actions/sav/technicien";
@@ -16,6 +18,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { FaComment } from "react-icons/fa";
+import { useSession } from "next-auth/react";
+import ModifierMaintenanceDialog from "@/components/sav/ModifierMaintenanceDialog";
+import Link from "next/link";
+import { toast } from "react-toastify";
 
 const MaintenancesPage = () => {
   const [maintenances, setMaintenances] = useState<any[]>([]);
@@ -40,11 +47,53 @@ const MaintenancesPage = () => {
     idSite: 0,
     idTechnicien: 0,
     idContact: 0,
-    idInstallation: 0
+    idInstallation: 0,
+    dateMaintenance: ''
   });
   const [dateDebut, setDateDebut] = useState('');
   const [dateFin, setDateFin] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [commentaireOpen, setCommentaireOpen] = useState(false);
+  const [selectedMaintenance, setSelectedMaintenance] = useState<any>(null);
+  const [commentaire, setCommentaire] = useState('');
+  const [commentaires, setCommentaires] = useState<any[]>([]);
+  const [isModificationOpen, setIsModificationOpen] = useState(false);
+  const [maintenanceToModify, setMaintenanceToModify] = useState(null);
+
+// Dans le handleEdit :
+const handleEdit = async (maintenance) => {
+  if (!techniciens || techniciens.length === 0) {
+    try {
+      const techniciensData = await getAllTechniciens();
+      setTechniciens(techniciensData);
+    } catch (error) {
+      console.error("Erreur lors du chargement des techniciens:", error);
+      alert("Erreur lors du chargement des techniciens");
+      return;
+    }
+  }
+  setMaintenanceToModify(maintenance);
+  setIsModificationOpen(true);
+};
+
+// Ajoutez la fonction de soumission :
+const handleModificationSubmit = async (formData) => {
+  try {
+    await updateMaintenanceWithComment(maintenanceToModify.id, {
+      ...formData,
+      idUtilisateur: idUtilisateurConnecte
+    });
+    fetchMaintenances();
+    setIsModificationOpen(false);
+    setMaintenanceToModify(null);
+  } catch (error) {
+    console.error("Erreur lors de la modification:", error);
+    alert("Une erreur est survenue lors de la modification");
+  }
+};
+
+  const { data: session } = useSession();
+  const idUtilisateurConnecte = session?.user?.id;
 
   const fetchMaintenances = async () => {
     setLoading(true);
@@ -63,6 +112,15 @@ const MaintenancesPage = () => {
       console.error("Erreur:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadCommentaires = async (maintenanceId: number) => {
+    try {
+      const comments = await getCommentairesMaintenance(maintenanceId);
+      setCommentaires(comments);
+    } catch (error) {
+      console.error("Erreur lors du chargement des commentaires:", error);
     }
   };
 
@@ -121,21 +179,27 @@ const MaintenancesPage = () => {
     setFormData(prev => ({ ...prev, idInstallation: parseInt(installationId) }));
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      await planifierMaintenanceGlobal({
+      // Formatage de la date en ISO string
+      const formattedData = {
         ...formData,
-        statut: 'PLANIFIE',
         datePlanifiee: new Date(formData.datePlanifiee).toISOString()
+      };
+  
+      await planifierMaintenanceGlobal({
+        ...formattedData,
+        statut: 'PLANIFIE'
       });
       setIsOpen(false);
-      // Refresh the list of maintenances
       fetchMaintenances();
+      toast.success("Maintenance planifiée avec succès");
     } catch (error) {
       console.error("Erreur lors de la planification:", error);
+      // Afficher un message d'erreur à l'utilisateur
     }
   };
-
   const handlePause = async (id: number, currentStatus: string) => {
     try {
       const newStatus = currentStatus === 'SUSPENDU' ? 'PLANIFIE' : 'SUSPENDU';
@@ -151,6 +215,11 @@ const MaintenancesPage = () => {
     setPage(newPage);
   };
 
+  const handleExport = () => {
+    exportMaintenancesToExcel(maintenances);
+  };
+
+
   if (loading) {
     return (
       <div className="flex items-center justify-center gap-3">
@@ -159,9 +228,6 @@ const MaintenancesPage = () => {
       </div>
     );
   }
-  const handleExport = () => {
-    exportMaintenancesToExcel(maintenances);
-  };
 
   const totalPages = Math.ceil(total / pageSize);
 
@@ -222,6 +288,7 @@ const MaintenancesPage = () => {
             <TableHead>Site</TableHead>
             <TableHead>Système</TableHead>
             <TableHead>Date Prévue</TableHead>
+            <TableHead>Date Effectuée</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead>Technicien</TableHead>
             <TableHead>Actions</TableHead>
@@ -234,6 +301,11 @@ const MaintenancesPage = () => {
               <TableCell>{maintenance.Site.nom}</TableCell>
               <TableCell>{maintenance.Installation.Systeme.nom}</TableCell>
               <TableCell>{new Date(maintenance.datePlanifiee).toLocaleDateString()}</TableCell>
+              <TableCell>
+                {maintenance.dateMaintenance 
+                  ? new Date(maintenance.dateMaintenance).toLocaleDateString()
+                  : '-'}
+              </TableCell>
               <TableCell className={maintenance.statut === 'PLANIFIE' ? 'text-green-500' : maintenance.statut === 'TERMINE' ? 'text-red-500' : ''}>
                 {maintenance.statut}
               </TableCell>
@@ -246,10 +318,25 @@ const MaintenancesPage = () => {
                 >
                   <FaPause />
                 </Button>
-                <Button variant="outline" className="text-blue-500" onClick={() => {/* Add logic to handle edit */}}>
+                <Button 
+                  variant="outline" 
+                  className="text-blue-500" 
+                  onClick={() => handleEdit(maintenance)}
+                >
                   <FaEdit />
                 </Button>
-              </TableCell>
+                <Button variant="outline" className="text-yellow-500" 
+                  onClick={() => {
+                setSelectedMaintenance(maintenance);
+                loadCommentaires(maintenance.id);
+                setCommentaireOpen(true);
+              }}>
+                <FaComment />
+                </Button>
+                <Link href={`/sav/maintenances/${maintenance.id}`}>
+                Voir détails
+              </Link>
+              </TableCell>  
             </TableRow>
           ))}
         </TableBody>
@@ -431,6 +518,66 @@ const MaintenancesPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={commentaireOpen} onOpenChange={setCommentaireOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Commentaires de la maintenance {selectedMaintenance?.numero}</DialogTitle>
+            </DialogHeader>
+
+            <div className="space-y-4">
+              <div className="max-h-64 overflow-y-auto space-y-2">
+                {commentaires.map((comment) => (
+                  <Card key={comment.id}>
+                    <CardContent className="p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="font-semibold">
+                          {comment.Utilisateur.prenom} {comment.Utilisateur.nom}
+                        </span>
+                        <span className="text-sm text-gray-500">
+                          {new Date(comment.dateCommentaire).toLocaleString()}
+                        </span>
+                      </div>
+                      <p>{comment.commentaire}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                <Input
+                  placeholder="Votre commentaire..."
+                  value={commentaire}
+                  onChange={(e) => setCommentaire(e.target.value)}
+                />
+                <Button 
+                  className="w-full"
+                  onClick={async () => {
+                    if (commentaire.trim() && selectedMaintenance) {
+                      await ajouterCommentaireMaintenance({
+                        idMaintenance: selectedMaintenance.id,
+                        idUtilisateur: idUtilisateurConnecte,
+                        commentaire: commentaire.trim()
+                      });
+                      setCommentaire('');
+                      loadCommentaires(selectedMaintenance.id);
+                    }
+                  }}
+                >
+                  Ajouter un commentaire
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+      </Dialog>
+
+      <ModifierMaintenanceDialog
+        isOpen={isModificationOpen}
+        onClose={() => setIsModificationOpen(false)}
+        maintenance={maintenanceToModify}
+        techniciens={techniciens}
+        onSubmit={handleModificationSubmit}
+      />
     </div>
   );
 };
