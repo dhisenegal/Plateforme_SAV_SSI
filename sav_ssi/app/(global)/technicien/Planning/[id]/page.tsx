@@ -19,13 +19,14 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@radix-ui
 import InterventionSection from '@/actions/technicien/InterventionSection';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import ExtincteursPageContent from '@/actions/technicien/Extinteur';
 
 const formSchema = z.object({
   diagnostic: z.string().min(1, {
-    message: 'Diagnostic is required.'
+    message: 'Le diagnostic est requis.'
   }),
   travauxRealises: z.string().min(1, {
-    message: 'Travaux réalisés are required.'
+    message: 'Les travaux réalisés sont requis.'
   }),
   dureeHeure: z.string().min(1, {
     message: 'La durée de l\'intervention est requise.'
@@ -138,6 +139,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
 
           // Initialize form with fetched data
           form.reset({
+            
             diagnostic: fetchedDetails.diagnostics || '',
             travauxRealises: fetchedDetails.travauxRealises || '',
             dureeHeure: fetchedDetails.dureeHeure?.toString() || '',
@@ -470,7 +472,10 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
 
   const renderMaintenanceSection = () => {
     if (type !== 'maintenance') return null;
-
+    if (details.systeme === "MOYENS DE SECOURS EXTINCTEURS") {
+      // Appeler la fonction pour afficher les extincteurs si le type est "maintenance" et le système est "MOYENS DE SECOURS EXTINCTEURS"
+      return < ExtincteursPageContent />;
+    }
     return (
       <div className="mt-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

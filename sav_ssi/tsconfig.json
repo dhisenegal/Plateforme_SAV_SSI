@@ -33,7 +33,7 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts"
-  ],
+, "actions/technicien/Extinteur.ts"  ],
   "exclude": [
     "node_modules"
   ]

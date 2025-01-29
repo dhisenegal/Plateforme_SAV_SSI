@@ -59,7 +59,7 @@ export function PieGraph() {
   }, []);
 
   return (
-    <Card className="flex flex-col">
+    <Card className="flex flex-col w-[545px] h-[400px]">
       <CardHeader className="items-center pb-0">
         <CardTitle>Répartition des Interventions</CardTitle>
         <CardDescription>Janvier - Juin 2024</CardDescription>
@@ -67,9 +67,9 @@ export function PieGraph() {
       <CardContent className="flex-1 pb-0">
         <ChartContainer
           config={chartConfig}
-          className="mx-auto aspect-square max-h-[360px]"
+          className="mx-auto w-full h-full"
         >
-          <PieChart>
+          <PieChart startAngle={90} endAngle={450}>
             <ChartTooltip
               cursor={false}
               content={<ChartTooltipContent hideLabel />}

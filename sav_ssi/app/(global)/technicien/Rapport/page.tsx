@@ -2,7 +2,6 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import Link from 'next/link';
 import { FaEye, FaArrowLeft, FaArrowRight } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
@@ -48,10 +47,7 @@ const PlanningTabContent = () => {
           }
 
           // Appel de fetchDetails avec le type déterminé par getType
-          const { clientName, description, statut, urgent, technicienName, dateFinInt,dateFinMaint,  systeme } = await fetchDetails(plan.id, type.toLowerCase());
-
-          // Loguer le statut pour débogage
-          console.log('Statut récupéré:', statut);
+          const { clientName, description, statut, urgent, technicienName, dateFinInt, dateFinMaint, systeme } = await fetchDetails(plan.id, type.toLowerCase());
 
           return {
             ...plan,
@@ -88,7 +84,7 @@ const PlanningTabContent = () => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>Date</TableHead>
+            <TableHead>Date de fin</TableHead>
             <TableHead>Client</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Type</TableHead>
@@ -100,6 +96,8 @@ const PlanningTabContent = () => {
           {currentPlanning.map((plan, index) => (
             <TableRow
               key={`${plan.id}-${index}`}  // Utiliser une combinaison de l'id et de l'index pour garantir l'unicité
+              className="cursor-pointer hover:bg-gray-100"  // Ajoute un effet de survol visuel
+              onClick={() => handleValidateClick(plan.id, plan.type.toLowerCase())}  // Redirige lors du clic
             >
               <TableCell>{plan.dateFin ? new Date(plan.dateFin).toLocaleDateString() : 'Non défini'}</TableCell>
               <TableCell>{plan.client}</TableCell>
@@ -110,7 +108,7 @@ const PlanningTabContent = () => {
                 <FaEye 
                   className="text-blue-500 cursor-pointer" 
                   onClick={(e) => {
-                    e.stopPropagation(); 
+                    e.stopPropagation();  // Empêche la propagation du clic pour éviter une redirection au survol
                     handleValidateClick(plan.id, plan.type.toLowerCase());  // Redirige vers la page de détail
                   }} 
                 />

@@ -26,62 +26,92 @@ const CrossIcon = () => (
     />
   </Svg>
 );
-
 const styles = StyleSheet.create({
   page: {
     padding: 30,
-    fontFamily: 'Helvetica',
-    backgroundColor: '#ffffff'
+    fontFamily: 'Times-Roman',
+    backgroundColor: '#ffffff',
+  },
+  headerContainer: {
+    flexDirection: 'row', // Aligne le logo et le titre horizontalement
+    alignItems: 'center', // Aligne verticalement au centre
+    padding: 10, // Espacement à l'intérieur du bord
+    marginBottom: 20, // Espacement après le header
+    borderWidth: 1, // Bordure autour du bloc logo + titre
+    borderColor: '#000000', // Couleur de la bordure
+    borderRadius: 5, // Coins arrondis pour un effet plus esthétique
+    paddingRight: 20, // Un peu plus d'espace à droite
+    height: 100, // Définit la hauteur du bloc (logo + titre + bordure)
   },
   logoContainer: {
-    alignItems: 'center',
-    marginBottom: 20
+    marginRight: 10, // Espacement entre le logo et le titre
   },
   logo: {
     width: 150,
-    height: 75
+    height: 75,
+  },
+  titleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 15,
     fontFamily: 'Helvetica-Bold',
-    textAlign: 'center',
-    marginBottom: 30,
-    color: '#000000'
+    color: '#000000',
+    marginLeft: 10, // Espacement entre le trait vertical et le titre
+    alignItems: 'center',
+  },
+  separator: {
+    width: 1, // Largeur du trait
+    backgroundColor: '#000', // Couleur du trait
+    marginRight: 10, // Espacement entre le logo et le trait
+    height: '126%', // Hauteur du trait égale à la hauteur du parent (bloc contenant le logo et le titre)
+  },
+  smallTextContainer: {
+    marginTop: 10, // Espace avant le texte
+    fontSize: 8, // Taille de texte petite
+    lineHeight: 12, // Espacement entre les lignes
+    color: '#000', // Couleur du texte
+    textAlign: 'center', // Centrer le texte
   },
   infoContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 30
+    marginBottom: 30,
   },
   infoGroup: {
-    flex: 1
+    flex: 1,
   },
   infoRow: {
-    flexDirection: 'row',
-    marginBottom: 10
+    flexDirection: 'row', // Assurez-vous que label et valeur sont sur la même ligne
+    marginBottom: 5, // Réduit l'espacement entre chaque ligne
   },
   label: {
     fontFamily: 'Helvetica-Bold',
     fontSize: 12,
-    width: 100
+    width: 'auto', // Permet au label de ne pas occuper tout l'espace
+    marginRight: 5, // Espacement direct après le label
+    padding: 0, // Supprime tout espacement interne
   },
   value: {
-    fontSize: 12
+    fontSize: 12,
+    marginLeft: 0, // Pas de marge à gauche de la valeur
+    padding: 0, // Pas de padding pour réduire l'espace
   },
   sectionTitle: {
     fontSize: 16,
     fontFamily: 'Helvetica-Bold',
-    marginBottom: 20
+    marginBottom: 20,
   },
   table: {
     width: '100%',
-    marginTop: 6
+    marginTop: 6,
   },
   tableHeader: {
     flexDirection: 'row',
     backgroundColor: '#F9FAFB',
     borderWidth: 1,
-    borderColor: '#000000'
+    borderColor: '#000000',
   },
   tableRow: {
     flexDirection: 'row',
@@ -89,47 +119,47 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderBottomWidth: 1,
     borderColor: '#000000',
-    minHeight: 40
+    minHeight: 40,
   },
   tableCellHeader: {
     padding: 5,
     fontSize: 12,
     fontFamily: 'Helvetica-Bold',
-    color: '#000000'
+    color: '#000000',
   },
   tableCell: {
     padding: 8,
     fontSize: 11,
-    color: '#000000'
+    color: '#000000',
   },
   cellTask: {
     flex: 2,
     borderRightWidth: 1,
-    borderRightColor: '#000000'
+    borderRightColor: '#000000',
   },
   cellObs: {
-    flex: 3
+    flex: 3,
   },
   signatureSection: {
     marginTop: 20,
     flexDirection: 'row',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
   },
   signatureBlock: {
-    width: '45%'
+    width: '45%',
   },
   signatureLabel: {
     fontFamily: 'Helvetica-Bold',
     fontSize: 12,
-    marginBottom: 10
+    marginBottom: 10,
   },
   statusIconSuccess: {
     color: '#22C55E',  // Vert
-    fontSize: 16
+    fontSize: 16,
   },
   statusIconError: {
     color: '#EF4444',  // Rouge
-    fontSize: 16
+    fontSize: 16,
   },
   cellStatus: {
     width: 50,
@@ -137,24 +167,56 @@ const styles = StyleSheet.create({
     borderRightColor: '#000000',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 4
+    padding: 4,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 10,
+    left: 0,
+    right: 0,
+    textAlign: 'center',
+    fontSize: 10,
+    color: '#777',
+    padding: 5
   },
   iconContainer: {
     alignItems: 'center',
     justifyContent: 'center',
     width: 20,
-    height: 20
-  }
+    height: 20,
+  },
 });
 
 const MaintenancePDF = ({ data, actions }) => (
   <Document>
     <Page size="A4" style={styles.page}>
-      <View style={styles.logoContainer}>
-        <PdfImage src="/logo.jpg" style={styles.logo} />
+      {/* Conteneur avec le logo, le séparateur vertical et le titre */}
+      <View style={styles.headerContainer}>
+        <View style={styles.logoContainer}>
+          <PdfImage src="/logo.jpg" style={styles.logo} />
+        </View>
+
+        {/* Trait vertical séparateur */}
+        <View style={styles.separator} />
+
+        {/* Titre "Fiche de Maintenance" */}
+        <View style={styles.titleContainer}>
+          <Text style={styles.title}>FICHE DE MAINTENANCE</Text>
+        </View>
+        <View style={styles.separator} />
+        <View style={styles.value}>
+                   <Text>FMDet-S07</Text>
+                   <Text>Version: 02</Text>
+                   <Text>Date de révision:</Text>
+                   <Text> 01-03-2022</Text>
+         </View>
       </View>
 
-      <Text style={styles.title}>Fiche de Maintenance</Text>
+      {/* Nouveau séparateur sous le titre */}
+     
+
+      {/* Troisième partie du cadran */}
+      
 
       <View style={styles.infoContainer}>
         <View style={styles.infoGroup}>
@@ -217,13 +279,15 @@ const MaintenancePDF = ({ data, actions }) => (
       <View style={styles.signatureSection}>
         <View style={styles.signatureBlock}>
           <Text style={styles.signatureLabel}>VISA Technicien :</Text>
-          <Text>{data.technicienName}</Text>
+          <Text style={styles.value}>{data.technicienName}</Text>
         </View>
         <View style={styles.signatureBlock}>
           <Text style={styles.signatureLabel}>VISA Client :</Text>
-          <Text>{data.clientName}</Text>
+          <Text style={styles.value}>{data.clientName}</Text>
         </View>
       </View>
+
+       <Text style={styles.footer}>DHI - Solutions and Integrated Systems </Text>
     </Page>
   </Document>
 );
@@ -380,7 +444,7 @@ const MaintenancePage = () => {
       <div className="w-[210mm] p-6 border rounded-lg shadow-lg bg-white">
         {data && (
           <div id="pdf-content" className="space-y-6">
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-start mb-8">
               <Image
                 src="/logo.jpg"
                 alt="Logo"
@@ -391,7 +455,7 @@ const MaintenancePage = () => {
             </div>
             
             <h1 className="text-2xl font-Helvetica-Bold text-center mb-8">
-              Fiche de Maintenance
+              FICHE DE MAINTENANCE
             </h1>
 
             <div className="grid grid-cols-2 gap-8 mb-8">
@@ -408,7 +472,7 @@ const MaintenancePage = () => {
             </div>
 
             <div className="space-y-4">
-              <h2 className="text-xl font-semibold">Liste des vérifications</h2>
+              <h2 className="text-xl font-semibold">{data.systeme}</h2>
               <div className="overflow-x-auto">
                 <table className="w-full border-collapse">
                   <thead className="bg-gray-50">

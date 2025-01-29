@@ -1,9 +1,140 @@
 'use server';
 
 import prisma from "@/lib/prisma";
+import { revalidatePath } from 'next/cache';
 import { Main } from "next/document";
 
 
+export async function getExtincteursForSystem(installationId: number) {
+  try {
+    // Check if installation exists and is for fire extinguishers
+    const installation = await prisma.installation.findUnique({
+      where: { 
+        id: installationId 
+      },
+      include: {
+        Systeme: true
+      }
+    });
+
+    // Log the system name for debugging
+    console.log('System name:', installation?.Systeme?.nom);
+
+    // Remove special characters and spaces, convert to uppercase for comparison
+    const systemName = installation?.Systeme?.nom
+      ?.normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .toUpperCase()
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    console.log('Normalized system name:', systemName);
+
+    if (!systemName || !systemName.includes('MOYENS DE SECOURS EXTINCTEURS')) {
+      return {
+        success: false,
+        message: `Invalid system type. Expected: MOYENS DE SECOURS EXTINCTEURS, Got: ${systemName}`,
+        data: []
+      };
+    }
+
+    // Rest of the function remains the same
+    const installationEquipments = await prisma.installationEquipement.findMany({
+      where: {
+        idInstallation: installationId,
+      },
+      select: {
+        id: true,
+        statut: true,
+        Emplacement: true,
+        Numero: true,
+        Equipement: {
+          select: {
+            Extincteurs: {
+              select: {
+                typePression: true,
+                modeVerification: true,
+                chargeReference: true,
+                TypeExtincteur: {
+                  select: {
+                    nom: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const formattedData = installationEquipments
+      .filter(eq => eq.Equipement.Extincteurs.length > 0)
+      .map(equipment => ({
+        id: equipment.id,
+        status: equipment.statut,
+        location: equipment.Emplacement || '',
+        number: equipment.Numero || '',
+        extinguisher: {
+          typePression: equipment.Equipement.Extincteurs[0]?.typePression || '',
+          modeVerification: equipment.Equipement.Extincteurs[0]?.modeVerification || '',
+          chargeReference: equipment.Equipement.Extincteurs[0]?.chargeReference || '',
+          TypeExtincteur: {
+            nom: equipment.Equipement.Extincteurs[0]?.TypeExtincteur?.nom || ''
+          }
+        }
+      }));
+
+    return {
+      success: true,
+      data: formattedData,
+      message: null
+    };
+
+  } catch (error) {
+    console.error('Error in getExtincteursForSystem:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Failed to fetch extinguishers',
+      data: []
+    };
+  }
+}
+
+export async function countExtincteursForSystem(installationId: number) {
+  const installation = await prisma.installation.findUnique({
+    where: { id: installationId },
+    include: {
+      Systeme: true
+    }
+  });
+
+  // If not a fire extinguisher system, return 0
+  if (!installation?.Systeme?.nom.toUpperCase().includes('MOYENS DE SECOURS EXTINCTEURS')) {
+    return 0;
+  }
+
+  const count = await prisma.installationExtincteur.count({
+    where: {
+      InstallationEquipement: {
+        idInstallation: installationId
+      }
+    }
+  });
+
+  return count;
+}
+  
+export async function getInstallationIdFromMaintenance() {
+  // Récupérer simplement la première maintenance (sans condition sur le statut)
+  const maintenance = await prisma.maintenance.findFirst({
+    select: {
+      idInstallation: true,  // Récupérer uniquement l'ID de l'installation
+    },
+  });
+
+  // Si une maintenance est trouvée, retourner l'id de l'installation
+  return maintenance ? maintenance.idInstallation : null;
+}
 export const getEtatUrgence = async (id: number, type: string) => {
   try {
     if (type === 'intervention') {
@@ -629,4 +760,44 @@ export const formatStatut = async (statut) => {
       resolve(statut.replace('_', ' ').toUpperCase());
     }, 1000);
   });
-}
+};
+
+export const getInterventionsBySystem = async () => {
+  try {
+    // Récupération des systèmes distincts dans les interventions
+    const systems = await prisma.intervention.findMany({
+      select: {
+        idSysteme: true,  // On récupère l'id du système
+      },
+      distinct: ['idSysteme'],  // On récupère les systèmes distincts
+    });
+
+    // Comptage des interventions pour chaque système
+    const systemCounts = await prisma.intervention.groupBy({
+      by: ['idSysteme'],  // Grouper par idSysteme
+      _count: {
+        id: true,  // Compter le nombre d'interventions
+      },
+    });
+
+    // Création d'un tableau avec les résultats (nom du système et nombre d'interventions)
+    const result = await Promise.all(
+      systemCounts.map(async (system) => {
+        const systemName = await prisma.systeme.findUnique({
+          where: { id: system.idSysteme },
+          select: { nom: true },
+        });
+
+        return {
+          systeme: systemName?.nom || 'Inconnu',
+          interventions: system._count.id,
+        };
+      })
+    );
+
+    return result;
+  } catch (error) {
+    console.error('Erreur lors du comptage des interventions par système:', error);
+    throw error;
+  }
+};

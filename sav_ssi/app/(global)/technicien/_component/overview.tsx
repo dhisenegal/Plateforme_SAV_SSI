@@ -35,9 +35,9 @@ export default function OverViewPage() {
     }
 
     const storedHorsDelaiCount = localStorage.getItem('interventionsHorsDelaiCount');
-  if (storedHorsDelaiCount) {
-    setInterventionsHorsDelaiCount(parseInt(storedHorsDelaiCount));
-  }
+    if (storedHorsDelaiCount) {
+      setInterventionsHorsDelaiCount(parseInt(storedHorsDelaiCount));
+    }
 
     // Fetch the data for interventions and maintenances
     async function fetchData() {
@@ -53,6 +53,12 @@ export default function OverViewPage() {
         setMaintenancesCount(maintenances);
         setInterventionsHorsDelaiCount(interventionsHorsDelai);
         setUpcomingPlans(nextPlans || []); // Ensure nextPlans is not undefined
+
+        // Calculer et mettre à jour le nombre d'interventions urgentes
+        const urgentCount = nextPlans.filter(plan => plan.urgent).length; // Assurez-vous que `plan.urgent` existe dans les données
+        localStorage.setItem('urgentInterventionsCount', String(urgentCount));
+        setUrgentInterventionsCount(urgentCount); // Mettre à jour l'état des interventions urgentes
+
       } catch (error) {
         console.error("Erreur lors de la récupération des données:", error);
       }
@@ -77,51 +83,60 @@ export default function OverViewPage() {
           </TabsList>
           <TabsContent value="overview" className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {/* Card pour le nombre d'interventions */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
+                  <CardTitle className="text-sm font-bold text-black">
                     Nombres d'interventions
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{interventionsCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {/* Additional description if needed */}
-                  </p>
-                </CardContent>
-              </Card>
-              
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Interventions hors délai</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{interventionsHorsDelaiCount}</div>
+                  <div className="text-2xl font-bold text-blue-600">{interventionsCount}</div>
                   <p className="text-xs text-muted-foreground">
                     {/* Additional description if needed */}
                   </p>
                 </CardContent>
               </Card>
 
+              {/* Card pour interventions hors délai */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Interventions Urgentes</CardTitle>
+                  <CardTitle className="text-sm font-bold text-black">
+                    Interventions hors délai
+                  </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{urgentInterventionsCount}</div>
+                  <div className="text-2xl font-bold text-red-600">{interventionsHorsDelaiCount}</div>
                   <p className="text-xs text-muted-foreground">
                     {/* Additional description if needed */}
                   </p>
                 </CardContent>
               </Card>
+
+              {/* Card pour interventions urgentes */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">
+                  <CardTitle className="text-sm font-bold text-black">
+                    Interventions Urgentes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-600">{urgentInterventionsCount}</div>
+                  <p className="text-xs text-muted-foreground">
+                    {/* Additional description if needed */}
+                  </p>
+                </CardContent>
+              </Card>
+
+              {/* Card pour le nombre de maintenances */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-bold text-black">
                     Nombres de Maintenances 
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{maintenancesCount}</div>
+                  <div className="text-2xl font-bold text-blue-600">{maintenancesCount}</div>
                   <p className="text-xs text-muted-foreground">
                     {/* Additional description if needed */}
                   </p>
@@ -131,12 +146,14 @@ export default function OverViewPage() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7">
               <Card className="col-span-4 md:col-span-3">
                 <CardHeader>
-                  <CardTitle>PROCHAINES MAINTENANCES  </CardTitle>
+                   <CardTitle className="font-bold text-black text-center"> PROCHAINES MAINTENANCES</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <RecentInterventions plans={upcomingPlans}/>
+                  <RecentInterventions plans={upcomingPlans} />
                 </CardContent>
               </Card>
+              
+              {/* Additional content */} 
               <div className="col-span-4 md:col-span-3">
                 <PieGraph />
               </div>
