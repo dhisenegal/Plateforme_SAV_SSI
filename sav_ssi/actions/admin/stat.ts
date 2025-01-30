@@ -106,17 +106,6 @@ export async function getEquipmentDistribution() {
       // Compte le nombre d'équipements pour ce système
       const count = await prisma.equipement.count({
         where: {
-<<<<<<< HEAD
-          Equipement: {
-            idSysteme: system.id
-          }
-        
-    }});
-
-      return {
-        name: system.nom,
-        value: totalEquipments.length
-=======
           idSysteme: system.id, // Filtre par système
         },
       });
@@ -124,7 +113,6 @@ export async function getEquipmentDistribution() {
       return {
         name: system.nom, // Nom du système
         value: count, // Nombre d'équipements pour ce système
->>>>>>> e53b9087d97f15fe3e42b1afec95c6fd3df6b94a
       };
     })
   );
