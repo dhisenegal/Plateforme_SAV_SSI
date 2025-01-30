@@ -184,7 +184,7 @@ export const navItemsByRole: { [key: string]: NavItem[] } = {
     },
     {
       title: 'Rapports',
-      url: '/technicien/rapports',
+      url: '/technicien/Rapport',
       icon: FileText,
       isActive: false,
       shortcut: ['r', 'r'],

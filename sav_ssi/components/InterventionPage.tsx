@@ -272,7 +272,7 @@ const InterventionPDF = ({ data }: { data: any }) => (
       </View>
 
       {/* Footer */}
-      <Text style={styles.footer}>Solutions and Integrated Systems - FMC</Text>
+      <Text style={styles.footer}>DHI - Solutions and Integrated Systems </Text>
     </Page>
   </Document>
 );

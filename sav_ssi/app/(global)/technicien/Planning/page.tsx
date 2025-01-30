@@ -10,7 +10,7 @@ import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getType, getPlanning } from '@/actions/technicien/planning';
-import { fetchDetails } from '@/lib/fonctionas'; // Assurez-vous que fetchDetails est importé
+import { fetchDetails } from '@/lib/fonctionas';
 
 const PlanningTabContent = () => {
   const { data: session } = useSession();
@@ -25,7 +25,7 @@ const PlanningTabContent = () => {
   }, [currentPage]);
 
   const fetchPlanning = async () => {
-    setLoading(true); // Met l'état de chargement à true
+    setLoading(true);
     try {
       // Récupérer le planning pour la page actuelle
       const planning = await getPlanning(technicienId, currentPage);
@@ -55,7 +55,6 @@ const PlanningTabContent = () => {
             urgent,
             technicienName,
             systeme,
-            
             type // Ajout du type pour pouvoir l'afficher dans la table
           };
         })
@@ -66,10 +65,16 @@ const PlanningTabContent = () => {
 
       // Mettre à jour l'état avec les données filtrées
       setCurrentPlanning(filteredPlanning);
+
+      // Récupérer le nombre d'interventions urgentes et le stocker dans le localStorage
+      const urgentCount = filteredPlanning.filter(plan => plan.urgent).length;
+      localStorage.setItem('urgentInterventionsCount', String(urgentCount));
+      console.log('Nombre d\'interventions urgentes stockées :', urgentCount);
+
     } catch (error) {
       console.error("Erreur lors de la récupération du planning :", error);
     } finally {
-      setLoading(false); // Met l'état de chargement à false une fois les données récupérées
+      setLoading(false);
     }
   };
 

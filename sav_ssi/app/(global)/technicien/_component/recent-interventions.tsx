@@ -71,7 +71,7 @@ export function RecentInterventions() { // Pas besoin de passer `plans` car les 
   }, []);  // L'effet est exécuté une seule fois au montage du composant
 
   if (maintenances.length === 0) {
-    return <p>Chargement...</p>;
+    return <p></p>;
   }
 
   const handleRowClick = (id: number, type: string) => {
@@ -81,7 +81,7 @@ export function RecentInterventions() { // Pas besoin de passer `plans` car les 
 
   return (
     <div className="overflow-x-auto">
-      <Table className="min-w-full divide-y divide-gray-200">
+      <Table className="min-w-full divide-y   divide-gray-200">
         <TableHeader className="bg-gray-50">
           <TableRow>
             <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
