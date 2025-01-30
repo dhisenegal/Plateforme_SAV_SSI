@@ -17,6 +17,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { updateIntervention, updateInterventionStatus,updateMaintenanceStatus,  updateMaintenanceAction,updateMaintenance, formatHeure } from '@/actions/technicien/planning';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@radix-ui/react-dialog';
 import InterventionSection from '@/actions/technicien/InterventionSection';
+import ExtincteursPageContent from '@/actions/technicien/Extinteur';
 
 const formSchema = z.object({
   diagnostic: z.string().min(1, {
@@ -137,23 +138,11 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
           
           // Format dates for form
           form.reset({
-<<<<<<< HEAD
-            
-            diagnostic: fetchedDetails.diagnostics || '',
-            travauxRealises: fetchedDetails.travauxRealises || '',
-            dureeHeure: fetchedDetails.dureeHeure?.toString() || '',
-            
-            dateIntervention: fetchedDetails.dateIntervention ? new Date(fetchedDetails.dateIntervention).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
-            dateFinInt: fetchedDetails.dateFinInt ? new Date(fetchedDetails.dateFinInt).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
-            dateMaintenance: fetchedDetails.dateMaintenance ? new Date(fetchedDetails.dateMaintenance).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
-            dateFinMaint: fetchedDetails.dateFinMaint ? new Date(fetchedDetails.dateFinMaint).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
-=======
             ...form.getValues(),
             dateIntervention: formatDateTimeForInput(fetchedDetails.dateIntervention),
             dateFinInt: formatDateTimeForInput(fetchedDetails.dateFinInt),
             dateMaintenance: formatDateTimeForInput(fetchedDetails.dateMaintenance),
             dateFinMaint: formatDateTimeForInput(fetchedDetails.dateFinMaint),
->>>>>>> a1d88c8e5f8f4fa05d2773ff2e2bf0d35beaa9ca
           });
         } catch (err) {
           console.error('Error fetching details:', err);
@@ -451,7 +440,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     if (type !== 'maintenance') return null;
     if (details.systeme === "MOYENS DE SECOURS EXTINCTEURS") {
       // Appeler la fonction pour afficher les extincteurs si le type est "maintenance" et le système est "MOYENS DE SECOURS EXTINCTEURS"
-      return < ExtincteursPageContent />;
+      return < ExtincteursPageContent id={parseInt(id as string)} />;
     }
     return (
       <div className="mt-6">
