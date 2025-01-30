@@ -209,6 +209,7 @@ export const planifierMaintenanceGlobal = async (data: {
     return maintenance;
   });
 };
+
 export const getMaintenancesBySite = async (siteId: number): Promise<Maintenance[]> => {
   const maintenances = await prisma.maintenance.findMany({
     where: { idSite: siteId },
