@@ -108,15 +108,12 @@ export async function getEquipmentDistribution() {
           Equipement: {
             idSysteme: system.id
           }
-        },
-        select: {
-          quantite: true
-        }
-      });
+        
+    }});
 
       return {
         name: system.nom,
-        value: totalEquipments.reduce((acc, curr) => acc + curr.quantite, 0)
+        value: totalEquipments.length
       };
     })
   );

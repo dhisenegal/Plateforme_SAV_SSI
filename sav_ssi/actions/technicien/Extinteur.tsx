@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
 import { useEffect, useState } from 'react';
-import { getExtincteursForSystem } from '@/actions/technicien/planning';
+import { useRouter } from 'next/navigation';
+import { getExtincteursForSystem, getInstallationIdFromMaintenance } from '@/actions/technicien/planning';
 import { FaEye } from 'react-icons/fa';
 import { 
   Table, 
@@ -13,75 +14,133 @@ import {
 } from '@/components/ui/table';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from "@/components/ui/badge";
+
+interface ExtinguisherProps {
+  id: number; // ID de la maintenance
+}
 
 interface Extinguisher {
-  id: number;
-  status: string;
-  location: string;
+  idInstallationEquipement: number;
   number: string;
+  location: string;
+  status: string;
+  idInstallation: number;
   extinguisher: {
     typePression: string;
     modeVerification: string;
-    chargeReference: string;
     TypeExtincteur: {
       nom: string;
     }
   };
+  details?: {
+    DateFabrication: string;
+    DatePremierChargement: string;
+    DateDerniereVerification: string;
+  }
 }
 
+// Composant StatusBadge
 const StatusBadge = ({ status }: { status: string }) => {
   const getStatusStyle = () => {
     switch (status) {
       case 'OK':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 border-green-200';
       case 'A_REPARER':
-        return 'bg-red-100 text-red-800';
+        return 'bg-red-100 text-red-800 border-red-200';
       case 'A_CHANGER':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getStatusText = () => {
+    switch (status) {
+      case 'OK':
+        return 'OK';
+      case 'A_REPARER':
+        return 'À réparer';
+      case 'A_CHANGER':
+        return 'À changer';
+      default:
+        return status;
     }
   };
 
   return (
-    <span className={`px-2 py-1 rounded-full text-sm ${getStatusStyle()}`}>
-      {status}
-    </span>
+    <Badge variant="outline" className={`${getStatusStyle()} px-2 py-1`}>
+      {getStatusText()}
+    </Badge>
   );
 };
 
-export default function ExtincteursPageContent() {
+const ExtincteursPageContent: React.FC<ExtinguisherProps> = ({ id }) => {
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [extincteurs, setExtincteurs] = useState<Extinguisher[]>([]);
+  const [installationId, setInstallationId] = useState<number | null>(null);
+  
+  const [userInfo] = useState({
+    currentUser: 'Narou98',
+    currentDate: '2025-01-30 11:25:55'
+  });
 
   useEffect(() => {
-    async function fetchExtincteurs() {
+    const fetchData = async () => {
       try {
         setLoading(true);
-        const response = await getExtincteursForSystem(2);
+        console.log('Récupération des données pour la maintenance ID:', id);
+        
+        // 1. Récupérer l'ID de l'installation
+        const installationData = await getInstallationIdFromMaintenance(id);
+        console.log('ID Installation récupéré:', installationData);
+        
+        if (!installationData) {
+          throw new Error('Installation non trouvée');
+        }
+        
+        // 2. Récupérer les extincteurs de l'installation
+        const response = await getExtincteursForSystem(installationData);
+        console.log('Réponse des extincteurs:', response);
         
         if (!response.success) {
-          throw new Error(response.message || 'Failed to fetch extinguishers');
+          throw new Error(response.message || 'Échec de la récupération des extincteurs');
         }
-
+        
+        setInstallationId(installationData);
         setExtincteurs(response.data);
+
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+        console.error('Erreur lors de la récupération des données:', err);
+        setError(err instanceof Error ? err.message : 'Une erreur est survenue');
       } finally {
         setLoading(false);
       }
-    }
+    };
 
-    
-      fetchExtincteurs();
-    
-  }, []);
+    if (id) {
+      fetchData();
+    }
+  }, [id]);
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+  };
+
+  const handleValidateClick = (idInstallationEquipement: number) => {
+    router.push(`/technicien/Extincteur/${idInstallationEquipement}?installationId=${installationId}`);
+  };
 
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
-        <div className="animate-pulse text-lg">Loading...</div>
+        <div className="animate-pulse text-lg">Chargement...</div>
       </div>
     );
   }
@@ -98,8 +157,12 @@ export default function ExtincteursPageContent() {
     <Card className="m-4">
       <CardHeader>
         <CardTitle className="flex justify-between items-center">
-          <span>Fire Extinguishers ({extincteurs.length})</span>
+          <span>MOYENS DE SECOURS EXTINCTEURS ({installationId})</span>
         </CardTitle>
+        <div className="text-sm text-gray-500">
+          <p>Utilisateur: {userInfo.currentUser}</p>
+          <p>Date d'inspection: {userInfo.currentDate}</p>
+        </div>
       </CardHeader>
       <CardContent>
         {extincteurs.length > 0 ? (
@@ -107,24 +170,22 @@ export default function ExtincteursPageContent() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Number</TableHead>
+                  <TableHead>Numéro</TableHead>
                   <TableHead>Type</TableHead>
-                  <TableHead>Location</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Pressure Type</TableHead>
-                  <TableHead>Verification Mode</TableHead>
-                  <TableHead className="w-16">Details</TableHead>
+                  <TableHead>Emplacement</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Type Pression</TableHead>
+                  <TableHead>Mode Vérification</TableHead>
+                  <TableHead>Date Fabrication</TableHead>
+                  <TableHead>Dernier Contrôle</TableHead>
+                  <TableHead className="w-16">Détails</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {extincteurs.map((extincteur) => (
                   <TableRow 
-                    key={extincteur.id}
-                    className={`
-                      hover:bg-gray-50 transition-colors
-                      ${extincteur.status === 'A_REPARER' ? 'bg-red-50/50' : ''}
-                      ${extincteur.status === 'A_CHANGER' ? 'bg-yellow-50/50' : ''}
-                    `}
+                    key={extincteur.idInstallationEquipement}
+                    className="hover:bg-gray-50 transition-colors"
                   >
                     <TableCell className="font-medium">{extincteur.number}</TableCell>
                     <TableCell>{extincteur.extinguisher.TypeExtincteur.nom}</TableCell>
@@ -135,10 +196,18 @@ export default function ExtincteursPageContent() {
                     <TableCell>{extincteur.extinguisher.typePression}</TableCell>
                     <TableCell>{extincteur.extinguisher.modeVerification}</TableCell>
                     <TableCell>
+                      {extincteur.details?.DateFabrication && 
+                        formatDate(extincteur.details.DateFabrication)}
+                    </TableCell>
+                    <TableCell>
+                      {extincteur.details?.DateDerniereVerification && 
+                        formatDate(extincteur.details.DateDerniereVerification)}
+                    </TableCell>
+                    <TableCell>
                       <button
-                        onClick={() => alert(`Details for extinguisher ${extincteur.number}`)}
+                        onClick={() => handleValidateClick(extincteur.idInstallationEquipement)}
                         className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
-                        aria-label="View details"
+                        aria-label="Voir les détails"
                       >
                         <FaEye className="w-4 h-4" />
                       </button>
@@ -150,10 +219,12 @@ export default function ExtincteursPageContent() {
           </div>
         ) : (
           <div className="text-center py-8 text-gray-500">
-            No extinguishers found for this installation.
+            Aucun extincteur trouvé pour cette installation.
           </div>
         )}
       </CardContent>
     </Card>
   );
-}
+};
+
+export default ExtincteursPageContent;
