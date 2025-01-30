@@ -13,7 +13,7 @@ async function getAllSystems() {
   });
 }
 
-// Fonction pour obtenir les statistiques des équipements par mois
+//Fonction pour obtenir les statistiques des équipements par mois
 export async function getEquipmentStats() {
   const systems = await getAllSystems();
   
@@ -103,20 +103,16 @@ export async function getEquipmentDistribution() {
 
   const distribution = await Promise.all(
     systems.map(async (system) => {
-      const totalEquipments = await prisma.installationEquipement.findMany({
+      // Compte le nombre d'équipements pour ce système
+      const count = await prisma.equipement.count({
         where: {
-          Equipement: {
-            idSysteme: system.id
-          }
+          idSysteme: system.id, // Filtre par système
         },
-        select: {
-          quantite: true
-        }
       });
 
       return {
-        name: system.nom,
-        value: totalEquipments.reduce((acc, curr) => acc + curr.quantite, 0)
+        name: system.nom, // Nom du système
+        value: count, // Nombre d'équipements pour ce système
       };
     })
   );
