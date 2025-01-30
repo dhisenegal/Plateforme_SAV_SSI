@@ -440,7 +440,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     if (type !== 'maintenance') return null;
     if (details.systeme === "MOYENS DE SECOURS EXTINCTEURS") {
       // Appeler la fonction pour afficher les extincteurs si le type est "maintenance" et le système est "MOYENS DE SECOURS EXTINCTEURS"
-      return < ExtincteursPageContent id={parseInt(id as string)} />;
+      return <ExtincteursPageContent id={parseInt(id as string)} />;
     }
     return (
       <div className="mt-6">

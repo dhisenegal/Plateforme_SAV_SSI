@@ -102,6 +102,31 @@ CREATE TABLE `Equipement` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `Extincteur` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `idEquipement` INTEGER NOT NULL,
+    `typePression` ENUM('PP', 'PA') NOT NULL,
+    `modeVerification` ENUM('V5', 'V10') NOT NULL,
+    `chargeReference` INTEGER NULL,
+    `tare` INTEGER NULL,
+    `sparklet` BOOLEAN NOT NULL DEFAULT false,
+    `chargeReferenceSparklet` INTEGER NULL,
+    `poidsMax` INTEGER NULL,
+    `poidsMin` INTEGER NULL,
+    `idTypeExtincteur` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `TypeExtincteur` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `nom` VARCHAR(191) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `MarqueSsi` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `nom` VARCHAR(191) NOT NULL,
@@ -133,13 +158,27 @@ CREATE TABLE `Installation` (
 -- CreateTable
 CREATE TABLE `InstallationEquipement` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `statut` VARCHAR(191) NOT NULL,
+    `statut` ENUM('A_REPARER', 'A_CHANGER', 'OK') NOT NULL DEFAULT 'OK',
+    `Numero` VARCHAR(191) NULL,
+    `Emplacement` VARCHAR(191) NULL,
+    `Commentaires` VARCHAR(191) NULL,
+    `HorsService` BOOLEAN NOT NULL DEFAULT false,
     `dateInstallation` DATETIME(3) NOT NULL,
     `dateMaintenance` DATETIME(3) NULL,
     `idEquipement` INTEGER NOT NULL,
     `idInstallation` INTEGER NOT NULL,
-    `quantite` INTEGER NOT NULL,
     `estGaranti` BOOLEAN NOT NULL DEFAULT true,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `InstallationExtincteur` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `idInstallationEquipement` INTEGER NOT NULL,
+    `DateFabrication` DATETIME(3) NOT NULL,
+    `DatePremierChargement` DATETIME(3) NOT NULL,
+    `DateDerniereVerification` DATETIME(3) NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -187,6 +226,17 @@ CREATE TABLE `Maintenance` (
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
 -- CreateTable
+CREATE TABLE `CommentaireMaintenance` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `idMaintenance` INTEGER NOT NULL,
+    `idUtilisateur` INTEGER NOT NULL,
+    `commentaire` VARCHAR(191) NOT NULL,
+    `dateCommentaire` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
 CREATE TABLE `ActionMaintenance` (
     `id` INTEGER NOT NULL AUTO_INCREMENT,
     `libeleAction` VARCHAR(191) NOT NULL,
@@ -202,6 +252,26 @@ CREATE TABLE `MaintenanceAction` (
     `observation` VARCHAR(191) NOT NULL,
     `idMaintenance` INTEGER NOT NULL,
     `idAction` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `MaintenanceActionExtincteur` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `idMaintenance` INTEGER NOT NULL,
+    `idActionMaintenanceExtincteur` INTEGER NOT NULL,
+    `idInstallationExtincteur` INTEGER NOT NULL,
+    `statut` BOOLEAN NOT NULL,
+    `observation` VARCHAR(191) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `ActionMaintenanceExtincteur` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `libeleAction` VARCHAR(191) NOT NULL,
 
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
@@ -275,6 +345,12 @@ ALTER TABLE `Equipement` ADD CONSTRAINT `Equipement_idModeleSsi_fkey` FOREIGN KE
 ALTER TABLE `Equipement` ADD CONSTRAINT `Equipement_idSysteme_fkey` FOREIGN KEY (`idSysteme`) REFERENCES `Systeme`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `Extincteur` ADD CONSTRAINT `Extincteur_idTypeExtincteur_fkey` FOREIGN KEY (`idTypeExtincteur`) REFERENCES `TypeExtincteur`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `Extincteur` ADD CONSTRAINT `Extincteur_idEquipement_fkey` FOREIGN KEY (`idEquipement`) REFERENCES `Equipement`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `Installation` ADD CONSTRAINT `Installation_idClient_fkey` FOREIGN KEY (`idClient`) REFERENCES `Client`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -288,6 +364,9 @@ ALTER TABLE `InstallationEquipement` ADD CONSTRAINT `InstallationEquipement_idEq
 
 -- AddForeignKey
 ALTER TABLE `InstallationEquipement` ADD CONSTRAINT `InstallationEquipement_idInstallation_fkey` FOREIGN KEY (`idInstallation`) REFERENCES `Installation`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `InstallationExtincteur` ADD CONSTRAINT `InstallationExtincteur_idInstallationEquipement_fkey` FOREIGN KEY (`idInstallationEquipement`) REFERENCES `InstallationEquipement`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Contrat` ADD CONSTRAINT `Contrat_idSite_fkey` FOREIGN KEY (`idSite`) REFERENCES `Site`(`id`) ON DELETE CASCADE ON UPDATE CASCADE;
@@ -308,6 +387,12 @@ ALTER TABLE `Maintenance` ADD CONSTRAINT `Maintenance_idInstallation_fkey` FOREI
 ALTER TABLE `Maintenance` ADD CONSTRAINT `Maintenance_idTechnicien_fkey` FOREIGN KEY (`idTechnicien`) REFERENCES `Utilisateur`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE `CommentaireMaintenance` ADD CONSTRAINT `CommentaireMaintenance_idUtilisateur_fkey` FOREIGN KEY (`idUtilisateur`) REFERENCES `Utilisateur`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `CommentaireMaintenance` ADD CONSTRAINT `CommentaireMaintenance_idMaintenance_fkey` FOREIGN KEY (`idMaintenance`) REFERENCES `Maintenance`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE `ActionMaintenance` ADD CONSTRAINT `ActionMaintenance_idSysteme_fkey` FOREIGN KEY (`idSysteme`) REFERENCES `Systeme`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
@@ -315,6 +400,15 @@ ALTER TABLE `MaintenanceAction` ADD CONSTRAINT `MaintenanceAction_idMaintenance_
 
 -- AddForeignKey
 ALTER TABLE `MaintenanceAction` ADD CONSTRAINT `MaintenanceAction_idAction_fkey` FOREIGN KEY (`idAction`) REFERENCES `ActionMaintenance`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `MaintenanceActionExtincteur` ADD CONSTRAINT `MaintenanceActionExtincteur_idInstallationExtincteur_fkey` FOREIGN KEY (`idInstallationExtincteur`) REFERENCES `InstallationExtincteur`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `MaintenanceActionExtincteur` ADD CONSTRAINT `MaintenanceActionExtincteur_idMaintenance_fkey` FOREIGN KEY (`idMaintenance`) REFERENCES `Maintenance`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE `MaintenanceActionExtincteur` ADD CONSTRAINT `MaintenanceActionExtincteur_idActionMaintenanceExtincteur_fkey` FOREIGN KEY (`idActionMaintenanceExtincteur`) REFERENCES `ActionMaintenanceExtincteur`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE `Intervention` ADD CONSTRAINT `Intervention_idSysteme_fkey` FOREIGN KEY (`idSysteme`) REFERENCES `Systeme`(`id`) ON DELETE SET NULL ON UPDATE CASCADE;
