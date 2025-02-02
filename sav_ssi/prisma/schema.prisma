@@ -175,6 +175,9 @@ model InstallationEquipement {
   Installation      Installation @relation(fields: [idInstallation], references: [id], onDelete: Cascade)
   Garanties         Garantie[]
   InstallationExtincteur InstallationExtincteur[]
+
+  @@index([idEquipement,idInstallation])
+  @@index([statut])
 }
 model InstallationExtincteur{
   id                Int      @id @default(autoincrement())
@@ -184,6 +187,8 @@ model InstallationExtincteur{
   DateDerniereVerification DateTime
   InstallationEquipement InstallationEquipement @relation(fields: [idInstallationEquipement], references: [id])
   MaintenanceActionExtincteur MaintenanceActionExtincteur[]
+
+  @@index([idInstallationEquipement,DateDerniereVerification])
 }
 
 model Contrat {
@@ -226,6 +231,9 @@ model Maintenance {
   Actions           MaintenanceAction[]
   CommentairesMaintenances CommentaireMaintenance[]
   MaintenanceActionExtincteur MaintenanceActionExtincteur[]
+
+  @@index([idTechnicien,statut, datePlanifiee])
+  @@index([idInstallation,dateMaintenance])
 }
 
 model CommentaireMaintenance {
@@ -298,6 +306,11 @@ model Intervention {
   adresse           String?
   Technicien        Utilisateur? @relation("TechnicienIntervention", fields: [idTechnicien], references: [id])
   Commentaires      Commentaire[]
+  
+  @@index([idTechnicien,statut, datePlanifiee])
+  @@index([idClient,dateDeclaration])
+  @@index([idSysteme,statut])
+  @@index([urgent,statut])
 }
 model Commentaire {
   id                Int      @id @default(autoincrement())

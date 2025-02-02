@@ -14,33 +14,26 @@ import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { getSystemIdFromInstallation, getActionsBySystem } from '@/actions/admin/maintenanceAction';
 import { Form, FormControl, FormItem, FormLabel } from '@/components/ui/form';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { updateIntervention, updateInterventionStatus,updateMaintenanceStatus,  updateMaintenanceAction,updateMaintenance, formatHeure } from '@/actions/technicien/planning';
+import { updateIntervention, updateInterventionStatus,updateMaintenanceStatus,  updateMaintenanceAction,updateMaintenance } from '@/actions/technicien/planning';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@radix-ui/react-dialog';
 import InterventionSection from '@/actions/technicien/InterventionSection';
-import ExtincteursPageContent from '@/actions/technicien/Extinteur';
+import ExtincteursPageContent  from '@/actions/technicien/Extinteur';
 
 const formSchema = z.object({
   diagnostic: z.string().min(1, {
-    message: 'Diagnostic est requis pour valider.'
+    message: 'Diagnostic is required.'
   }),
   travauxRealises: z.string().min(1, {
-    message: 'Travaux réalisés est requis.'
+    message: 'Travaux réalisés are required.'
   }),
   dureeHeure: z.string().min(1, {
     message: 'La durée de l\'intervention est requise.'
   }),
-  dateFinInt: z.string().min(1, {
-    message: 'La date de fin de  l\'intervention est requise.'
+  Heureint: z.string().min(1, {
+    message: 'L\'heure de l\'intervention est requise.'
   }),
- 
   dateIntervention: z.string().min(1, {
-    message: 'La date de début de  l\'intervention est requise.'
-  }),
-  dateFinMaint: z.string().min(1, {
-    message: 'La date de début de  l\'intervention est requise.'
-  }),
-  dateMaintenance : z.string().min(1, {
-    message: 'La date de début de  l\'intervention est requise.'
+    message: 'Date of intervention is required.'
   })
 });
 
@@ -60,12 +53,6 @@ interface MaintenanceAction {
   libeleAction: string;
   idSysteme: number;
 }
-
-const formatDateTimeForInput = (date: Date | string | null) => {
-  if (!date) return '';
-  const d = new Date(date);
-  return d.toISOString().slice(0, 16); // Format: "YYYY-MM-DDThh:mm"
-};
 
 const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
   const params = useParams();
@@ -91,10 +78,10 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
       diagnostic: '',
       travauxRealises: '',
       dureeHeure:'',
+      Heureint: '',
       dateIntervention: '',
-      dateFinInt: '',
-      dateMaintenance: '',
-      dateFinMaint: '',
+      Heuredebut: '',
+      Heuredefin: '',
     }
   });
 
@@ -135,24 +122,48 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         try {
           const fetchedDetails = await fetchDetails(parseInt(id), type);
           setDetails(fetchedDetails);
-          
-          // Format dates for form
+  
+          // Set suspended state based on status
+          if (fetchedDetails.statut === 'SUSPENDU') {
+            setIsSuspended(true);
+          }
+  
+          // Initialize form with fetched data
           form.reset({
-            ...form.getValues(),
-            dateIntervention: formatDateTimeForInput(fetchedDetails.dateIntervention),
-            dateFinInt: formatDateTimeForInput(fetchedDetails.dateFinInt),
-            dateMaintenance: formatDateTimeForInput(fetchedDetails.dateMaintenance),
-            dateFinMaint: formatDateTimeForInput(fetchedDetails.dateFinMaint),
+            diagnostic: fetchedDetails.diagnostics || '',
+            travauxRealises: fetchedDetails.travauxRealises || '',
+            dureeHeure: fetchedDetails.dureeHeure?.toString() || '',
+            dateIntervention: fetchedDetails.dateIntervention ? new Date(fetchedDetails.dateIntervention).toISOString().split('T')[0] : '',
+            Heureint: fetchedDetails.Heureint ? new Date(fetchedDetails.Heureint).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
+            Heuredebut: fetchedDetails.Heuredebut ? new Date(fetchedDetails.Heuredebut).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
+            Heuredefin: fetchedDetails.Heuredefin ? new Date(fetchedDetails.Heuredefin).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : '',
           });
+  
+          // For maintenance type, load saved actions status if available
+          if (type === 'maintenance' && fetchedDetails.actions) {
+            const savedStatus: Record<number, string> = {};
+            const savedObservations: Record<number, string> = {};
+  
+            fetchedDetails.actions.forEach((action: any, index: number) => {
+              savedStatus[index] = action.statut ? 'valide' : 'non-valide';
+              savedObservations[index] = action.observation || '';
+            });
+  
+            setSelectedStatus(savedStatus);
+            setObservations(savedObservations);
+          }
         } catch (err) {
           console.error('Error fetching details:', err);
+          setDetails(null);
         } finally {
           setLoading(false);
         }
       };
+  
       fetchData();
     }
-  }, [id, type]); 
+  }, [id, type]); // Removed form from dependencies array
+  
   useEffect(() => {
     const fetchSystemAndActions = async () => {
       if (details?.idInstallation && type === 'maintenance') {
@@ -163,12 +174,12 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
             setSystemId(systemData.idSysteme);
             const fetchedActions = await getActionsBySystem(systemData.idSysteme);
             setActions(fetchedActions);
-
+  
             // If we have existing status/observations, keep them
             if (fetchedActions.length > 0 && details.actions) {
               const existingStatus = { ...selectedStatus };
               const existingObservations = { ...observations };
-
+  
               details.actions.forEach((savedAction: any) => {
                 const actionIndex = fetchedActions.findIndex(
                   (action: MaintenanceAction) => action.id === savedAction.idAction
@@ -178,7 +189,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                   existingObservations[actionIndex] = savedAction.observation || '';
                 }
               });
-
+  
               setSelectedStatus(existingStatus);
               setObservations(existingObservations);
             }
@@ -191,11 +202,38 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         }
       }
     };
-
+  
     if (details) {
       fetchSystemAndActions();
     }
-  }, [details, type]);
+  }, [details, type, selectedStatus, observations]); // Added selectedStatus and observations to dependencies array
+  
+  useEffect(() => {
+    if (id && type) {
+      const fetchData = async () => {
+        try {
+          const fetchedDetails = await fetchDetails(parseInt(id), type);
+          setDetails(fetchedDetails);
+          if (fetchedDetails.statut === 'SUSPENDU') {
+            setIsSuspended(true);
+          }
+          form.reset({
+            diagnostic: fetchedDetails.diagnostics || '',
+            travauxRealises: fetchedDetails.travauxRealises || ''
+          });
+        } catch (err) {
+          console.error('Erreur lors de la récupération des détails', err);
+          setDetails(null);
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchData();
+      loadFromLocalStorage();
+    } else {
+      setLoading(false);
+    }
+  }, [id, type]); // Removed form from dependencies array
 
 
   const handleSave = async (data: z.infer<typeof formSchema>) => {
@@ -216,9 +254,8 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
           diagnostics: data.diagnostic,
           travauxRealises: data.travauxRealises,
           dureeHeure: parseInt(data.dureeHeure),
-         
-          dateIntervention: new Date(data.dateIntervention),
-          dateFinInt: new Date(data.dateFinInt),
+          Heureint: new Date(`${currentDate}T${data.Heureint}:00`),
+          dateIntervention: new Date(data.dateIntervention)
         };
         
         await updateIntervention(parseInt(id), interventionData);
@@ -228,10 +265,10 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         console.log('Saving maintenance...');
         
         // Save maintenance times
-        if (data.dateMaintenance && data.dateFinMaint) {
+        if (data.Heuredebut && data.Heuredefin) {
           const maintenanceData = {
-            dateMaintenance: new Date(data.dateMaintenance),
-            dateFinMaint: new Date(data.dateFinMaint),
+            Heuredebut: new Date(`${currentDate}T${data.Heuredebut}:00`),
+            Heuredefin: new Date(`${currentDate}T${data.Heuredefin}:00`)
           };
           
           console.log('Maintenance data to save:', maintenanceData);
@@ -254,20 +291,26 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         console.log('Maintenance saved successfully');
       }
 
+      // Refresh the data after saving
       const updatedDetails = await fetchDetails(parseInt(id), type);
-        form.reset({
-          ...data,
-          dateIntervention: formatDateTimeForInput(updatedDetails.dateIntervention),
-          dateFinInt: formatDateTimeForInput(updatedDetails.dateFinInt),
-          dateMaintenance: formatDateTimeForInput(updatedDetails.dateMaintenance),
-          dateFinMaint: formatDateTimeForInput(updatedDetails.dateFinMaint),
-        })
-      
+      setDetails(updatedDetails);
 
       // Show success message
       alert('Changes saved successfully');
       
-    
+      // Update form with new data
+      form.reset({
+        ...data,
+        diagnostic: updatedDetails.diagnostics || data.diagnostic,
+        travauxRealises: updatedDetails.travauxRealises || data.travauxRealises,
+        dureeHeure: updatedDetails.dureeHeure?.toString() || data.dureeHeure,
+        Heureint: updatedDetails.Heureint || data.Heureint,
+        dateIntervention: updatedDetails.dateIntervention || data.dateIntervention,
+        Heuredebut: updatedDetails.Heuredebut || data.Heuredebut,
+        Heuredefin: updatedDetails.Heuredefin || data.Heuredefin,
+      
+      });
+
     } catch (err) {
       console.error('Error while saving:', err);
       alert('Error saving changes. Please try again.');
@@ -294,8 +337,8 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
             diagnostics: data.diagnostic,
             travauxRealises: data.travauxRealises,
             dureeHeure: parseInt(data.dureeHeure), // assurez-vous de convertir en nombre
+            Heureint: new Date(`${currentDateString}T${data.Heureint}:00`),
             dateIntervention: new Date(data.dateIntervention),
-            dateFinInt: new Date(data.dateFinInt),
           });
 
           console.log('Données validées avec succès', result);
@@ -309,12 +352,12 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
       
       if (id && type === 'maintenance') {
         // Mettre à jour la maintenance (ajout de la mise à jour des heures de début et de fin)
-        const dateMaintenance = new Date(data.dateMaintenance);  // Heure de début
-        const dateFinMaint = new Date(data.dateFinMaint);    // Heure de fin
+        const dateHeureDebut = new Date(`${currentDateString}T${data.Heuredebut}:00`);  // Heure de début
+        const dateHeureFin = new Date();    // Heure de fin
       
         const result = await updateMaintenance(parseInt(id as string), {
-          dateMaintenance: dateMaintenance,  // Heure de début
-          dateFinMaint: dateFinMaint,    // Heure de fin
+          Heuredebut: dateHeureDebut,  // Heure de début
+          Heuredefin: dateHeureFin,    // Heure de fin
         });
         console.log('Maintenance mise à jour avec succès:', result);
   
@@ -340,10 +383,10 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
           diagnostic: updatedDetails.diagnostics || data.diagnostic,
           travauxRealises: updatedDetails.travauxRealises || data.travauxRealises,
           dureeHeure: String(updatedDetails.dureeHeure || data.dureeHeure),
+          Heureint: updatedDetails.Heureint || data.Heureint,
           dateIntervention: updatedDetails.dateIntervention || data.dateIntervention,
-          dateFinInt: updatedDetails.dateFinInt || data.dateFinInt,
-          dateMaintenance: updatedDetails.dateMaintenance || data.dateMaintenance, // Remettre à jour l'heure de début
-          dateFinMaint: updatedDetails.dateFinMaint || data.dateFinMaint, // Remettre à jour l'heure de fin
+          Heuredebut: updatedDetails.Heuredebut || data.Heuredebut, // Remettre à jour l'heure de début
+          Heuredefin: updatedDetails.Heuredefin || data.Heuredefin, // Remettre à jour l'heure de fin
         });
       }
     } catch (err) {
@@ -440,35 +483,38 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     if (type !== 'maintenance') return null;
     if (details.systeme === "MOYENS DE SECOURS EXTINCTEURS") {
       // Appeler la fonction pour afficher les extincteurs si le type est "maintenance" et le système est "MOYENS DE SECOURS EXTINCTEURS"
-      return <ExtincteursPageContent id={parseInt(id as string)} />;
+      return <ExtincteursPageContent id={parseInt(id as string)}  />;
     }
+
     return (
       <div className="mt-6">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-5">
-                  <FormItem>
-  <FormLabel>Date et heure de début </FormLabel>
-  <FormControl>
-    <Input
-      type="datetime-local" // Permet de sélectionner à la fois la date et l'heure
-      {...form.register('dateMaintenance')} // Adapté au nom du champ dans votre formulaire
-      className="w-full p-2 border border-gray-300 rounded-md"
-      
-    />
-  </FormControl>
-</FormItem>
+                <FormItem>
+                <FormLabel>Heure début</FormLabel>
+                <FormControl>
+                  <Input
+                    type="time"
+                    {...form.register('Heuredebut')}
+                    placeholder="Heure de l'intervention"
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  />
+                </FormControl>
+              </FormItem>
               </div>
               <div className="space-y-5">
               <FormItem>
-  <FormLabel>Date et heure de fin </FormLabel>
-  <FormControl>
-    <Input
-      type="datetime-local" // Permet de sélectionner à la fois la date et l'heure
-      {...form.register('dateFinMaint')} // Adapté au nom du champ dans votre formulaire
-      className="w-full p-2 border border-gray-300 rounded-md"
-    />
-  </FormControl>
-</FormItem>
+                  <FormLabel>Heure fin </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="time"
+                        {...form.register('Heuredefin')}
+                        placeholder="Durée de l'intervention en heures"
+                        
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                      />
+                    </FormControl>
+                    </FormItem>
                     </div>
                     </div>
         <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -644,16 +690,17 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                       <Input value={formatDate(details.dateDeclaration) || 'N/A'} readOnly />
                     </FormControl>
                   </FormItem>
-                  <FormItem>
-  <FormLabel>Date et heure de début </FormLabel>
-  <FormControl>
-    <Input
-      type="datetime-local" // Permet de sélectionner à la fois la date et l'heure
-      {...form.register('dateIntervention')} // Adapté au nom du champ dans votre formulaire
-      className="w-full p-2 border border-gray-300 rounded-md"
-    />
-  </FormControl>
-</FormItem>
+                <FormItem>
+                <FormLabel>Date de l'intervention</FormLabel>
+                <FormControl>
+                  <Input
+                    type="date"
+                    {...form.register('dateIntervention')}
+                    placeholder="Heure de l'intervention"
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  />
+                </FormControl>
+              </FormItem>
               </div>
               <div className="space-y-5">
               <FormItem>
@@ -662,16 +709,18 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                       <Input value="Oui" readOnly className="text-blue-400" />
                     </FormControl>
                   </FormItem>
-                  <FormItem>
-  <FormLabel>Date et heure de fin </FormLabel>
-  <FormControl>
-    <Input
-      type="datetime-local" // Permet de sélectionner à la fois la date et l'heure
-      {...form.register('dateFinInt')} // Adapté au nom du champ dans votre formulaire
-      className="w-full p-2 border border-gray-300 rounded-md"
-    />
-  </FormControl>
-</FormItem>
+              <FormItem>
+                  <FormLabel>Heure de l'intervention (en heures) </FormLabel>
+                    <FormControl>
+                      <Input
+                        type="time"
+                        {...form.register('Heureint')}
+                        placeholder="Heure de l'intervention en heures"
+                        
+                        className="w-full p-2 border border-gray-300 rounded-md"
+                      />
+                    </FormControl>
+                    </FormItem>
                     </div>
                   </div>
                   
@@ -694,23 +743,17 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                   type="submit"
                   disabled={isSaving || isSuspended}
                   className="bg-blue-500 hover:bg-blue-600"
-                  onClick={() => handleSave(form.getValues())}
                 >
                   {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
                 </Button>
                 <Button
-                type="button"
-                onClick={() => {
-                  form.trigger(); // Trigger validation
-                  if (form.formState.isValid) {
-                    setIsConfirmDialogOpen(true);
-                  }
-                }}
-                disabled={isSaving || isSuspended}
-                className="bg-green-500 hover:bg-green-600"
-              >
-                {isSaving ? 'Validation...' : 'Valider'}
-              </Button>
+                  type="button"
+                  onClick={() => setIsConfirmDialogOpen(true)}
+                  disabled={isSaving || isSuspended}
+                  className="bg-green-500 hover:bg-green-600"
+                >
+                  {isSaving ? 'Validation...' : 'Valider'}
+                </Button>
               </div>
             </form>
           </Form>

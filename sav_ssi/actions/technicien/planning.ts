@@ -17,7 +17,7 @@ export async function getExtincteurDetails(installationEquipementId: number) {
 
     const extincteurDetails = await prisma.installationExtincteur.findFirst({
       where: {
-        idInstallationEquipement: installationEquipementId
+        idInstallationEquipement: installationEquipementId,
       },
       include: {
         InstallationEquipement: {
@@ -61,6 +61,7 @@ export async function getExtincteurDetails(installationEquipementId: number) {
         Numero: extincteurDetails.InstallationEquipement.Numero,
         Emplacement: extincteurDetails.InstallationEquipement.Emplacement,
         statut: extincteurDetails.InstallationEquipement.statut,
+        HorsService: extincteurDetails.InstallationEquipement.HorsService,
         Equipement: {
           id: extincteurDetails.InstallationEquipement.Equipement.id,
           Extincteurs: extincteurDetails.InstallationEquipement.Equipement.Extincteurs.map(ext => ({

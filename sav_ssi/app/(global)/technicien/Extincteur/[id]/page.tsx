@@ -13,9 +13,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getExtincteurDetails,updateMaintenanceActionExtincteur } from '@/actions/technicien/planning';
+import { Image as PdfImage,  } from '@react-pdf/renderer';
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { Document, Page, Text, View, StyleSheet, PDFDownloadLink,Svg, Path } from '@react-pdf/renderer';
+; // Adjust the import path as necessary
 
 interface ExtincteurDetails {
   id: number;
@@ -55,6 +58,267 @@ interface ExtincteurDetails {
     }
   }>;
 }
+
+const CheckIcon = () => (
+  <Svg viewBox="0 0 24 24" width={16} height={16}>
+    <Path
+      fill="#22C55E"
+      d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"
+    />
+  </Svg>
+);
+
+const CrossIcon = () => (
+  <Svg viewBox="0 0 24 24" width={16} height={16}>
+    <Path
+      fill="#EF4444"
+      d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"
+    />
+  </Svg>
+);
+
+const ExtincteurPDF = ({ extincteurDetails, selectedStatus, observations }: any) => {
+  const styles = StyleSheet.create({
+    page: {
+      padding: 30,
+      fontFamily: 'Times-Roman',
+      backgroundColor: '#ffffff',
+    },
+    headerContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: 10,
+      marginBottom: 20,
+      borderWidth: 1,
+      borderColor: '#000000',
+      borderRadius: 5,
+      paddingRight: 20,
+      height: 100,
+    },
+    logoContainer: {
+      marginRight: 10,
+    },
+    logo: {
+      width: 150,
+      height: 75,
+    },
+    titleContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    title: {
+      fontSize: 15,
+      fontFamily: 'Helvetica-Bold',
+      color: '#000000',
+      marginLeft: 10,
+    },
+    separator: {
+      width: 1,
+      backgroundColor: '#000',
+      marginRight: 10,
+      height: '126%',
+    },
+    row: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 10,
+    },
+    leftColumn: {
+      width: '48%',
+      padding: 5,
+    },
+    rightColumn: {
+      width: '48%',
+      padding: 5,
+    },
+    titleColumn: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      marginBottom: 5, // Espacement entre chaque label et valeur
+    },
+    valueColumn: {
+      fontSize: 12,
+      marginTop: 5,
+    },
+    infoRow: {
+      flexDirection: 'row', // Aligne le label et la valeur sur la même ligne
+      marginBottom: 5,
+    },
+    label: {
+      fontSize: 12,
+      fontFamily: 'Helvetica-Bold',
+      color: '#000',
+      marginRight: 5, // Un peu d'espace entre le label et la valeur
+    },
+    value: {
+      fontSize: 12,
+      color: '#000',
+    },
+    table: {
+      width: '100%',
+      marginTop: 6,
+    },
+    tableHeader: {
+      flexDirection: 'row',
+      backgroundColor: '#F9FAFB',
+      borderWidth: 1,
+      borderColor: '#000000',
+    },
+    tableRow: {
+      flexDirection: 'row',
+      borderLeftWidth: 1,
+      borderRightWidth: 1,
+      borderBottomWidth: 1,
+      borderColor: '#000000',
+      minHeight: 40,
+    },
+    tableCellHeader: {
+      padding: 5,
+      fontSize: 12,
+      fontFamily: 'Helvetica-Bold',
+      color: '#000000',
+    },
+    tableCell: {
+      padding: 8,
+      fontSize: 11,
+      color: '#000000',
+    },
+    cellTask: {
+      flex: 2,
+      borderRightWidth: 1,
+      borderRightColor: '#000000',
+    },
+    cellObs: {
+      flex: 3,
+    },
+    statusIconSuccess: {
+      color: '#22C55E',
+      fontSize: 16,
+    },
+    statusIconError: {
+      color: '#EF4444',
+      fontSize: 16,
+    },
+    cellStatus: {
+      width: 50,
+      borderRightWidth: 1,
+      borderRightColor: '#000000',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: 4,
+    },
+    footer: {
+      position: 'absolute',
+      bottom: 10,
+      left: 0,
+      right: 0,
+      textAlign: 'center',
+      fontSize: 10,
+      color: '#777',
+      padding: 5,
+    },
+  });
+  
+  // Format de la date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('fr-FR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    });
+  };
+  
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* En-tête avec logo et titre */}
+        <View style={styles.headerContainer}>
+          <View style={styles.logoContainer}>
+            <PdfImage src="/logo.jpg" style={styles.logo} />
+          </View>
+          <View style={styles.separator} />
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>FICHE EXTINCTEUR</Text>
+          </View>
+        </View>
+  
+        {/* Détails de l'extincteur */}
+        <View style={styles.row}>
+          <View style={styles.leftColumn}>
+            {/* Utilisation de infoRow pour afficher sur une seule ligne */}
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Numéro:</Text>
+              <Text style={styles.value}>{extincteurDetails?.InstallationEquipement.Numero}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Emplacement:</Text>
+              <Text style={styles.value}>{extincteurDetails?.InstallationEquipement.Emplacement}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Statut:</Text>
+              <Text style={styles.value}>{extincteurDetails?.InstallationEquipement.statut}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Type:</Text>
+              <Text style={styles.value}>{extincteurDetails?.InstallationEquipement.Equipement.Extincteurs[0]?.TypeExtincteur.nom}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>En Service:</Text>
+              <Text style={styles.value}>{formatDate(extincteurDetails?.HorsService)}</Text>
+            </View>
+          </View>
+  
+          <View style={styles.rightColumn}>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Date de fabrication:</Text>
+              <Text style={styles.value}>{formatDate(extincteurDetails?.DateFabrication)}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Date du premier chargement:</Text>
+              <Text style={styles.value}>{formatDate(extincteurDetails?.DatePremierChargement)}</Text>
+            </View>
+            <View style={styles.infoRow}>
+              <Text style={styles.label}>Dernière vérification:</Text>
+              <Text style={styles.value}>{formatDate(extincteurDetails?.DateDerniereVerification)}</Text>
+            </View>
+           
+          </View>
+        </View>
+  
+        {/* Tâches de maintenance */}
+        <View style={styles.table}>
+          <View style={styles.tableHeader}>
+            <Text style={[styles.tableCellHeader, styles.cellTask]}>Tâches</Text>
+            <Text style={[styles.tableCellHeader, styles.cellStatus]}>Statut</Text>
+            <Text style={[styles.tableCellHeader, styles.cellObs]}>Observations</Text>
+          </View>
+  
+          {extincteurDetails?.maintenanceActions?.map((action: any, index: number) => (
+            <View key={action.id} style={styles.tableRow}>
+              <View style={[styles.tableCell, styles.cellTask]}>
+                <Text>{action.actionDetails.libeleAction}</Text>
+              </View>
+              <View style={[styles.tableCell, styles.cellStatus]}>
+                <View style={styles.iconContainer}>
+                  {selectedStatus[action.id] === 'valide' ? <CheckIcon /> : <CrossIcon />}
+                </View>
+              </View>
+              <View style={[styles.tableCell, styles.cellObs]}>
+                <Text>{observations[action.id] || 'Aucune observation'}</Text>
+              </View>
+            </View>
+          ))}
+        </View>
+  
+        {/* Footer */}
+        <Text style={styles.footer}>DHI - Solutions and Integrated Systems</Text>
+      </Page>
+    </Document>
+  );
+  
+};
+
+
 
 const StatusBadge = ({ status }: { status: string }) => {
   const getStatusStyle = () => {
@@ -230,7 +494,7 @@ export default function ExtincteurPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-gray-800">
-            Détails de l'extincteur
+            Fiche de l'extincteur
           </CardTitle>
          
         </CardHeader>
@@ -293,7 +557,7 @@ export default function ExtincteurPage() {
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-md">
-                  <h3 className="font-semibold text-gray-700">Dernière vérification</h3>
+                  <h3 className="font-semibold text-gray-(00">Dernière vérification</h3>
                   <p className="text-gray-900 mt-1">
                     {formatDate(extincteurDetails.DateDerniereVerification)}
                   </p>
@@ -301,7 +565,7 @@ export default function ExtincteurPage() {
               </div>
 
               <div className="mt-8 mb-6">
-                <h3 className="text-xl font-semibold mb-4">Liste des tâches de maintenance</h3>
+                
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -316,12 +580,13 @@ export default function ExtincteurPage() {
                         <TableCell className="font-medium">
                           {action.actionDetails.libeleAction}
                         </TableCell>
-                        <TableCell>
+                        <TableCell> 
                           <div className="flex space-x-4">
                             <button
                               type="button"
                               onClick={() => handleStatusChange(action.id, 'valide')}
                               className="focus:outline-none"
+                              disabled
                             >
                               <FaCheckCircle
                                 className={`w-6 h-6 transition-colors ${
@@ -335,6 +600,7 @@ export default function ExtincteurPage() {
                               type="button"
                               onClick={() => handleStatusChange(action.id, 'non-valide')}
                               className="focus:outline-none"
+                              disabled
                             >
                               <FaTimesCircle
                                 className={`w-6 h-6 transition-colors ${
@@ -343,7 +609,7 @@ export default function ExtincteurPage() {
                                     : 'text-gray-300'
                                 }`}
                               />
-                            </button>
+                            </button> 
                           </div>
                         </TableCell>
                         <TableCell>
@@ -352,6 +618,7 @@ export default function ExtincteurPage() {
                             value={observations[action.id] || ''}
                             onChange={(e) => handleObservationChange(action.id, e.target.value)}
                             placeholder="Ajouter une observation..."
+                            disabled
                           />
                         </TableCell>
                       </TableRow>
@@ -360,52 +627,22 @@ export default function ExtincteurPage() {
                 </Table>
               </div>
 
-              <div className="flex justify-end space-x-4 mt-6">
-                <Button
-                  onClick={() => router.back()}
-                  className="bg-gray-500 hover:bg-gray-600 text-white"
-                >
-                  Retour
-                </Button>
-                <Button
-                  onClick={() => setIsConfirmDialogOpen(true)}
-                  disabled={isSaving}
-                  className="bg-blue-500 hover:bg-blue-600 text-white"
-                >
-                  Valider l'inspection
-                </Button>
-              </div>
+              
             </>
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={isConfirmDialogOpen} onOpenChange={setIsConfirmDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmation de validation</DialogTitle>
-            <DialogDescription>
-              Êtes-vous sûr de vouloir valider l'inspection de cet extincteur ?
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end space-x-4 mt-4">
-          <Button
-              onClick={() => setIsConfirmDialogOpen(false)}
-              variant="outline"
-              className="bg-gray-500 text-white hover:bg-gray-600"
-            >
-              Annuler
-            </Button>
-            <Button
-              onClick={handleValidate}
-              disabled={isSaving}
-              className="bg-blue-500 hover:bg-blue-600 text-white"
-            >
-              {isSaving ? 'Validation...' : 'Confirmer'}
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
+      <PDFDownloadLink
+  document={<ExtincteurPDF extincteurDetails={extincteurDetails} selectedStatus={selectedStatus} observations={observations} />}
+  fileName="extincteur_details.pdf"
+>
+  {({ loading }: { loading: boolean }) => (
+    <Button disabled={loading}>
+      {loading ? 'Génération du PDF...' : 'Télécharger PDF'}
+    </Button>
+  )}
+</PDFDownloadLink>
+      
     </div>
   );
 }

@@ -5,6 +5,7 @@ import { Table, TableHeader, TableBody, TableRow, TableCell } from '@/components
 import { fetchDetails } from '@/lib/fonctionas'; // Assurez-vous que fetchDetails est importé
 import { getStatut, getPlanning, getType } from '@/actions/technicien/planning'; // Importation des fonctions existantes
 import { useRouter } from 'next/navigation'; // Utilisation de useRouter pour la redirection
+import { useSession } from 'next-auth/react'; // Importation de la session utilisateur
 
 // Fonction utilitaire pour formater les dates au format 'DD/MM/YYYY'
 const formatDate = (date: Date | string) => {
@@ -21,12 +22,14 @@ const formatDate = (date: Date | string) => {
 export function RecentInterventions() { // Pas besoin de passer `plans` car les données seront récupérées ici
   const [maintenances, setMaintenances] = useState<any[]>([]);
   const router = useRouter();  // Initialisation du hook useRouter pour gérer la redirection
+  const { data: session } = useSession();  // Récupération de la session utilisateur
+  const technicienId = session?.user?.id;  // Récupération de l'ID du technicien
 
   useEffect(() => {
     const fetchMaintenances = async () => {
       try {
         // Récupérer tous les plans de type "Maintenance" pour le technicien
-        const planning = await getPlanning(); // Récupère le planning complet (assurez-vous d'avoir l'ID du technicien ici)
+        const planning = await getPlanning(technicienId); // Récupère le planning complet (assurez-vous d'avoir l'ID du technicien ici)
 
         // Ajouter les détails associés à chaque plan
         const planningWithDetails = await Promise.all(

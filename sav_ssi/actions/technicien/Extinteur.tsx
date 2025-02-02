@@ -134,7 +134,7 @@ const ExtincteursPageContent: React.FC<ExtinguisherProps> = ({ id }) => {
   };
 
   const handleValidateClick = (idInstallationEquipement: number) => {
-    router.push(`/technicien/Extincteur/${idInstallationEquipement}?installationId=${installationId}`);
+    router.push(`/technicien/Maintenances/Extincteur/${idInstallationEquipement}?installationId=${installationId}&maintenanceId=${id}`);
   };
 
   if (loading) {
