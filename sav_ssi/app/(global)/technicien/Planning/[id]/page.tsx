@@ -105,11 +105,11 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
   const type = searchParams?.get('type');
   console.log("Type:", type); // Debugging line
 
-  const saveToLocalStorage = (data: z.infer<typeof formSchema>) => {
+  {/*const saveToLocalStorage = (data: z.infer<typeof formSchema>) => {
     if (id) {
       localStorage.setItem(`formData-${id}`, JSON.stringify(data));
     }
-  };
+  };*/}
 
   const handleValidateClick = (id, type) => {
     if (type === 'maintenance') {
@@ -357,8 +357,6 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
   
 
 
-
-  
   const handleSuspendOrResume = async (type: 'intervention' | 'maintenance') => {
     setIsSaving(true);
     try {
