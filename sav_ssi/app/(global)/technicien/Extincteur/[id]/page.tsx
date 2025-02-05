@@ -3,13 +3,6 @@
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader,
-  DialogTitle,
-  DialogDescription 
-} from "@/components/ui/dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { getExtincteurDetails,updateMaintenanceActionExtincteur } from '@/actions/technicien/planning';
@@ -18,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink,Svg, Path } from '@react-pdf/renderer';
+import Link from 'next/link';
 ; // Adjust the import path as necessary
 
 interface ExtincteurDetails {
@@ -264,7 +258,7 @@ const ExtincteurPDF = ({ extincteurDetails, selectedStatus, observations }: any)
             </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>En Service:</Text>
-              <Text style={styles.value}>{formatDate(extincteurDetails?.HorsService)}</Text>
+              <Text style={styles.value}>{(extincteurDetails?.HorsService)? "non" : "oui"}</Text>
             </View>
           </View>
   
@@ -358,7 +352,7 @@ export default function ExtincteurPage() {
   const params = useParams();
   const router = useRouter();
   const idInstallationEquipement = parseInt(params.id as string);
-  
+  const idMaintenance = parseInt(useSearchParams().get('maintenanceId') as string);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [extincteurDetails, setExtincteurDetails] = useState<ExtincteurDetails | null>(null);
@@ -381,7 +375,7 @@ export default function ExtincteurPage() {
   
       try {
         setLoading(true);
-        const response = await getExtincteurDetails(idInstallationEquipement);
+        const response = await getExtincteurDetails(idInstallationEquipement,idMaintenance);
         console.log("Détails de l'extincteur récupérés :", response); // Log des données récupérées
   
         if (!response.success || !response.data) {
@@ -491,6 +485,25 @@ export default function ExtincteurPage() {
 
   return (
     <div className="container mx-auto p-4">
+      <div className='mb-5 flex justify-between'>
+            <div>
+              <Link href={`/technicien/Planning/${idMaintenance}?type=maintenance`}>
+                Retour à la page de maintenance
+              </Link>
+            </div>
+            <div>
+                <PDFDownloadLink
+                    document={<ExtincteurPDF extincteurDetails={extincteurDetails} selectedStatus={selectedStatus} observations={observations} />}
+                    fileName="extincteur_details.pdf"
+                      >
+                  {({ loading }: { loading: boolean }) => (
+                    <Button disabled={loading}>
+                      {loading ? 'Génération du PDF...' : 'Télécharger PDF'}
+                    </Button>
+                  )}
+                </PDFDownloadLink>    
+              </div>
+            </div>
       <Card>
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-gray-800">
@@ -632,17 +645,7 @@ export default function ExtincteurPage() {
           )}
         </CardContent>
       </Card>
-      <PDFDownloadLink
-  document={<ExtincteurPDF extincteurDetails={extincteurDetails} selectedStatus={selectedStatus} observations={observations} />}
-  fileName="extincteur_details.pdf"
->
-  {({ loading }: { loading: boolean }) => (
-    <Button disabled={loading}>
-      {loading ? 'Génération du PDF...' : 'Télécharger PDF'}
-    </Button>
-  )}
-</PDFDownloadLink>
-      
+
     </div>
   );
 }

@@ -47,7 +47,7 @@ const MaintenanceTab = ({ id }: { id: number }) => {
         <TableBody>
           {maintenances.map((maintenance) => (
             <TableRow key={maintenance.id} className="hover:bg-blue-100">
-              <TableCell>{new Date(maintenance.dateMaintenance).toLocaleDateString()}</TableCell>
+              <TableCell>{new Date(maintenance.datePlanifiee).toLocaleDateString()}</TableCell>
               <TableCell>{maintenance.typeMaintenance}</TableCell>
               <TableCell className={maintenance.statut === 'PLANIFIE' ? 'text-green-500' : maintenance.statut === 'TERMINE' ? 'text-red-500' : ''}>
                 {maintenance.statut}

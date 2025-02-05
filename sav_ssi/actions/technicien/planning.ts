@@ -1,13 +1,98 @@
 'use server';
 
 import prisma from "@/lib/prisma";
-import { revalidatePath } from 'next/cache';
-import { Main } from "next/document";
 
+export async function getMaintenanceActionsForExtincteurs(maintenanceId: number) {
+  try {
+    if (!maintenanceId) {
+      throw new Error("L'ID de la maintenance est requis");
+    }
 
+    console.log('Récupération des actions de maintenance pour maintenance ID:', maintenanceId);
+
+    const maintenanceActions = await prisma.maintenanceActionExtincteur.findMany({
+      where: {
+        idMaintenance: maintenanceId
+      },
+      include: {
+        ActionMaintenanceExtincteur: true,
+        InstallationExtincteur: {
+          include: {
+            InstallationEquipement: {
+              include: {
+                Equipement: {
+                  include: {
+                    Extincteurs: {
+                      include: {
+                        TypeExtincteur: true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!maintenanceActions.length) {
+      return {
+        success: false,
+        message: 'Aucune action de maintenance trouvée pour cette maintenance',
+        data: []
+      };
+    }
+
+    const formattedData = maintenanceActions.map(action => ({
+      id: action.id,
+      idMaintenance: action.idMaintenance,
+      idActionMaintenanceExtincteur: action.idActionMaintenanceExtincteur,
+      idInstallationExtincteur: action.idInstallationExtincteur,
+      statut: action.statut,
+      observation: action.observation,
+      actionDetails: {
+        id: action.ActionMaintenanceExtincteur.id,
+        libeleAction: action.ActionMaintenanceExtincteur.libeleAction
+      },
+      extincteur: {
+        idInstallationEquipement: action.InstallationExtincteur.InstallationEquipement.id,
+        number: action.InstallationExtincteur.InstallationEquipement.Numero || '',
+        location: action.InstallationExtincteur.InstallationEquipement.Emplacement || '',
+        status: action.InstallationExtincteur.InstallationEquipement.statut,
+        typePression: action.InstallationExtincteur.InstallationEquipement.Equipement.Extincteurs[0]?.typePression || '',
+        modeVerification: action.InstallationExtincteur.InstallationEquipement.Equipement.Extincteurs[0]?.modeVerification || '',
+        typeExtincteur: action.InstallationExtincteur.InstallationEquipement.Equipement.Extincteurs[0]?.TypeExtincteur?.nom || '',
+        details: {
+          DateFabrication: action.InstallationExtincteur.DateFabrication.toISOString(),
+          DatePremierChargement: action.InstallationExtincteur.DatePremierChargement.toISOString(),
+          DateDerniereVerification: action.InstallationExtincteur.DateDerniereVerification.toISOString()
+        }
+      }
+    }));
+
+    console.log('Données formatées:', formattedData);
+
+    return {
+      success: true,
+      data: formattedData,
+      message: null
+    };
+
+  } catch (error) {
+    console.error('Erreur lors de la récupération des actions de maintenance:', error);
+    return {
+      success: false,
+      message: error instanceof Error ? error.message : 'Échec de la récupération des actions de maintenance',
+      data: []
+    };
+  }
+}
 
 // Fonction pour récupérer les détails d'un extincteur spécifique
-export async function getExtincteurDetails(installationEquipementId: number) {
+export async function getExtincteurDetails(installationEquipementId: number,
+  maintenanceId: number
+) {
   try {
     if (!installationEquipementId) {
       throw new Error("L'ID de l'installation équipement est requis");
@@ -34,6 +119,9 @@ export async function getExtincteurDetails(installationEquipementId: number) {
           }
         },
         MaintenanceActionExtincteur: {
+          where: {
+            idMaintenance: maintenanceId
+          },
           include: {
             ActionMaintenanceExtincteur: true
           }
@@ -213,6 +301,7 @@ export async function getExtincteursForSystem(installationId: number) {
 
     const formattedData = installationEquipements.map(equipment => ({
       idInstallationEquipement: equipment.id,
+      idInstallationExtincteur: equipment.InstallationExtincteur[0]?.id,
       idInstallation: equipment.idInstallation,
       number: equipment.Numero || '',
       location: equipment.Emplacement || '',

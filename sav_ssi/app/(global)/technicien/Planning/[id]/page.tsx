@@ -34,6 +34,12 @@ const formSchema = z.object({
   }),
   dateIntervention: z.string().min(1, {
     message: 'Date of intervention is required.'
+  }),
+  Heuredebut: z.string().min(1, {
+    message: 'Heure de début is required.'
+  }),
+  Heuredefin: z.string().min(1, {
+    message: 'Heure de fin is required.'
   })
 });
 
@@ -92,14 +98,18 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
   const type = searchParams?.get('type');
   console.log("Type:", type); // Debugging line
 
-  {/*const saveToLocalStorage = (data: z.infer<typeof formSchema>) => {
+  const saveToLocalStorage = (data: z.infer<typeof formSchema>) => {
     if (id) {
       localStorage.setItem(`formData-${id}`, JSON.stringify(data));
     }
-  };*/}
+  };
 
-  const handleValidateClick = (id, type) => {
+  const handleValidateClick = (id:number, type:string) => {
     if (type === 'maintenance') {
+      if(details.systeme === 'MOYENS DE SECOURS EXTINCTEURS'){
+        router.push(`/technicien/Maintenances/ExtincteursRecapPDF/${id}`);
+        return;
+      }
       router.push(`/technicien/Maintenances/${id}`);
     } else if (type === 'intervention') {
       router.push(`/technicien/Interventions/${id}`);
@@ -162,7 +172,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
   
       fetchData();
     }
-  }, [id, type]); // Removed form from dependencies array
+  }, [id]); // Added form to dependencies array
   
   useEffect(() => {
     const fetchSystemAndActions = async () => {
@@ -206,7 +216,7 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
     if (details) {
       fetchSystemAndActions();
     }
-  }, [details, type, selectedStatus, observations]); // Added selectedStatus and observations to dependencies array
+  }, [details,type]); // Added selectedStatus and observations to dependencies array
   
   useEffect(() => {
     if (id && type) {
@@ -641,8 +651,6 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                       <Input value={details.siteName || 'N/A'} readOnly />
                     
                   </FormItem>
-                  
-                  
                 </div>
                 <div className="space-y-5">
                   <FormItem>

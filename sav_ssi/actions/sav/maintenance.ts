@@ -2,6 +2,7 @@
 
 import { prisma } from "@/prisma";
 import { Maintenance } from "@prisma/client";
+import { randomInt } from "node:crypto";
 
 // Mettre à jour le statut de la maintenance
 export const updateMaintenanceStatus = async (id: number, statut: string): Promise<Maintenance> => {
@@ -157,7 +158,7 @@ export const planifierMaintenanceGlobal = async (data: {
     // Créer la maintenance
     const maintenance = await tx.maintenance.create({
       data: {
-        numero: data.numero,
+        numero: data.idSite.toString().concat(randomInt(1000, 9999).toString()),
         datePlanifiee: new Date(data.datePlanifiee),
         description: data.description,
         statut: "PLANIFIE",

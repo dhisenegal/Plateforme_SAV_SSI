@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Svg, Path } from '@react-pdf/renderer';
 import { Image as PdfImage,  } from '@react-pdf/renderer';
-import { fetchDetails, fetchMaintenanceActions, updateMaintenanceActions } from '@/lib/fonctionas';
+import { fetchDetails, fetchMaintenanceActions } from '@/lib/fonctionas';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
 
 // Ajout des composants SVG personnalisés
@@ -213,7 +213,7 @@ const MaintenancePDF = ({ data, actions }) => (
       </View>
 
       {/* Nouveau séparateur sous le titre */}
-     
+
 
       {/* Troisième partie du cadran */}
       
@@ -237,15 +237,15 @@ const MaintenancePDF = ({ data, actions }) => (
         <View style={styles.infoGroup}>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Date Prévu: </Text>
-            <Text style={styles.value}>{formatDate1(data.datePlanifiee)}</Text>
+            <Text style={styles.value}>{formatDateTime(data.datePlanifiee)}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Date et Heure Début : </Text>
-            <Text style={styles.value}>{formatDate(data.dateMaintenance)}</Text>
+            <Text style={styles.value}>{formatDateTime(data.dateMaintenance)}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Date et Heure Fin : </Text>
-            <Text style={styles.value}>{formatDate(data.dateFinMaint)}</Text>
+            <Text style={styles.value}>{formatDateTime(data.dateFinMaint)}</Text>
           </View>
         </View>
       </View>
@@ -360,6 +360,36 @@ const formatHeure = (dateTime: string | undefined): string => {
   }
 };
 
+const formatDateTime = (dateStr) => {
+  if (!dateStr || dateStr === 'N/A') return 'N/A';
+  
+  try {
+    const date = new Date(dateStr);
+    
+    // Vérifier si la date est valide
+    if (isNaN(date.getTime())) {
+      console.error("Date invalide:", dateStr);
+      return 'N/A';
+    }
+
+    // Format de la date
+    const dateFormatted = new Intl.DateTimeFormat('fr-FR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    }).format(date);
+
+    return dateFormatted;
+  } catch (error) {
+    console.error("Erreur de formatage de la date:", error);
+    return 'N/A';
+  }
+};
+
+
 const MaintenancePage = () => {
   const params = useParams();
   const id = Array.isArray(params?.id) ? params.id[0] : params?.id;
@@ -465,9 +495,9 @@ const MaintenancePage = () => {
                 <p><strong>Téléphone :</strong> {data.numero || 'N/A'}</p>
               </div>
               <div className="space-y-2">
-                <p><strong>Date Prévu:</strong> {(formatDate1(data.datePlanifiee)|| 'N/A')}</p>
-                <p><strong>Date et Heure Début :</strong> {formatDate(data.dateMaintenance || 'N/A' )}</p>
-                <p><strong>Date et Heure Fin :</strong> {formatDate(data.dateFinMaint || 'N/A')}</p>
+                <p><strong>Date Prévu:</strong> {(formatDateTime(data.datePlanifiee).split(' ')[0]|| 'N/A')}</p>
+                <p><strong>Date et Heure Début :</strong> {formatDateTime(data.dateMaintenance || 'N/A' )}</p>
+                <p><strong>Date et Heure Fin :</strong> {formatDateTime(data.dateFinMaint || 'N/A')}</p>
               </div>
             </div>
 

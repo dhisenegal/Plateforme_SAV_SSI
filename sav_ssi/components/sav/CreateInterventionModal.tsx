@@ -136,6 +136,11 @@ const CreateInterventionModal = ({ onCreate }) => {
   };
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      toast.error("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
     try {
       // Récupérer d'abord le technicien si une planification est faite
       let technicien = null;
@@ -207,6 +212,30 @@ const CreateInterventionModal = ({ onCreate }) => {
       console.error("Erreur complète:", error);
       toast.error("Erreur lors de la création de l'intervention");
     }
+  };
+  interface FormErrors {
+    idClient: boolean;
+    idSite: boolean;
+    idSysteme: boolean;
+    typePanneDeclare: boolean;
+    prenomContact: boolean;
+    telephoneContact: boolean;
+    datePlanifiee: boolean;
+    idTechnicien: boolean;
+  }
+  const validateForm = () => {
+    const errors = {
+      idClient: !formData.idClient,
+      idSite: !formData.idSite,
+      idSysteme: !formData.idSysteme,
+      typePanneDeclare: !formData.typePanneDeclare,
+      prenomContact: !formData.prenomContact,
+      telephoneContact: !formData.telephoneContact,
+      datePlanifiee: planificationData.planifierMaintenant && !planificationData.datePlanifiee,
+      idTechnicien: planificationData.planifierMaintenant && !planificationData.idTechnicien
+    };
+
+    return !Object.values(errors).some(error => error);
   };
 
   return (
