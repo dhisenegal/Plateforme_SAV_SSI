@@ -5,12 +5,24 @@ import Image from "next/image";
 import Link from "next/link";
 import { FaBars, FaTimes } from "react-icons/fa";
 import { ModeToggle } from "./mode-toggle";
+import {useSession, signOut} from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 const Nav = () => {
   const [isOpen, setIsOpen] = useState(false);
 
+  const { data: session } = useSession(); 
+  const router = useRouter(); 
+
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+  const handleLogin = () => {
+    router.push("/auth/login"); 
+  };
+
+  const handleLogout = () => {
+    signOut(); // Déconnexion via next-auth
   };
 
   return (
@@ -47,11 +59,20 @@ const Nav = () => {
      <div className="flex items-center space-x-4">
       <ModeToggle />
         <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hidden md:block">
-          Connexion
+        {session ? (
+            <Link href="/" onClick={handleLogout} 
+            className="ml-4 hover:text-blue-400 cursor-pointer">
+              Déconnexion
+            </Link>
+          ) : (
+            <Link href="/auth/login" onClick={handleLogin} 
+            className="ml-4 hover:text-blue-400 cursor-pointer">
+              Connexion
+            </Link>
+          )}
         </button>
      </div>
       
-
       {/* Icône Hamburger pour Mobile */}
       <div className="md:hidden flex items-center">
         <button onClick={toggleMenu} className="text-gray-700 focus:outline-none">
@@ -85,7 +106,17 @@ const Nav = () => {
             </li>
             <li>
               <button onClick={toggleMenu} className="bg-blue-600 text-white px-4 py-2 rounded-lg">
-                Connexion
+              {session ? (
+            <Link href="/" onClick={handleLogout} 
+            className="ml-4 hover:text-blue-400 cursor-pointer">
+              Déconnexion
+            </Link>
+          ) : (
+            <Link href="/auth/login" onClick={handleLogin} 
+            className="ml-4 hover:text-blue-400 cursor-pointer">
+              Connexion
+            </Link>
+          )}
               </button>
             </li>
           </ul>
