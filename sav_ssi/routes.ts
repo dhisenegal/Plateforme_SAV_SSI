@@ -3,9 +3,12 @@
  * ces routes ne nécessitent pas du tout de s'authentifier
  * @type {string[]}
  */
-export const publicRoutes = [
-  "/",
-];
+export const publicRoutes = (() =>{
+  const routes = ["/"];
+
+  return routes;
+})();
+  
 
 /**
  * un tableau de routes non accessibles au public
@@ -16,7 +19,6 @@ export const publicRoutes = [
 
 export const authRoutes = [
   "/auth/login",
-  "/auth/register",
 ];
 /**
  * un string qui contient le préfixe des routes 
@@ -29,4 +31,12 @@ export const apiAuthPrefix = "/api/auth"
  * utilisateurs aprés authentification
  * @type {string}
  */
-export const DEFAULT_LOGIN_REDIRECT = "/admin"
+// Remove DEFAULT_LOGIN_REDIRECT export and replace with role mappings
+export const ROLE_REDIRECTS = {
+  admin: "/admin",
+  technicien: "/technicien",
+  sav: "/sav",
+  client: "/client"
+} as const;
+
+export const DEFAULT_LOGIN_REDIRECT = "/admin";

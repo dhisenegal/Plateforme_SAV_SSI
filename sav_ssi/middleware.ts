@@ -1,46 +1,55 @@
-import authConfig from "./auth.config"
-import NextAuth from "next-auth"
-import { DEFAULT_LOGIN_REDIRECT,
+import { NextResponse } from 'next/server';
+import { auth } from "@/auth"
+import { 
   apiAuthPrefix,
   authRoutes,
-  publicRoutes
- } from "./routes";
+  publicRoutes,
+  ROLE_REDIRECTS 
+} from "./routes";
 
-const {auth} = NextAuth(authConfig)
- 
-export default auth((req) => {
-  
-  const {nextUrl} = req;
-  const isLoggedIn = !!req.auth;
+export default auth(async (req) => {
+  try {
+    const { nextUrl } = req;
+    const session = await auth();
+    
+    
+    // Get user role from session user object
+    const userRole = session?.user?.role?.nom?.toLowerCase();
+    
 
-  const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
-  const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
-  const isAuthRoute = authRoutes.includes(nextUrl.pathname);
+    const isLoggedIn = !!session;
 
-  if(isApiAuthRoute){
-    return;
-  }
-
-  if(isAuthRoute){
-    if(isLoggedIn){
-      return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
+    // Root path redirect
+    if (nextUrl.pathname === '/') {
+      return NextResponse.redirect(new URL('/auth/login', nextUrl));
     }
-    return;
-  }
 
-  if(!isLoggedIn && !isPublicRoute){
-    return Response.redirect(new URL("/auth/login", nextUrl));
+    const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
+    if (isApiAuthRoute) return null;
+
+    const isPublicRoute = publicRoutes.includes(nextUrl.pathname);
+    const isAuthRoute = authRoutes.includes(nextUrl.pathname);
+
+    if (isAuthRoute) {
+      if (isLoggedIn && userRole) {
+        const redirectUrl = ROLE_REDIRECTS[userRole] || '/admin';
+        console.log(`Redirecting ${userRole} to: ${redirectUrl}`);
+        return NextResponse.redirect(new URL(redirectUrl, nextUrl));
+      }
+      return null;
+    }
+
+    if (!isLoggedIn && !isPublicRoute) {
+      return NextResponse.redirect(new URL('/auth/login', nextUrl));
+    }
+
+    return null;
+  } catch (error) {
+    console.error("Middleware error:", error);
+    return NextResponse.redirect(new URL('/auth/login', req.nextUrl));
   }
-  
-  return;
-})
- 
-// Optionally, don't invoke Middleware on some paths
+});
+
 export const config = {
-  matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
-    '/(api|trpc)(.*)',
-  ],
+  matcher: ['/((?!.+\\.[\\w]+$|_next).*)', '/', '/(api|trpc)(.*)'],
 }
