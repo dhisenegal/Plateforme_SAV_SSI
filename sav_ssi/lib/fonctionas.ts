@@ -1,16 +1,22 @@
 "use server";
 
-import prisma from '@/lib/prisma';
+import prisma from "@/lib/prisma";
 
-export async function fetchDetails(id, type) {
+/**
+ * Récupérer les détails d'une maintenance ou d'une intervention
+ * @param {string | number} id
+ * @param {string} type
+ * @returns {Promise<any>}
+ */
+export async function fetchDetails(id: string | number, type: string) {
   if (!id || !type) {
-    throw new Error('ID ou type manquant');
+    throw new Error("ID ou type manquant");
   }
 
   try {
-    const parsedId = parseInt(id);
+    const parsedId = parseInt(String(id), 10);
 
-    if (type === 'intervention') {
+    if (type === "intervention") {
       const intervention = await prisma.intervention.findUnique({
         where: { id: parsedId },
         include: {
@@ -22,7 +28,7 @@ export async function fetchDetails(id, type) {
       });
 
       if (!intervention) {
-        throw new Error('Intervention non trouvée');
+        throw new Error("Intervention non trouvée");
       }
 
       return {
@@ -30,9 +36,9 @@ export async function fetchDetails(id, type) {
         statut: intervention.statut,
         description: intervention.typePanneDeclare,
         dateDeclaration: intervention.dateDeclaration,
-        clientName: intervention.Client?.nom || null,
-        siteName: intervention.Site?.nom || null,
-        systeme: intervention.Systeme?.nom || null,
+        clientName: intervention.Client?.nom ?? null,
+        siteName: intervention.Site?.nom ?? null,
+        systeme: intervention.Systeme?.nom ?? null,
         diagnostics: intervention.diagnostics,
         travauxRealises: intervention.travauxRealises,
         pieceFournies: intervention.pieceFournies,
@@ -46,10 +52,10 @@ export async function fetchDetails(id, type) {
         datePlanifiee: intervention.datePlanifiee,
         sousGarantie: intervention.sousGarantie,
         urgent: intervention.urgent,
-        technicienName: intervention.Technicien?.prenom || null,
+        technicienName: intervention.Technicien?.prenom ?? null,
         dateFinInt: intervention.dateFinInt,
       };
-    } else if (type === 'maintenance') {
+    } else if (type === "maintenance") {
       const maintenance = await prisma.maintenance.findUnique({
         where: { id: parsedId },
         include: {
@@ -62,52 +68,49 @@ export async function fetchDetails(id, type) {
           },
           Contact: {
             include: {
-              Utilisateur:
-              {
-                select: {
-                  numero: true,
-                },
-              },
-            },      
-          },
-          Technicien: {
-            select: {
-              prenom: true,
+              Utilisateur: { select: { numero: true } },
             },
           },
+          Technicien: { select: { prenom: true } },
         },
       });
 
       if (!maintenance) {
-        throw new Error('Maintenance non trouvée');
+        throw new Error("Maintenance non trouvée");
       }
 
       return {
         id: maintenance.id,
         statut: maintenance.statut,
-        clientName: maintenance.Installation?.Client?.nom || null,
-        siteName: maintenance.Installation?.Site?.nom || null,
+        clientName: maintenance.Installation?.Client?.nom ?? null,
+        siteName: maintenance.Installation?.Site?.nom ?? null,
         datePlanifiee: maintenance.datePlanifiee,
-        systeme: maintenance.Installation?.Systeme?.nom || null,
+        systeme: maintenance.Installation?.Systeme?.nom ?? null,
         description: maintenance.description,
         idInstallation: maintenance?.idInstallation,
-        technicienName: maintenance.Technicien?.prenom || null,
+        technicienName: maintenance.Technicien?.prenom ?? null,
         dateMaintenance: maintenance.dateMaintenance,
         dateFinMaint: maintenance.dateFinMaint,
-        numero: maintenance.Contact?.Utilisateur?.numero || null,
+        numero: maintenance.Contact?.Utilisateur?.numero ?? null,
       };
     } else {
-      throw new Error('Type invalide');
+      throw new Error("Type invalide");
     }
   } catch (error) {
-    console.error('Erreur lors de la récupération des détails :', error);
-    throw new Error('Erreur lors de la récupération des détails');
+    console.error("Erreur lors de la récupération des détails :", error);
+    throw new Error("Erreur lors de la récupération des détails");
   }
 }
 
+/**
+ * Mettre à jour les actions associées à une maintenance.
+ * @param {string} maintenanceId
+ * @param {any[]} actions
+ * @returns {Promise<{ success: true }>}
+ */
 export async function updateMaintenanceActions(maintenanceId: string, actions: any[]) {
   if (!maintenanceId || !actions) {
-    throw new Error('Données manquantes pour la mise à jour');
+    throw new Error("Données manquantes pour la mise à jour");
   }
 
   try {
@@ -115,22 +118,21 @@ export async function updateMaintenanceActions(maintenanceId: string, actions: a
 
     // Récupérer d'abord toutes les actions existantes pour cette maintenance
     const existingActions = await prisma.maintenanceAction.findMany({
-      where: { 
-        idMaintenance: parsedId 
-      },
-      orderBy: {
-        id: 'asc'
-      }
+      where: { idMaintenance: parsedId },
+      orderBy: { id: "asc" },
     });
 
     // Grouper les actions existantes par idAction pour trouver les doublons
-    const actionsByIdAction = existingActions.reduce((acc, action) => {
-      if (!acc[action.idAction]) {
-        acc[action.idAction] = [];
-      }
-      acc[action.idAction].push(action);
-      return acc;
-    }, {});
+    const actionsByIdAction = existingActions.reduce(
+      (acc: Record<string, any[]>, action) => {
+        if (!acc[action.idAction]) {
+          acc[action.idAction] = [];
+        }
+        acc[action.idAction].push(action);
+        return acc;
+      },
+      {}
+    );
 
     // Utiliser une transaction pour s'assurer que toutes les opérations sont atomiques
     await prisma.$transaction(async (tx) => {
@@ -143,109 +145,111 @@ export async function updateMaintenanceActions(maintenanceId: string, actions: a
           await tx.maintenanceAction.deleteMany({
             where: {
               id: {
-                in: duplicatesToDelete.map(a => a.id)
-              }
-            }
+                in: duplicatesToDelete.map((a) => a.id),
+              },
+            },
           });
         }
       }
 
       // 2. Mettre à jour les actions restantes
-      const updatePromises = actions.map(action => {
-        const existingAction = existingActions.find(ea => 
-          ea.idAction === action.idAction && 
-          ea.idMaintenance === parsedId
+      const updatePromises = actions.map((action) => {
+        const existingAction = existingActions.find(
+          (ea) =>
+            ea.idAction === action.idAction && ea.idMaintenance === parsedId
         );
 
         if (existingAction) {
           return tx.maintenanceAction.update({
-            where: {
-              id: existingAction.id
-            },
+            where: { id: existingAction.id },
             data: {
               statut: action.statut,
-              observation: action.observation
-            }
+              observation: action.observation,
+            },
           });
         }
         return null;
       });
 
-      await Promise.all(updatePromises.filter(p => p !== null));
+      await Promise.all(updatePromises.filter((p) => p !== null));
     });
 
     return { success: true };
   } catch (error) {
-    console.error('Erreur lors de la mise à jour des actions :', error);
-    throw new Error('Erreur lors de la mise à jour des actions');
+    console.error("Erreur lors de la mise à jour des actions :", error);
+    throw new Error("Erreur lors de la mise à jour des actions");
   }
 }
-export async function fetchMaintenanceActions(idMaintenance) {
+
+/**
+ * Récupérer les actions d'une maintenance, en supprimant les doublons.
+ * @param {string | number} idMaintenance
+ * @returns {Promise<any[]>}
+ */
+export async function fetchMaintenanceActions(idMaintenance: string | number) {
   if (!idMaintenance) {
-    throw new Error('ID de maintenance manquant');
+    throw new Error("ID de maintenance manquant");
   }
 
   try {
-    const parsedId = parseInt(idMaintenance);
+    const parsedId = parseInt(String(idMaintenance), 10);
 
-    // Get all actions with duplicates
+    // Récupère toutes les actions (y compris doublons)
     const allActions = await prisma.maintenanceAction.findMany({
-      where: { 
-        idMaintenance: parsedId 
-      },
+      where: { idMaintenance: parsedId },
       include: {
         Action: {
           select: {
             libeleAction: true,
-            id: true
+            id: true,
           },
         },
       },
-      orderBy: {
-        id: 'desc' // Most recent first
-      }
+      orderBy: { id: "desc" }, // Most recent first
     });
 
-    // Group by idAction to find duplicates
-    const actionsByIdAction = allActions.reduce((acc, action) => {
-      if (!acc[action.idAction]) {
-        acc[action.idAction] = [];
-      }
-      acc[action.idAction].push(action);
-      return acc;
-    }, {});
+    // Group by idAction
+    const actionsByIdAction = allActions.reduce(
+      (acc: Record<string, any[]>, action) => {
+        if (!acc[action.idAction]) {
+          acc[action.idAction] = [];
+        }
+        acc[action.idAction].push(action);
+        return acc;
+      },
+      {}
+    );
 
-    // Delete older duplicates and keep most recent
+    // Transaction to delete older duplicates
     await prisma.$transaction(async (tx) => {
       for (const idAction in actionsByIdAction) {
         const actions = actionsByIdAction[idAction];
         if (actions.length > 1) {
-          const [keep, ...duplicates] = actions; // Keep most recent (first due to desc order)
+          const [keep, ...duplicates] = actions; // keep is the most recent (desc order)
           await tx.maintenanceAction.deleteMany({
             where: {
               id: {
-                in: duplicates.map(d => d.id)
-              }
-            }
+                in: duplicates.map((d) => d.id),
+              },
+            },
           });
         }
       }
     });
 
-    // Return latest actions only
-    return Object.values(actionsByIdAction).map(actions => {
-      const latest = actions[0]; // Most recent action
+    // Return only the latest
+    return Object.values(actionsByIdAction).map((actions: any[]) => {
+      const latest = actions[0];
       return {
         action_id: latest.id,
         libeleAction: latest.Action.libeleAction,
         statut: latest.statut,
         observation: latest.observation,
-        idAction: latest.idAction
+        idAction: latest.idAction,
       };
     });
-
   } catch (error) {
-    console.error('Erreur lors de la récupération des actions:', error);
-    throw new Error('Erreur lors de la récupération des actions');
+    console.error("Erreur lors de la récupération des actions:", error);
+    throw new Error("Erreur lors de la récupération des actions");
   }
 }

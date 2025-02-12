@@ -285,7 +285,22 @@ export async function getExtincteursForSystem(installationId: number) {
             }
           }
         },
-        InstallationExtincteur: true
+        InstallationExtincteur: {
+          include: {
+            MaintenanceActionExtincteur: {
+              include: {
+                ActionMaintenanceExtincteur: true,
+                Maintenance: {
+                  select: {
+                    dateMaintenance: true,
+                    numero: true,
+                    statut: true
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     });
 
@@ -317,7 +332,21 @@ export async function getExtincteursForSystem(installationId: number) {
         DateFabrication: equipment.InstallationExtincteur[0].DateFabrication.toISOString(),
         DatePremierChargement: equipment.InstallationExtincteur[0].DatePremierChargement.toISOString(),
         DateDerniereVerification: equipment.InstallationExtincteur[0].DateDerniereVerification.toISOString()
-      } : null
+      } : null,
+      maintenanceActions: equipment.InstallationExtincteur[0]?.MaintenanceActionExtincteur.map(action => ({
+        id: action.id,
+        statut: action.statut,
+        observation: action.observation,
+        maintenance: {
+          numero: action.Maintenance.numero,
+          dateMaintenance: action.Maintenance.dateMaintenance?.toISOString(),
+          statut: action.Maintenance.statut
+        },
+        action: {
+          id: action.ActionMaintenanceExtincteur.id,
+          libeleAction: action.ActionMaintenanceExtincteur.libeleAction
+        }
+      })) || []
     }));
 
     console.log('Données formatées:', formattedData);
@@ -639,7 +668,6 @@ export async function getNextMaintenance() {
           idClient: true,
           diagnostics: true,
           travauxRealises: true,
-          pieceFournies: true,
           Client: {
             select: {
               nom: true, // Récupère uniquement le nom du client
@@ -653,94 +681,211 @@ export async function getNextMaintenance() {
     }
   }
   
-  // Fonction pour récupérer toutes les interventions et maintenances triées par date
-
+  // Constants for pagination
+ 
   
-  export const getPlanning = async (technicienId) => {
-    try {
-      const interventions = await prisma.intervention.findMany({
-        where: {
-          idTechnicien: technicienId
-        },
+ export const getPlanning = async (technicienId) => {
+  try {
+    const interventions = await prisma.intervention.findMany({
+      where: {
+        idTechnicien: technicienId
+      },
+      
+      select: {
+        id: true,
+        statut: true,
+        typePanneDeclare: true,
+        dateDeclaration: true,
+        dateIntervention: true,
+        datePlanifiee: true,
+        diagnostics: true,
+        travauxRealises: true,
         
-        select: {
-          id: true,
-          statut: true,
-          typePanneDeclare: true,
-          dateDeclaration: true,
-          dateIntervention: true,
-          datePlanifiee: true,
-          diagnostics: true,
-          travauxRealises: true,
-          
-          dureeHeure: true,
-          numero: true,
-          
-          prenomContact: true,
-          telephoneContact: true,
-          adresse: true,
-          Client: {
-            select: {
-              nom: true,
-            },
+        dureeHeure: true,
+        numero: true,
+        
+        prenomContact: true,
+        telephoneContact: true,
+        adresse: true,
+        Client: {
+          select: {
+            nom: true,
           },
         },
-        orderBy: {
-          datePlanifiee: "asc",
-        },
+      },
+      orderBy: {
+        datePlanifiee: "asc",
+      },
+    
+    });
+
+    const maintenances = await prisma.maintenance.findMany({
+      where: {
+        idTechnicien: technicienId
+      },
       
-      });
-  
-      const maintenances = await prisma.maintenance.findMany({
-        where: {
-          idTechnicien: technicienId
-        },
-        
-        include: {
-          Installation: {
-            select: {
-              Client: {
-                select: {
-                  nom: true,
-                },
+      include: {
+        Installation: {
+          select: {
+            Client: {
+              select: {
+                nom: true,
               },
             },
           },
         },
-        orderBy: {
-          dateMaintenance: "asc",
-        },
-      });
-      console.log(maintenances);
+      },
+      orderBy: {
+        dateMaintenance: "asc",
+      },
+    });
+    console.log(maintenances);
 
-      // Fusionner interventions et maintenances, puis trier par date
-      const planning = [...interventions, ...maintenances].sort((a, b) => {
-        const dateA = new Date(a.datePlanifiee || a.dateMaintenance);
-        const dateB = new Date(b.datePlanifiee || b.dateMaintenance);
-        return dateA - dateB;
-      });
-  
-      // Supprimer les doublons
-      const uniquePlanning = [];
-      const seen = new Set();
-  
-      for (const item of planning) {
-        const identifier = `${item.id}-${item.datePlanifiee || item.dateMaintenance}`;
-        if (!seen.has(identifier)) {
-          seen.add(identifier);
-          uniquePlanning.push(item);
-        }
+    // Fusionner interventions et maintenances, puis trier par date
+    const planning = [...interventions, ...maintenances].sort((a, b) => {
+      const dateA = new Date(a.datePlanifiee || a.dateMaintenance);
+      const dateB = new Date(b.datePlanifiee || b.dateMaintenance);
+      return dateA - dateB;
+    });
+
+    // Supprimer les doublons
+    const uniquePlanning = [];
+    const seen = new Set();
+
+    for (const item of planning) {
+      const identifier = `${item.id}-${item.datePlanifiee || item.dateMaintenance}`;
+      if (!seen.has(identifier)) {
+        seen.add(identifier);
+        uniquePlanning.push(item);
       }
+    }
+
+    return uniquePlanning;
+  } catch (error) {
+    console.error("Erreur lors de la récupération des données de planning :", error);
+    throw error;
+  }
   
-      return uniquePlanning;
+};
+  
+  export const fetchDetails = async (id: number, type: string) => {
+    try {
+      if (type === "intervention") {
+        const intervention = await prisma.intervention.findUnique({
+          where: { id },
+          select: {
+            Client: { select: { nom: true } },
+            Systeme: { select: { nom: true } },
+            datePlanifiee: true,
+            statut: true,
+            urgent: true,
+          },
+        });
+  
+        if (!intervention) {
+          throw new Error("Intervention non trouvée");
+        }
+  
+        return {
+          clientName: intervention.Client.nom,
+          systeme: intervention.Systeme.nom,
+          datePlanifiee: intervention.datePlanifiee,
+          statut: intervention.statut,
+          urgent: intervention.urgent,
+        };
+      } else if (type === "maintenance") {
+        const maintenance = await prisma.maintenance.findUnique({
+          where: { id },
+          select: {
+            Installation: {
+              select: {
+                Client: { select: { nom: true } },
+                Systeme: { select: { nom: true } },
+              },
+            },
+            datePlanifiee: true,
+            statut: true,
+          },
+        });
+  
+        if (!maintenance) {
+          throw new Error("Maintenance non trouvée");
+        }
+  
+        return {
+          clientName: maintenance.Installation.Client.nom,
+          systeme: maintenance.Installation.Systeme.nom,
+          datePlanifiee: maintenance.datePlanifiee,
+          statut: maintenance.statut,
+          urgent: false, // Maintenances are not urgent by default
+        };
+      } else {
+        throw new Error("Type invalide");
+      }
     } catch (error) {
-      console.error("Erreur lors de la récupération des données de planning :", error);
+      console.error("Erreur lors de la récupération des détails:", error);
       throw error;
     }
-    
   };
   
+  export const getType = async (item) => {
+    try {
+     
+      await new Promise((resolve) => setTimeout(resolve, 10)); 
+  
+  
+      if (item.typePanneDeclare) {
+        return "intervention";
+      }
 
+      if (item.description) {
+        return "maintenance";
+      }
+  
+      return "Type inconnu";
+    } catch (error) {
+      console.error("Erreur lors de la détermination du type :", error);
+      throw error;
+    }
+  };
+// Fonction pour récupérer le statut d'une intervention ou d'une maintenance
+  export const getStatut = async (id: number, type: string) => {
+    try {
+      if (type === 'intervention') {
+        const intervention = await prisma.intervention.findUnique({
+          where: { id },
+          select: {
+            statut: true,
+          },
+        });
+  
+        if (intervention) {
+          return intervention.statut || 'Statut non défini';
+        } else {
+          throw new Error('Intervention non trouvée');
+        }
+      } else if (type === 'maintenance') {
+        const maintenance = await prisma.maintenance.findUnique({
+          where: { id },
+          select: {
+            statut: true,
+          },
+        });
+  
+        if (maintenance) {
+          return maintenance.statut || 'Statut non défini';
+        } else {
+          throw new Error('Maintenance non trouvée');
+        }
+      } else {
+        throw new Error('Type invalide');
+      }
+    } catch (error) {
+      console.error('Erreur lors de la récupération du statut :', error);
+      return 'Erreur lors de la récupération du statut';
+    }
+  };
+  
   export const formatHeure = async (date: string | undefined): Promise<string> => {
     // Simuler un délai asynchrone (si nécessaire pour votre cas d'usage)
     await new Promise(resolve => setTimeout(resolve, 10));
@@ -821,30 +966,7 @@ export const getDescription = async (item) => {
 
   
   
- // Fonction pour déterminer le type (intervention ou maintenance)
-export const getType = async (item) => {
-  try {
-    // Simuler un délai asynchrone si nécessaire
-    await new Promise((resolve) => setTimeout(resolve, 10)); // Attente de 10 ms pour simuler un traitement
-
-    // Vérifie si l'item correspond à une intervention
-    if (item.typePanneDeclare) {
-      return "Intervention";
-    }
-
-    // Sinon, considère que c'est une maintenance
-    if (item.description) {
-      return "Maintenance";
-    }
-
-    // Si aucune information n'est disponible
-    return "Type inconnu";
-  } catch (error) {
-    console.error("Erreur lors de la détermination du type :", error);
-    throw error;
-  }
-};
-
+ 
   
   // Exporte la fonction qui récupère le nombre total de pages pour un technicien donné
 // Exemple pour la fonction `getTotalPages` dans le backend
@@ -873,44 +995,6 @@ export const getTotalPages = async (technicienId) => {
   }
 };
 
-  // Fonction pour récupérer le statut d'une intervention ou d'une maintenance
-  export const getStatut = async (id, type) => {
-    try {
-      if (type === 'intervention') {
-        const intervention = await prisma.intervention.findUnique({
-          where: { id: parseInt(id) },
-          select: {
-            statut: true, // Sélectionne directement le statut de l'intervention
-          },
-        });
-  
-        if (intervention) {
-          return intervention.statut || 'Statut non défini';
-        } else {
-          throw new Error('Intervention non trouvée');
-        }
-      } else if (type === 'maintenance') {
-        const maintenance = await prisma.maintenance.findUnique({
-          where: { id: parseInt(id) },
-          select: {
-            statut: true, // Sélectionne le statut de la maintenance
-          },
-        });
-  
-        if (maintenance) {
-          return maintenance.statut || 'Statut non défini';
-        } else {
-          throw new Error('Maintenance non trouvée');
-        }
-      } else {
-        throw new Error('Type invalide');
-      }
-    } catch (error) {
-      console.error('Erreur lors de la récupération du statut :', error);
-      return 'Erreur lors de la récupération du statut';
-    }
-  };
-  
  
 // Fonction pour récupérer le système pour une intervention donnée
 export const getSystemeForIntervention = async (idIntervention) => {

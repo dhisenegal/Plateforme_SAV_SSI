@@ -1,4 +1,5 @@
 'use client';
+
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
@@ -8,7 +9,7 @@ import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { getType, getPlanning } from '@/actions/technicien/planning';
-import { fetchDetails } from '@/lib/fonctionas'; // Assurez-vous que fetchDetails est importé
+import { fetchDetails } from '@/lib/fonctionas'; 
 
 const PlanningTabContent = () => {
   const { data: session } = useSession();
@@ -31,22 +32,20 @@ const PlanningTabContent = () => {
   }, [currentPage]);
 
   const fetchPlanning = async () => {
-    setLoading(true); // Met l'état de chargement à true
+    setLoading(true); 
     try {
-      // Récupérer le planning pour la page actuelle
-      const planning = await getPlanning(technicienId, currentPage);
+     
+      const planning = await getPlanning(technicienId);
 
-      // Récupérer les détails associés à chaque élément du planning
       const planningWithDetails = await Promise.all(
         planning.map(async (plan) => {
-          // Déterminer le type en utilisant la fonction getType
+         
           const type = await getType(plan);
           if (!plan.id || !type || type === 'Type inconnu') {
             console.error(`Erreur: ID ou type manquant ou inconnu pour le plan ${JSON.stringify(plan)}`);
-            return {};  // Retourne un objet vide ou vous pouvez aussi faire un autre traitement.
+            return {}; 
           }
-
-          // Appel de fetchDetails avec le type déterminé par getType
+    
           const { clientName, description, statut, urgent, technicienName, dateFinInt, dateFinMaint, systeme } = await fetchDetails(plan.id, type.toLowerCase());
 
           return {
@@ -58,20 +57,18 @@ const PlanningTabContent = () => {
             urgent,
             technicienName,
             systeme,
-            type // Ajout du type pour pouvoir l'afficher dans la table
+            type 
           };
         })
       );
 
-      // Filtrer les plans dont le statut est "TERMINE" (afficher toutes les interventions et maintenances terminées)
       const filteredPlanning = planningWithDetails.filter(plan => plan.statut === 'TERMINE');
 
-      // Mettre à jour l'état avec les données filtrées
       setCurrentPlanning(filteredPlanning);
     } catch (error) {
       console.error("Erreur lors de la récupération du planning :", error);
     } finally {
-      setLoading(false); // Met l'état de chargement à false une fois les données récupérées
+      setLoading(false); 
     }
   };
 

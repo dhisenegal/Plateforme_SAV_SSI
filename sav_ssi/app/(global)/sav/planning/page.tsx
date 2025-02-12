@@ -10,11 +10,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { getAllMaintenances } from "@/actions/sav/maintenance";
 
-// Type pour les données de maintenance basé sur votre schéma Prisma
+// Type pour les données de maintenance (basé sur votre schéma Prisma)
 type MaintenanceData = {
   id: number;
   numero: string;
-  dateMaintenance: Date;
+  datePlanifiee: Date;
   description: string;
   statut: "PLANIFIE" | "EN_COURS" | "SUSPENDU" | "TERMINE" | "NON_PLANIFIE";
   typeMaintenance: string;
@@ -60,8 +60,8 @@ export default function PlanningPage() {
   useEffect(() => {
     const fetchMaintenances = async () => {
       try {
-        const { maintenances } = await getAllMaintenances();
-        setMaintenances(maintenances);
+        const response = await getAllMaintenances();
+        setMaintenances(response.maintenances);
       } catch (error) {
         console.error("Erreur lors de la récupération des maintenances:", error);
       }
@@ -70,29 +70,39 @@ export default function PlanningPage() {
     fetchMaintenances();
   }, []);
 
+  /**
+   * Mise en forme de la liste de maintenances pour le calendrier.
+   * On utilise datePlanifiee comme start et end pour afficher l'événement sur la journée.
+   */
   const events = maintenances.map((maintenance) => ({
     id: maintenance.id,
     title: `${maintenance.Contact.Client.nom} - ${maintenance.typeMaintenance}`,
-    start: new Date(maintenance.dateMaintenance),
-    end: new Date(maintenance.dateMaintenance),
-    resource: maintenance, // Stocke toutes les données de maintenance pour le modal
+    start: new Date(maintenance.datePlanifiee),
+    end: new Date(maintenance.datePlanifiee),
+    resource: maintenance,
   }));
 
+  /**
+   * Définition d'un style par statut pour colorer les événements.
+   */
   const getEventStyle = (event: any) => {
     const colors = {
-      PLANIFIE: "bg-blue-500",
-      SUSPENDU: "bg-red-500",
-      TERMINE: "bg-green-500",
-      EN_COURS: "bg-yellow-500",
-      NON_PLANIFIE: "bg-gray-500"
+      PLANIFIE: "bg-blue-500",    // Bleu pour Planifié
+      SUSPENDU: "bg-red-500",    // Rouge pour Suspendu
+      TERMINE: "bg-green-500",   // Vert pour Terminé
+      EN_COURS: "bg-yellow-500", // Jaune pour En cours
+      NON_PLANIFIE: "bg-gray-500", 
     };
 
     const status = event.resource.statut;
     return {
-      className: `${colors[status] || "bg-gray-500"} text-white rounded-md p-1`
+      className: `${colors[status] || "bg-gray-500"} text-white rounded-md p-1`,
     };
   };
 
+  /**
+   * Sur clic d'un événement, on ouvre le modal pour afficher les détails.
+   */
   const handleEventSelect = (event: any) => {
     setSelectedMaintenance(event.resource);
     setIsModalOpen(true);
@@ -102,16 +112,21 @@ export default function PlanningPage() {
     <div className="p-6 space-y-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Planning des Maintenances</h1>
-        
+
+        {/* Légende des badges par statut */}
         <div className="flex gap-2">
           {Object.entries({
             PLANIFIE: "Planifié",
             EN_COURS: "En cours",
             SUSPENDU: "Suspendu",
             TERMINE: "Terminé",
-            NON_PLANIFIE: "Non planifié"
+            NON_PLANIFIE: "Non planifié",
           }).map(([status, label]) => (
-            <Badge key={status} variant="outline" className={`${getEventStyle({ resource: { statut: status } }).className}`}>
+            <Badge
+              key={status}
+              variant="outline"
+              className={getEventStyle({ resource: { statut: status } }).className}
+            >
               {label}
             </Badge>
           ))}
@@ -134,10 +149,11 @@ export default function PlanningPage() {
           today: "Aujourd'hui",
           month: "Mois",
           week: "Semaine",
-          day: "Jour"
+          day: "Jour",
         }}
       />
 
+      {/* Modal de détails de la maintenance */}
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         {selectedMaintenance && (
           <DialogContent className="max-w-2xl">
@@ -173,7 +189,7 @@ export default function PlanningPage() {
                     </div>
                     <div>
                       <p className="font-semibold">Date</p>
-                      <p>{format(new Date(selectedMaintenance.dateMaintenance), 'dd/MM/yyyy')}</p>
+                      <p>{format(new Date(selectedMaintenance.datePlanifiee), "dd/MM/yyyy")}</p>
                     </div>
                     <div className="col-span-2">
                       <p className="font-semibold">Statut</p>

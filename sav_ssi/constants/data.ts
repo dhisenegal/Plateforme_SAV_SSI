@@ -158,18 +158,11 @@ export const navItemsByRole: { [key: string]: NavItem[] } = {
       shortcut: ['a', 'a'],
       items: []
     },
+
     {
-      title: 'Maintenances',
-      url: '/technicien/Maintenances',
-      icon: PieChart,
-      isActive: false,
-      shortcut: ['m', 'm'],
-      items: []
-    },
-    {
-      title: 'Interventions',
-      url: '/technicien/Interventions',
-      icon: ClipboardList,
+      title: 'Calendrier',
+      url: '/technicien/calendrier',
+      icon: Calendar,
       isActive: false,
       shortcut: ['i', 'i'],
       items: []
@@ -177,7 +170,7 @@ export const navItemsByRole: { [key: string]: NavItem[] } = {
     {
       title: 'Planning',
       url: '/technicien/Planning',
-      icon: Calendar,
+      icon: ClipboardList,
       isActive: false,
       shortcut: ['i', 'i'],
       items: []

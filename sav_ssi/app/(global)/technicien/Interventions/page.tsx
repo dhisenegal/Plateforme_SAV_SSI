@@ -46,7 +46,7 @@ const PlanningTabContent = () => {
         planning.map(async (plan) => {
           const type = await getType(plan);  // Récupérer le type (Maintenance ou Intervention)
           
-          if (!plan.id || !type || type !== 'Intervention') {
+          if (!plan.id || !type || type.toLowerCase() !== 'intervention') {
             return null;  // Retourne null pour tout sauf les interventions
           }
 
