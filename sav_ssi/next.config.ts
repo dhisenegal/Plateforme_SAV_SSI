@@ -8,6 +8,10 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+  webpack: (config) => {
+    config.ignoreWarnings = [/Module not found/]; // Ignore "Module not found"
+    return config;
+  },
 };
 
 export default nextConfig;
