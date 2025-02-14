@@ -34,6 +34,12 @@ const formSchema = z.object({
   }),
   dateIntervention: z.string().min(1, {
     message: 'Date of intervention is required.'
+  }),
+  Heuredebut: z.string().min(1, {
+    message: 'Heure de début is required.'
+  }),
+  Heuredefin: z.string().min(1, {
+    message: 'Heure de fin is required.'
   })
 });
 
