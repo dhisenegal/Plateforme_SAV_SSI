@@ -1,8 +1,5 @@
 'use client';
 
-import { AreaGraph } from './area-graph';
-import { BarGraph } from './bar-graph';
-import { PieGraph } from './pie-graph';
 import { useSession } from 'next-auth/react';
 import PageContainer from '@/components/layout/page-container';
 import { RecentInterventions } from './recent-interventions';
@@ -10,7 +7,6 @@ import { useEffect, useState } from 'react';
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle
 } from '@/components/ui/card';
@@ -22,24 +18,12 @@ export default function OverViewPage() {
   const [interventionsCount, setInterventionsCount] = useState(0);
   const [maintenancesCount, setMaintenancesCount] = useState(0);
   const [interventionsHorsDelaiCount, setInterventionsHorsDelaiCount] = useState<number>(0);
-  const [upcomingPlans, setUpcomingPlans] = useState<Plan[]>([]); // Initialize with an empty array
-  const [urgentInterventionsCount, setUrgentInterventionsCount] = useState<number>(0); // State for urgent interventions count
+  const [upcomingPlans, setUpcomingPlans] = useState<Plan[]>([]);
+  const [urgentInterventionsCount, setUrgentInterventionsCount] = useState<number>(0);
 
   const technicienId = Number(session?.user?.id);
 
   useEffect(() => {
-    // Récupérer le nombre d'interventions urgentes depuis localStorage
-    const storedUrgentInterventionsCount = localStorage.getItem('urgentInterventionsCount');
-    if (storedUrgentInterventionsCount) {
-      setUrgentInterventionsCount(parseInt(storedUrgentInterventionsCount));
-    }
-
-    const storedHorsDelaiCount = localStorage.getItem('interventionsHorsDelaiCount');
-    if (storedHorsDelaiCount) {
-      setInterventionsHorsDelaiCount(parseInt(storedHorsDelaiCount));
-    }
-
-    // Fetch the data for interventions and maintenances
     async function fetchData() {
       try {
         const [interventions, maintenances, interventionsHorsDelai, nextPlans] = await Promise.all([
@@ -52,13 +36,10 @@ export default function OverViewPage() {
         setInterventionsCount(interventions);
         setMaintenancesCount(maintenances);
         setInterventionsHorsDelaiCount(interventionsHorsDelai);
-        setUpcomingPlans(nextPlans || []); // Ensure nextPlans is not undefined
-
-        // Calculer et mettre à jour le nombre d'interventions urgentes
-        const urgentCount = nextPlans.filter(plan => plan.urgent).length; // Assurez-vous que `plan.urgent` existe dans les données
-        localStorage.setItem('urgentInterventionsCount', String(urgentCount));
-        setUrgentInterventionsCount(urgentCount); // Mettre à jour l'état des interventions urgentes
-
+        setUpcomingPlans(nextPlans || []);
+        
+        const urgentCount = nextPlans.filter(plan => plan.urgent).length;
+        setUrgentInterventionsCount(urgentCount);
       } catch (error) {
         console.error("Erreur lors de la récupération des données:", error);
       }
@@ -68,98 +49,130 @@ export default function OverViewPage() {
 
   return (
     <PageContainer scrollable>
-      <div className="space-y-2">
-        <div className="flex items-center justify-between space-y-2">
-          <h2 className="text-2xl font-bold tracking-tight">
-            Heyyy Bienvenue 👋
-          </h2>
-        </div>
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="analytics" disabled>
-              Analytics
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="overview" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              {/* Card pour le nombre d'interventions */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-bold text-black">
-                    Nombres d'interventions
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">{interventionsCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {/* Additional description if needed */}
-                  </p>
-                </CardContent>
-              </Card>
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4 md:p-6 lg:p-8">
+        <div className="max-w-7xl mx-auto space-y-8">
+          {/* En-tête avec animation subtile */}
+          <div className="flex items-center justify-between py-4">
+            <h2 className="text-3xl md:text-4xl font-bold text-slate-800 tracking-tight transform transition-all duration-500 hover:scale-105">
+              Bienvenue sur votre tableau de bord
+              <span className="inline-block ml-2 animate-bounce">👋</span>
+            </h2>
+          </div>
 
-              {/* Card pour interventions hors délai */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-bold text-black">
-                    Interventions hors délai
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-red-600">{interventionsHorsDelaiCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {/* Additional description if needed */}
-                  </p>
-                </CardContent>
-              </Card>
+          <Tabs defaultValue="overview" className="space-y-8">
+            <TabsList className="bg-white/30 backdrop-blur-sm p-1 rounded-xl border border-slate-200 shadow-sm">
+              <TabsTrigger 
+                value="overview" 
+                className="px-6 py-2.5 text-sm font-medium transition-all duration-300 data-[state=active]:bg-white data-[state=active]:text-blue-600 rounded-lg"
+              >
+                Vue d'ensemble
+              </TabsTrigger>
+              <TabsTrigger 
+                value="analytics" 
+                disabled 
+                className="px-6 py-2.5 text-sm font-medium"
+              >
+                Analytiques
+              </TabsTrigger>
+            </TabsList>
 
-              {/* Card pour interventions urgentes */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-bold text-black">
-                    Interventions Urgentes
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-red-600">{urgentInterventionsCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {/* Additional description if needed */}
-                  </p>
-                </CardContent>
-              </Card>
+            <TabsContent value="overview" className="space-y-8">
+              {/* Grille des statistiques */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                {/* Carte Interventions */}
+                <Card className="group bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center text-lg font-bold text-slate-800">
+                      <span className="mr-2">📊</span>
+                      Interventions en cours
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-bold text-blue-600 group-hover:scale-110 transition-transform duration-300">
+                        {interventionsCount}
+                      </span>
+                      <span className="text-sm text-slate-500">total</span>
+                    </div>
+                  </CardContent>
+                </Card>
 
-              {/* Card pour le nombre de maintenances */}
-              <Card>
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-bold text-black">
-                    Nombres de Maintenances 
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold text-blue-600">{maintenancesCount}</div>
-                  <p className="text-xs text-muted-foreground">
-                    {/* Additional description if needed */}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-7">
-              <Card className="col-span-4 md:col-span-3">
-                <CardHeader>
-                   <CardTitle className="font-bold text-black text-center"> PROCHAINES MAINTENANCES</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <RecentInterventions plans={upcomingPlans} />
-                </CardContent>
-              </Card>
-              
-              {/* Additional content */} 
-              <div className="col-span-4 md:col-span-3">
-                <PieGraph />
+                {/* Carte Retards */}
+                <Card className="group bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center text-lg font-bold text-slate-800">
+                      <span className="mr-2">⚠️</span>
+                      Retards
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-bold text-red-600 group-hover:scale-110 transition-transform duration-300">
+                        {interventionsHorsDelaiCount}
+                      </span>
+                      <span className="text-sm text-slate-500">interventions</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Carte Urgences */}
+                <Card className="group bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center text-lg font-bold text-slate-800">
+                      <span className="mr-2">🚨</span>
+                      Urgences
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-bold text-orange-600 group-hover:scale-110 transition-transform duration-300">
+                        {urgentInterventionsCount}
+                      </span>
+                      <span className="text-sm text-slate-500">à traiter</span>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Carte Maintenances */}
+                <Card className="group bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="flex items-center text-lg font-bold text-slate-800">
+                      <span className="mr-2">🔧</span>
+                      Maintenances
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-4xl font-bold text-green-600 group-hover:scale-110 transition-transform duration-300">
+                        {maintenancesCount}
+                      </span>
+                      <span className="text-sm text-slate-500">planifiées</span>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
-            </div>
-          </TabsContent>
-        </Tabs>
+
+              {/* Section des prochaines maintenances */}
+              <div className="grid grid-cols-1 lg:grid-cols-7 gap-8">
+                <Card className="col-span-full lg:col-span-4 bg-white/70 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300">
+                  <CardHeader className="border-b border-slate-100 pb-4">
+                    <CardTitle className="text-xl font-bold text-slate-800 text-center flex items-center justify-center gap-2">
+                      <span>📅</span>
+                      Prochaines maintenances
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-4">
+                    <RecentInterventions plans={upcomingPlans} />
+                  </CardContent>
+                </Card>
+
+                <div className="col-span-full lg:col-span-3 space-y-6">
+                  {/* Espace réservé pour du contenu futur */}
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
       </div>
     </PageContainer>
   );

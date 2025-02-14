@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { fetchDetails } from "@/lib/fonctionas";
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
 import { Image as PdfImage } from '@react-pdf/renderer';
+import { formatDateTime } from "@/lib/fonction";
 import Image from "next/image";
 const styles = StyleSheet.create({
   page: {
@@ -193,15 +194,11 @@ const InterventionPDF = ({ data }: { data: any }) => (
           <View style={styles.section}>
             <View style={styles.row}>
               <Text style={styles.label}>Date et heure Début  :</Text>
-              <Text style={styles.value}>{(formatDate(data.dateIntervention))}</Text>
+              <Text style={styles.value}>{(formatDateTime(data.dateIntervention))}</Text>
             </View>
             <View style={styles.row}>
               <Text style={styles.label}>Date et heure Fin :</Text>
-              <Text style={styles.value}>{(formatDate(data.dateFinInt))}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Durée d'intervention :</Text>
-              <Text style={styles.value}>{data.dureeHeure || 'N/A'} Hrs</Text>
+              <Text style={styles.value}>{(formatDateTime(data.dateFinInt))}</Text>
             </View>
           </View>
         </View>
@@ -227,7 +224,7 @@ const InterventionPDF = ({ data }: { data: any }) => (
         {/* Déclaration de panne après "Matériel sous garantie" */}
         <View style={styles.row}>
           <Text style={styles.label}>Déclaration de panne :</Text>
-          <Text style={styles.value}>{formatDate(data.dateDeclaration)}</Text>
+          <Text style={styles.value}>{formatDateTime(data.dateDeclaration)}</Text>
         </View>
       </View>
 
@@ -282,8 +279,9 @@ interface InterventionData {
   adresse?: string;
   telephoneContact?: string;
   systeme?: string;
-  Heureint?: string;
+  dateIntervention?: string;
   dureeHeure?: string;
+  dateFinInt?: string;
   sousGarantie?: number;
   dateDeclaration?: string;
   description?: string;
@@ -292,49 +290,6 @@ interface InterventionData {
   technicienName?: string;
 }
 
-const formatHeure = (dateTime: string | undefined): string => {
-  if (!dateTime) return 'N/A';
-  try {
-    const date = new Date(dateTime);
-    return new Intl.DateTimeFormat('fr-SN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      timeZone: 'Africa/Dakar',
-      hour12: false
-    }).format(date);
-  } catch (error) {
-    console.error("Erreur lors du formatage de l'heure:", error);
-    return 'N/A';
-  }
-};
-
-const formatDate = (dateTime: string | undefined): string => {
-  if (!dateTime) return 'N/A';
-
-  try {
-    const date = new Date(dateTime);
-
-    // Formatage de la date
-    const formattedDate = new Intl.DateTimeFormat('fr-SN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }).format(date);
-
-    // Formatage de l'heure
-    const formattedTime = new Intl.DateTimeFormat('fr-SN', {
-      hour: '2-digit',
-      minute: '2-digit',
-      hour12: false, // Format 24 heures
-    }).format(date);
-
-    // Combinaison de la date et de l'heure
-    return `${formattedDate} ${formattedTime}`;
-  } catch (error) {
-    console.error("Erreur lors du formatage de la date:", error);
-    return 'N/A';
-  }
-};
 
 const InterventionPage = () => {
   const [data, setData] = useState<InterventionData | null>(null);
@@ -366,7 +321,9 @@ const InterventionPage = () => {
           <PDFDownloadLink
             document={<InterventionPDF data={data} />}
             fileName="fiche-intervention.pdf"
-            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded transition-colors cursor-pointer"
+            className="bg-blue-500 hover:bg-blue-600 text-white px-4 py
+            
+            -2 rounded transition-colors cursor-pointer"
           >
             {({ loading }) => loading ? 'Génération...' : 'Exporter en PDF'}
           </PDFDownloadLink>
@@ -395,8 +352,8 @@ const InterventionPage = () => {
                 <p><strong>Système :</strong> {data.systeme || 'N/A'}</p>
               </div>
               <div className="w-1/2">
-                <p><strong>Date et heure Début  :</strong> {(formatDate(data.dateIntervention))}</p>
-                <p><strong>Date et heure Fin:</strong> {(formatDate(data.dateFinInt))}</p>
+                <p><strong>Date et heure Début  :</strong> {(formatDateTime(data.dateIntervention))}</p>
+                <p><strong>Date et heure Fin:</strong> {(formatDateTime(data.dateFinInt))}</p>
                 <p><strong>Durée Intervention (Hrs):</strong> {data.dureeHeure || 'N/A'}</p>
               </div>
             </div>
@@ -423,7 +380,7 @@ const InterventionPage = () => {
                   </div>
                 </div>
               </div>
-              <p><strong>Date de Déclaration :</strong> {formatDate(data.dateDeclaration)}</p>
+              <p><strong>Date de Déclaration :</strong> {formatDateTime(data.dateDeclaration)}</p>
               <p><strong>Type de Panne déclarée :</strong> {data.description || 'N/A'}</p>
               <p><strong>Diagnostic / Observations :</strong> {data.diagnostics || 'N/A'}</p>
               <p><strong>Travaux Réalisés/ Pièce Fournies :</strong> {data.travauxRealises || 'N/A'}</p>

@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
+import { formatDate1, formatDateTime } from '@/lib/fonction';
 import Image from 'next/image';
 import { PDFDownloadLink, Document, Page, Text, View, StyleSheet, Svg, Path } from '@react-pdf/renderer';
 import { Image as PdfImage,  } from '@react-pdf/renderer';
@@ -241,11 +242,11 @@ const MaintenancePDF = ({ data, actions }) => (
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Date et Heure Début : </Text>
-            <Text style={styles.value}>{formatDate(data.dateMaintenance)}</Text>
+            <Text style={styles.value}>{formatDateTime(data.dateMaintenance)}</Text>
           </View>
           <View style={styles.infoRow}>
             <Text style={styles.label}>Date et Heure Fin : </Text>
-            <Text style={styles.value}>{formatDate(data.dateFinMaint)}</Text>
+            <Text style={styles.value}>{formatDateTime(data.dateFinMaint)}</Text>
           </View>
         </View>
       </View>
@@ -292,19 +293,7 @@ const MaintenancePDF = ({ data, actions }) => (
   </Document>
 );
 
-const formatDate1 = (dateTime: string | undefined): string => {
-  if (!dateTime) return 'N/A';
-  try {
-    return new Date(dateTime).toLocaleDateString("fr-SN", {
-      year: 'numeric',
-      month: 'numeric',
-      day: 'numeric'
-    });
-  } catch (error) {
-    console.error("Erreur lors du formatage de la date:", error);
-    return 'N/A';
-  }
-};
+
 const formatDate = (dateTime: string | undefined): string => {
   if (!dateTime || dateTime === 'N/A') return 'N/A'; // Vérifie si la valeur est 'N/A' ou undefined
 
@@ -465,9 +454,9 @@ const MaintenancePage = () => {
                 <p><strong>Téléphone :</strong> {data.numero || 'N/A'}</p>
               </div>
               <div className="space-y-2">
-                <p><strong>Date Prévu:</strong> {(formatDate1(data.datePlanifiee)|| 'N/A')}</p>
-                <p><strong>Date et Heure Début :</strong> {formatDate(data.dateMaintenance || 'N/A' )}</p>
-                <p><strong>Date et Heure Fin :</strong> {formatDate(data.dateFinMaint || 'N/A')}</p>
+                <p><strong>Date Prévu:</strong> {(formatDate1(data.datePlanifiee)|| '')}</p>
+                <p><strong>Date et Heure Début :</strong> {formatDateTime(data.dateMaintenance || 'N/A' )}</p>
+                <p><strong>Date et Heure Fin :</strong> {formatDateTime(data.dateFinMaint || 'N/A')}</p>
               </div>
             </div>
 

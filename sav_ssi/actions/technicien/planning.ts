@@ -506,8 +506,8 @@ interface UpdateInterventionData {
   diagnostics: string;
   travauxRealises: string;
   dureeHeure: number;
-  dateIntervention: Date;
-  dateFinInt: Date;
+  dateHeureDebut: Date;
+  dateHeureFin: Date;
 }
 
 
@@ -521,9 +521,9 @@ export const updateIntervention = async (id: number, data: UpdateInterventionDat
       data: {
         diagnostics: data.diagnostics,
         travauxRealises: data.travauxRealises,
-        dureeHeure: data.dureeHeure,
-        dateIntervention: data.dateIntervention,
-        dateFinInt: data.dateFinInt,
+        dureeHeure: data.dureeHeure || null,
+        dateIntervention: data.dateHeureDebut,
+        dateFinInt: data.dateHeureFin,
       },
     });
     return result;
@@ -533,6 +533,11 @@ export const updateIntervention = async (id: number, data: UpdateInterventionDat
   }
 };  
 
+interface UpdateMaintenanceData {
+  dateHeureDebut: Date;
+  dateHeureFin: Date;
+}
+
 export const updateMaintenance = async (id: number, data: UpdateMaintenanceData) => {
   try {
     // Ajoutez un log pour vérifier les données avant la mise à jour
@@ -541,8 +546,8 @@ export const updateMaintenance = async (id: number, data: UpdateMaintenanceData)
     const result = await prisma.maintenance.update({
       where: { id: id }, // Utilisation de l'id de la maintenance pour la mise à jour
       data: {
-        dateMaintenance: data.dateMaintenance, // Mise à jour de l'heure de début
-        dateFinMaint: data.dateFinMaint, // Mise à jour de l'heure de fin
+        dateMaintenance: data.dateHeureDebut, // Mise à jour de l'heure de début
+        dateFinMaint: data.dateHeureFin, // Mise à jour de l'heure de fin
       },
     });
 
@@ -1144,6 +1149,55 @@ export const getInterventionsBySystem = async () => {
     return result;
   } catch (error) {
     console.error('Erreur lors du comptage des interventions par système:', error);
+    throw error;
+  }
+};
+
+
+// Function to get the next 3 maintenance operations for a technician
+export const getNextMaintenances = async (technicienId: number) => {
+  try {
+    // Get current date
+    const currentDate = new Date();
+
+    // Query only maintenances that are planned or in progress
+    const maintenances = await prisma.maintenance.findMany({
+      where: {
+        idTechnicien: technicienId,
+        datePlanifiee: {
+          gte: currentDate
+        },
+        statut: {
+          in: ['PLANIFIE', 'EN_COURS']
+        }
+      },
+      select: {
+        id: true,
+        datePlanifiee: true,
+        Installation: {
+          select: {
+            Client: {
+              select: {
+                nom: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: {
+        datePlanifiee: 'asc'
+      },
+      take: 3 // Limit to next 3 maintenances
+    });
+
+    // Format the data for frontend use
+    return maintenances.map(maintenance => ({
+      id: maintenance.id,
+      date: maintenance.datePlanifiee,
+      client: maintenance.Installation.Client.nom
+    }));
+  } catch (error) {
+    console.error("Error fetching next maintenances:", error);
     throw error;
   }
 };

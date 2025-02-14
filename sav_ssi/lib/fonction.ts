@@ -477,3 +477,33 @@ export async function getEquipementForSysteme(systemeId: number) {
     throw new Error('Impossible de récupérer les équipements');
   }
 }
+
+// Formatage date seule (DD/MM/YYYY)
+export const formatDate1 = (dateString?: string | Date): string => {
+  if (!dateString) return 'N/A';
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'N/A';
+
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  }).format(date);
+};
+// Formatage date + heure (DD/MM/YYYY HH:MM)
+export const formatDateTime = (dateString?: string | Date): string => {
+  if (!dateString) return 'N/A';
+  
+  const date = new Date(dateString);
+  if (isNaN(date.getTime())) return 'N/A';
+
+  return new Intl.DateTimeFormat('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    hour12: false
+  }).format(date);
+};

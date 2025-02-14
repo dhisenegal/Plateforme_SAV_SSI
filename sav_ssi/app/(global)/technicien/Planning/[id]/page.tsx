@@ -7,7 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
 import { fetchDetails } from '@/lib/fonctionas';
-import { formatDate } from '@/lib/fonction';
+import { formatDate, formatDateTime } from '@/lib/fonction';
 import {
   getSystemIdFromInstallation,
   getActionsBySystem
@@ -37,8 +37,8 @@ const formSchema = z.object({
   dureeHeure: z.string().min(1, { message: 'La durée de l\'intervention est requise.' }),
   Heureint: z.string().min(1, { message: 'L\'heure de l\'intervention est requise.' }),
   dateIntervention: z.string().min(1, { message: 'Date of intervention is required.' }),
-  Heuredebut: z.string().min(1, { message: 'Heure de début is required.' }),
-  Heuredefin: z.string().min(1, { message: 'Heure de fin is required.' })
+  dateHeureDebut: z.string().min(1, { message: 'Heure de début is required.' }),
+  dateHeureFin: z.string().min(1, { message: 'Heure de fin is required.' })
 });
 
 interface MaintenanceAction {
@@ -91,8 +91,8 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
       dureeHeure: '',
       Heureint: '',
       dateIntervention: '',
-      Heuredebut: '',
-      Heuredefin: ''
+      dateHeureDebut: '',
+      dateHeureFin: ''
     }
   });
 
@@ -124,18 +124,12 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
               minute: '2-digit'
             })
           : '',
-        Heuredebut: fetchedDetails.Heuredebut
-          ? new Date(fetchedDetails.Heuredebut).toLocaleTimeString('en-GB', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })
+          dateHeureDebut: fetchedDetails.dateHeureDebut
+          ? new Date(fetchedDetails.dateHeureDebut).toISOString().slice(0, 16)
           : '',
-        Heuredefin: fetchedDetails.Heuredefin
-          ? new Date(fetchedDetails.Heuredefin).toLocaleTimeString('en-GB', {
-              hour: '2-digit',
-              minute: '2-digit'
-            })
-          : ''
+          dateHeureFin: fetchedDetails.dateHeureFin
+          ? new Date(fetchedDetails.dateHeureFin).toISOString().slice(0, 16)
+          : '',
       });
 
       // Si c'est une maintenance, charger les actions
@@ -213,23 +207,24 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
 
     try {
       if (type === 'intervention') {
-        const currentDate = new Date().toISOString().split('T')[0]; // yyyy-mm-dd
+       
         const interventionData = {
           diagnostics: data.diagnostic,
           travauxRealises: data.travauxRealises,
           dureeHeure: parseInt(data.dureeHeure),
-          Heureint: new Date(`${currentDate}T${data.Heureint}:00`),
-          dateIntervention: new Date(data.dateIntervention)
+          dateHeureDebut: new Date(data.dateHeureDebut),
+          dateHeureFin: new Date(data.dateHeureFin)
         };
         await updateIntervention(parseInt(idParam), interventionData);
       } else {
         // Maintenance
-        const currentDate = new Date().toISOString().split('T')[0];
-        if (data.Heuredebut && data.Heuredefin) {
+        
+        if (data.dateHeureDebut && data.dateHeureFin) {
           await updateMaintenance(parseInt(idParam), {
-            Heuredebut: new Date(`${currentDate}T${data.Heuredebut}:00`),
-            Heuredefin: new Date(`${currentDate}T${data.Heuredefin}:00`)
+            dateHeureDebut: new Date(data.dateHeureDebut),
+            dateHeureFin: new Date(data.dateHeureFin)
           });
+          
         }
         // Mettre à jour les actions
         if (actions.length > 0) {
@@ -270,11 +265,10 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         await updateInterventionStatus(parseInt(idParam), 'TERMINE');
       } else {
         // Maintenance
-        const currentDateString = new Date().toISOString().split('T')[0];
-        // Mettre "Heuredefin" à maintenant
+       
         await updateMaintenance(parseInt(idParam), {
-          Heuredebut: new Date(`${currentDateString}T${currentData.Heuredebut}:00`),
-          Heuredefin: new Date()
+          dateHeureDebut: new Date(currentData.dateHeureDebut),
+          dateHeureFin: new Date(currentData.dateHeureFin)
         });
         await updateMaintenanceStatus(parseInt(idParam), 'TERMINE');
 
@@ -348,11 +342,11 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-5">
             <FormItem>
-              <FormLabel>Heure début</FormLabel>
+              <FormLabel>Date et Heure début</FormLabel>
               <FormControl>
                 <Input
-                  type="time"
-                  {...form.register('Heuredebut')}
+                  type="datetime-local"
+                  {...form.register('dateHeureDebut')}
                   className="w-full p-2 border border-gray-300 rounded-md"
                 />
               </FormControl>
@@ -360,11 +354,11 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
           </div>
           <div className="space-y-5">
             <FormItem>
-              <FormLabel>Heure fin</FormLabel>
+              <FormLabel>Date et Heure fin</FormLabel>
               <FormControl>
                 <Input
-                  type="time"
-                  {...form.register('Heuredefin')}
+                  type="datetime-local"
+                  {...form.register('dateHeureFin')}
                   className="w-full p-2 border border-gray-300 rounded-md"
                 />
               </FormControl>
@@ -571,11 +565,11 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                       </FormControl>
                     </FormItem>
                     <FormItem>
-                      <FormLabel>Date de l'intervention</FormLabel>
+                      <FormLabel>Date et Heure début</FormLabel>
                       <FormControl>
                         <Input
-                          type="date"
-                          {...form.register('dateIntervention')}
+                          type="datetime-local"
+                          {...form.register('dateHeureDebut')}
                           className="w-full p-2 border border-gray-300 rounded-md"
                         />
                       </FormControl>
@@ -589,11 +583,11 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                       </FormControl>
                     </FormItem>
                     <FormItem>
-                      <FormLabel>Heure de l'intervention (HH:MM)</FormLabel>
+                      <FormLabel>Date et Heure de fin</FormLabel>
                       <FormControl>
                         <Input
-                          type="time"
-                          {...form.register('Heureint')}
+                          type="datetime-local"
+                          {...form.register('dateHeureFin')}
                           className="w-full p-2 border border-gray-300 rounded-md"
                         />
                       </FormControl>

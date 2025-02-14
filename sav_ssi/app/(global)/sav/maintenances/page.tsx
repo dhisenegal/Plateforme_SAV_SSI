@@ -15,10 +15,11 @@ import { getInstallationsBySite } from "@/actions/sav/installation";
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { FaComment } from "react-icons/fa";
+import { Label } from "@/components/ui/label";
 import { useSession } from "next-auth/react";
 import ModifierMaintenanceDialog from "@/components/sav/ModifierMaintenanceDialog";
 import Link from "next/link";
@@ -59,6 +60,34 @@ const MaintenancesPage = () => {
   const [commentaires, setCommentaires] = useState<any[]>([]);
   const [isModificationOpen, setIsModificationOpen] = useState(false);
   const [maintenanceToModify, setMaintenanceToModify] = useState(null);
+
+  const [formErrors, setFormErrors] = useState({
+    idClient: false,
+    idSite: false,
+    idInstallation: false,
+    datePlanifiee: false,
+    typeMaintenance: false,
+    idTechnicien: false,
+    idContact: false
+  });
+
+  // Fonction de validation avant soumission
+  const validateForm = () => {
+    const errors = {
+      idClient: !formData.idClient,
+      idSite: !formData.idSite,
+      idInstallation: !formData.idInstallation,
+      datePlanifiee: !formData.datePlanifiee,
+      typeMaintenance: !formData.typeMaintenance,
+      idTechnicien: !formData.idTechnicien,
+      idContact: !formData.idContact
+    };
+
+    setFormErrors(errors);
+
+    // Vérifier si tous les champs sont corrects
+    return !Object.values(errors).some(error => error);
+  };
 
 // Dans le handleEdit :
 const handleEdit = async (maintenance) => {
@@ -181,8 +210,14 @@ const handleModificationSubmit = async (formData) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Validation avant soumission
+    if (!validateForm()) {
+      toast.error("Veuillez remplir tous les champs obligatoires");
+      return;
+    }
+
     try {
-      // Formatage de la date en ISO string
       const formattedData = {
         ...formData,
         datePlanifiee: new Date(formData.datePlanifiee).toISOString()
@@ -197,7 +232,7 @@ const handleModificationSubmit = async (formData) => {
       toast.success("Maintenance planifiée avec succès");
     } catch (error) {
       console.error("Erreur lors de la planification:", error);
-      // Afficher un message d'erreur à l'utilisateur
+      toast.error("Une erreur est survenue lors de la planification");
     }
   };
   const handlePause = async (id: number, currentStatus: string) => {
@@ -356,168 +391,223 @@ const handleModificationSubmit = async (formData) => {
       </div>
 
       <Dialog open={isOpen} onOpenChange={setIsOpen}>
-        <DialogContent className="max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Planifier une nouvelle maintenance</DialogTitle>
-          </DialogHeader>
+          <DialogContent className="max-w-3xl bg-white shadow-2xl rounded-xl">
+            <DialogHeader className="border-b pb-4">
+              <DialogTitle className="text-2xl font-bold text-gray-800">
+                Planifier une nouvelle maintenance
+              </DialogTitle>
+              <p className="text-sm text-gray-500">
+                Tous les champs marqués d'un * sont obligatoires
+              </p>
+            </DialogHeader>
 
-          <div className="grid gap-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block mb-2">Client</label>
-                <Select onValueChange={handleClientSelect}>
-                  <SelectTrigger>
-                    Sélectionner un client
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map((client) => (
-                      <SelectItem key={client.id} value={client.id.toString()}>
-                        {client.nom}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block mb-2">Site</label>
-                <Select onValueChange={handleSiteSelect}>
-                  <SelectTrigger>
-                    Sélectionner un site
-                  </SelectTrigger>
-                  <SelectContent>
-                    {sites.map((site) => (
-                      <SelectItem key={site.id} value={site.id.toString()}>
-                        {site.nom}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block mb-2">Installation</label>
-                <Select onValueChange={handleInstallationSelect}>
-                  <SelectTrigger>
-                    Sélectionner une installation
-                  </SelectTrigger>
-                  <SelectContent>
-                    {installations.map((installation) => (
-                      <SelectItem key={installation.id} value={installation.id.toString()}>
-                        {`${installation.Systeme.nom} - Installé le ${new Date(installation.dateInstallation).toLocaleDateString()}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedInstallation && (
+            <div className="grid gap-6 py-4">
+              <div className="grid grid-cols-2 gap-6">
+                {/* Client */}
                 <div>
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Détails de l'installation</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <p>Système: {selectedInstallation.Systeme.nom}</p>
-                      <p>Date d'installation: {new Date(selectedInstallation.dateInstallation).toLocaleDateString()}</p>
-                      {selectedInstallation.dateMaintenance && (
-                        <p>Dernière maintenance: {new Date(selectedInstallation.dateMaintenance).toLocaleDateString()}</p>
-                      )}
-                    </CardContent>
-                  </Card>
+                  <Label className="block mb-2 text-gray-700 font-semibold">Client *</Label>
+                  <Select 
+                    value={formData.idClient ? formData.idClient.toString() : ""} 
+                    onValueChange={handleClientSelect}
+                  >
+                    <SelectTrigger className={`
+                      ${formErrors.idClient ? 'border-red-500 text-red-500' : 'border-gray-300'}
+                    `}>
+                      <SelectValue placeholder="Sélectionner un client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id.toString()}>
+                          {client.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formErrors.idClient && (
+                    <p className="text-red-500 text-sm mt-1">Ce champ est requis</p>
+                  )}
                 </div>
-              )}
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
+                {/* Site */}
+                <div>
+                  <Label className="block mb-2 text-gray-700 font-semibold">Site *</Label>
+                  <Select 
+                    disabled={!formData.idClient}
+                    value={formData.idSite ? formData.idSite.toString() : ""} 
+                    onValueChange={handleSiteSelect}
+                  >
+                    <SelectTrigger className={`
+                      ${formErrors.idSite ? 'border-red-500 text-red-500' : 'border-gray-300'}
+                    `}>
+                      <SelectValue placeholder="Sélectionner un site" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {sites.map((site) => (
+                        <SelectItem key={site.id} value={site.id.toString()}>
+                          {site.nom}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formErrors.idSite && (
+                    <p className="text-red-500 text-sm mt-1">Ce champ est requis</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-6">
+                {/* Installation */}
+                <div>
+                  <Label className="block mb-2 text-gray-700 font-semibold">Installation *</Label>
+                  <Select 
+                    disabled={!formData.idSite}
+                    value={formData.idInstallation ? formData.idInstallation.toString() : ""} 
+                    onValueChange={handleInstallationSelect}
+                  >
+                    <SelectTrigger className={`
+                      ${formErrors.idInstallation ? 'border-red-500 text-red-500' : 'border-gray-300'}
+                    `}>
+                      <SelectValue placeholder="Sélectionner une installation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {installations.map((installation) => (
+                        <SelectItem key={installation.id} value={installation.id.toString()}>
+                          {`${installation.Systeme.nom} - Installé le ${new Date(installation.dateInstallation).toLocaleDateString()}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formErrors.idInstallation && (
+                    <p className="text-red-500 text-sm mt-1">Ce champ est requis</p>
+                  )}
+                </div>
+
+                {/* Date Prévue */}
+                <div>
+                  <Label className="block mb-2 text-gray-700 font-semibold">Date prévue *</Label>
+                  <Input
+                    type="date"
+                    value={formData.datePlanifiee}
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, datePlanifiee: e.target.value }));
+                      setFormErrors(prev => ({ ...prev, datePlanifiee: false }));
+                    }}
+                    className={`
+                      ${formErrors.datePlanifiee ? 'border-red-500 text-red-500' : 'border-gray-300'}
+                    `}
+                  />
+                  {formErrors.datePlanifiee && (
+                    <p className="text-red-500 text-sm mt-1">Ce champ est requis</p>
+                  )}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-6">
+                {/* Type de Maintenance */}
+                <div>
+                  <Label className="block mb-2 text-gray-700 font-semibold">Type de maintenance *</Label>
+                  <Select 
+                    value={formData.typeMaintenance}
+                    onValueChange={(value) => {
+                      setFormData(prev => ({ ...prev, typeMaintenance: value }));
+                      setFormErrors(prev => ({ ...prev, typeMaintenance: false }));
+                    }}
+                  >
+                    <SelectTrigger className={`
+                      ${formErrors.typeMaintenance ? 'border-red-500 text-red-500' : 'border-gray-300'}
+                    `}>
+                      <SelectValue placeholder="Sélectionner un type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="preventive">Préventive</SelectItem>
+                      <SelectItem value="curative">Curative</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {formErrors.typeMaintenance && (
+                    <p className="text-red-500 text-sm mt-1">Ce champ est requis</p>
+                  )}
+                </div>
+
+                {/* Technicien */}
+                <div>
+                  <Label className="block mb-2 text-gray-700 font-semibold">Technicien *</Label>
+                  <Select 
+                    value={formData.idTechnicien ? formData.idTechnicien.toString() : ""}
+                    onValueChange={(value) => {
+                      setFormData(prev => ({ ...prev, idTechnicien: parseInt(value) }));
+                      setFormErrors(prev => ({ ...prev, idTechnicien: false }));
+                    }}
+                  >
+                    <SelectTrigger className={`
+                      ${formErrors.idTechnicien ? 'border-red-500 text-red-500' : 'border-gray-300'}
+                    `}>
+                      <SelectValue placeholder="Sélectionner un technicien" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {techniciens.map((tech) => (
+                        <SelectItem key={tech.id} value={tech.id.toString()}>
+                          {`${tech.prenom} ${tech.nom}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formErrors.idTechnicien && (
+                    <p className="text-red-500 text-sm mt-1">Ce champ est requis</p>
+                  )}
+                </div>
+
+                {/* Contact */}
+                <div>
+                  <Label className="block mb-2 text-gray-700 font-semibold">Contact sur site *</Label>
+                  <Select 
+                    disabled={!formData.idSite}
+                    value={formData.idContact ? formData.idContact.toString() : ""}
+                    onValueChange={(value) => {
+                      setFormData(prev => ({ ...prev, idContact: parseInt(value) }));
+                      setFormErrors(prev => ({ ...prev, idContact: false }));
+                    }}
+                  >
+                    <SelectTrigger className={`
+                      ${formErrors.idContact ? 'border-red-500 text-red-500' : 'border-gray-300'}
+                    `}>
+                      <SelectValue placeholder="Sélectionner un contact" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {contacts.map((contact) => (
+                        <SelectItem key={contact.id} value={contact.id.toString()}>
+                          {`${contact.prenom} ${contact.nom}`}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {formErrors.idContact && (
+                    <p className="text-red-500 text-sm mt-1">Ce champ est requis</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Description */}
               <div>
-                <label className="block mb-2">Numéro</label>
+                <Label className="block mb-2 text-gray-700 font-semibold">Description</Label>
                 <Input
-                  value={formData.numero}
-                  onChange={(e) => setFormData(prev => ({ ...prev, numero: e.target.value }))}
-                  placeholder="Numéro de maintenance"
+                  placeholder="Description détaillée des travaux à effectuer"
+                  value={formData.description}
+                  onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
+                  className="border-gray-300"
                 />
               </div>
-
-              <div>
-                <label className="block mb-2">Date prévue</label>
-                <Input
-                  type="date"
-                  value={formData.datePlanifiee}
-                  onChange={(e) => setFormData(prev => ({ ...prev, datePlanifiee: e.target.value }))}
-                />
-              </div>
             </div>
 
-            <div>
-              <label className="block mb-2">Description</label>
-              <Input
-                value={formData.description}
-                onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-                placeholder="Description des travaux à effectuer"
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block mb-2">Type de maintenance</label>
-                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, typeMaintenance: value }))}>
-                  <SelectTrigger>
-                    Sélectionner un type
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="preventive">Préventive</SelectItem>
-                    <SelectItem value="curative">Curative</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block mb-2">Technicien</label>
-                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, idTechnicien: parseInt(value) }))}>
-                  <SelectTrigger>
-                    Sélectionner un technicien
-                  </SelectTrigger>
-                  <SelectContent>
-                    {techniciens.map((tech) => (
-                      <SelectItem key={tech.id} value={tech.id.toString()}>
-                        {`${tech.prenom} ${tech.nom}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <label className="block mb-2">Contact sur site</label>
-                <Select onValueChange={(value) => setFormData(prev => ({ ...prev, idContact: parseInt(value) }))}>
-                  <SelectTrigger>
-                    Sélectionner un contact
-                  </SelectTrigger>
-                  <SelectContent>
-                    {contacts.map((contact) => (
-                      <SelectItem key={contact.id} value={contact.id.toString()}>
-                        {`${contact.prenom} ${contact.nom}`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </div>
-
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsOpen(false)}>
-              Annuler
-            </Button>
-            <Button onClick={handleSubmit}>
-              Planifier
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <DialogFooter className="border-t pt-4">
+              <Button variant="outline" onClick={() => setIsOpen(false)}>
+                Annuler
+              </Button>
+              <Button onClick={handleSubmit} className="bg-blue-600 text-white">
+                Planifier
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
       <Dialog open={commentaireOpen} onOpenChange={setCommentaireOpen}>
           <DialogContent className="max-w-2xl">
@@ -582,4 +672,4 @@ const handleModificationSubmit = async (formData) => {
   );
 };
 
-export default MaintenancesPage;
+export default MaintenancesPage
