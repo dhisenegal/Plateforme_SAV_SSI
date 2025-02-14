@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import {  useRouter } from 'next/navigation';
 import { getExtincteursForSystem, getInstallationIdFromMaintenance } from '@/actions/technicien/planning';
 import { FaEye } from 'react-icons/fa';
 import { 
@@ -21,6 +21,7 @@ interface ExtinguisherProps {
 }
 
 interface Extinguisher {
+  idInstallationExtincteur: number;
   idInstallationEquipement: number;
   number: string;
   location: string;
@@ -133,8 +134,9 @@ const ExtincteursPageContent: React.FC<ExtinguisherProps> = ({ id }) => {
     });
   };
 
-  const handleValidateClick = (idInstallationEquipement: number) => {
-    router.push(`/technicien/Maintenances/Extincteur/${idInstallationEquipement}?installationId=${installationId}&maintenanceId=${id}`);
+  const handleValidateClick = (extincteur: Extinguisher) => {
+    router.push(`/technicien/Maintenances/Extincteur/${extincteur.idInstallationExtincteur}?installationId=${installationId}
+      &maintenanceId=${id}&idInstallationEquipement=${extincteur.idInstallationEquipement}`);
   };
 
   if (loading) {
@@ -205,7 +207,7 @@ const ExtincteursPageContent: React.FC<ExtinguisherProps> = ({ id }) => {
                     </TableCell>
                     <TableCell>
                       <button
-                        onClick={() => handleValidateClick(extincteur.idInstallationEquipement)}
+                        onClick={() => handleValidateClick(extincteur)}
                         className="p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
                         aria-label="Voir les détails"
                       >

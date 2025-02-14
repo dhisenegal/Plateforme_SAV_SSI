@@ -9,8 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getType, getPlanning } from '@/actions/technicien/planning';
-import { fetchDetails } from '@/lib/fonctionas';
+import { getType, getPlanning, fetchDetails } from '@/actions/technicien/planning';
 
 const PlanningTabContent = () => {
   const { data: session } = useSession();
@@ -35,16 +34,13 @@ const PlanningTabContent = () => {
         planning.map(async (plan) => {
           // Déterminer le type en utilisant la fonction getType
           const type = await getType(plan);
-          if (!plan.id || !type || type === 'Type inconnu') {
+          if (!plan.id || type === 'Type inconnu') {
             console.error(`Erreur: ID ou type manquant ou inconnu pour le plan ${JSON.stringify(plan)}`);
-            return {};  // Retourne un objet vide ou vous pouvez aussi faire un autre traitement.
+            return null;  // Retourne null pour les plans incomplets ou inconnus
           }
 
           // Appel de fetchDetails avec le type déterminé par getType
-          const { clientName, description, statut, urgent, technicienName, datePlanifiee, systeme } = await fetchDetails(plan.id, type.toLowerCase());
-
-          // Loguer le statut pour débogage
-          console.log('Statut récupéré:', statut);
+          const { clientName, description, statut, urgent, technicienName, datePlanifiee, systeme } = await fetchDetails(plan.id, type);
 
           return {
             ...plan,
@@ -60,8 +56,8 @@ const PlanningTabContent = () => {
         })
       );
 
-      // Filtrer les plans dont le statut n'est pas "Terminé"
-      const filteredPlanning = planningWithDetails.filter(plan => plan.statut !== 'TERMINE');
+      // Filtrer les plans valides et dont le statut n'est pas "Terminé"
+      const filteredPlanning = planningWithDetails.filter(plan => plan && plan.statut !== 'TERMINE');
 
       // Mettre à jour l'état avec les données filtrées
       setCurrentPlanning(filteredPlanning);
@@ -101,7 +97,7 @@ const PlanningTabContent = () => {
             <TableRow
               key={`${plan.id}-${index}`}  // Utiliser une combinaison de l'id et de l'index pour garantir l'unicité
               className={`cursor-pointer hover:bg-blue-100 ${plan.urgent ? 'bg-red-50' : ''}`}
-              onClick={() => router.push(`/technicien/Planning/${plan.id}?type=${plan.type.toLowerCase()}`)}
+              onClick={() => router.push(`/technicien/Planning/${plan.id}?type=${plan.type}`)}
             >
               <TableCell>{plan.date ? new Date(plan.date).toLocaleDateString() : 'Non défini'}</TableCell>
               <TableCell>{plan.client}</TableCell>
@@ -119,7 +115,7 @@ const PlanningTabContent = () => {
                 )}
               </TableCell>
               <TableCell className="flex justify-center">
-                <Link href={`/technicien/Planning/${plan.id}?type=${plan.type.toLowerCase()}`} passHref>
+                <Link href={`/technicien/Planning/${plan.id}?type=${plan.type}`} passHref>
                   <FaEye 
                     className="text-blue-500 cursor-pointer" 
                     onClick={(e) => e.stopPropagation()} 

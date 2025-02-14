@@ -1,5 +1,5 @@
 'use client';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { 
@@ -21,7 +21,7 @@ interface ExtincteurDetails {
   DateFabrication: string;
   DatePremierChargement: string;
   DateDerniereVerification: string;
-  idInstallationEquipement: number;
+  idInstallationExtincteur: number;
   InstallationEquipement: {
     id: number;
     Numero: string;
@@ -92,9 +92,11 @@ const StatusBadge = ({ status }: { status: string }) => {
 
 export default function ExtincteurPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const router = useRouter();
-  const idInstallationEquipement = parseInt(params.id as string);
-  const idMaintenance = parseInt(params.maintenanceId as string); 
+  const idInstallationExtincteur = parseInt(params.id as string);
+  const idMaintenance = parseInt(searchParams.get('maintenanceId') as string); 
+  const idInstallationEquipement = parseInt(searchParams.get('idInstallationEquipement') as string);
   
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -111,14 +113,16 @@ export default function ExtincteurPage() {
 
   useEffect(() => {
     const fetchDetails = async () => {
-      if (!idInstallationEquipement) {
+      if (!idInstallationExtincteur) {
         setError("ID de l'installation équipement manquant");
         return;
       }
-  
+      console.log("idMaintenance : ", idMaintenance);
+      console.log("idInstallationEquipement : ", idInstallationEquipement);
+      console.log("IdInstallationExtincteur: ", idInstallationExtincteur);
       try {
         setLoading(true);
-        const response = await getExtincteurDetails(idInstallationEquipement);
+        const response = await getExtincteurDetails(idInstallationEquipement, idMaintenance);
         console.log("Détails de l'extincteur récupérés :", response); // Log des données récupérées
   
         if (!response.success || !response.data) {
@@ -126,7 +130,7 @@ export default function ExtincteurPage() {
         }
   
         // Filtrer les actions de maintenance pour ne garder que celles correspondant à l'ID de maintenance et l'ID d'installation extincteur
-        const filteredActions = response.data.maintenanceActions.filter(action => action.idMaintenance === idMaintenance && action.idInstallationExtincteur === idInstallationEquipement);
+        const filteredActions = response.data.maintenanceActions.filter(action => action.idMaintenance === idMaintenance && action.idInstallationExtincteur === idInstallationExtincteur);
         response.data.maintenanceActions = filteredActions;
         setExtincteurDetails(response.data);
   
@@ -153,7 +157,7 @@ export default function ExtincteurPage() {
     };
   
     fetchDetails();
-  }, [idInstallationEquipement]);
+  }, [idInstallationExtincteur, idMaintenance, idInstallationEquipement]);
   
 
   const handleStatusChange = (actionId: number, status: string) => {
@@ -185,8 +189,8 @@ export default function ExtincteurPage() {
         idMaintenance: action.idMaintenance,
         idActionMaintenanceExtincteur: action.idActionMaintenanceExtincteur,
         idInstallationExtincteur: action.idInstallationExtincteur,
-        statut: selectedStatus[action.id] === 'valide',  // Vérifie si l'état est "validé"
-        observation: observations[action.id] || ''  // Récupère l'observation correspondante
+        statut: selectedStatus[action.id] === 'valide',
+        observation: observations[action.id] || '',
       }));
   
       // Appeler la fonction de mise à jour pour enregistrer les actions de maintenance dans la base de données
@@ -196,16 +200,17 @@ export default function ExtincteurPage() {
         throw new Error(updateResponse.message || 'Erreur lors de la mise à jour des actions de maintenance');
       }
   
+      // Fermer la boîte de dialogue de confirmation
       setIsConfirmDialogOpen(false);
-      router.back();  // Retourne à la page précédente après la validation
   
+      // Rediriger vers la page de téléchargement du PDF après la validation
+      router.push(`/technicien/Extincteur/${idInstallationEquipement}?maintenanceId=${idMaintenance}`);  
     } catch (error) {
       console.error('Erreur lors de la validation:', error);
     } finally {
       setIsSaving(false);
     }
   };
-  
 
   if (loading) {
     return (
@@ -228,8 +233,8 @@ export default function ExtincteurPage() {
       </Alert>
     );
   }
-  const handleValidateClick = (idInstallationEquipement: number) => {
-    router.push(`/technicien/Extincteur/${idInstallationEquipement}?installationId=${idInstallationEquipement}`);
+  const handleValidateClick = () => {
+    setIsConfirmDialogOpen(true); // Ouvrir la boîte de dialogue de confirmation
   };
 
   return (
@@ -308,7 +313,7 @@ export default function ExtincteurPage() {
                 <div className="bg-gray-50 p-4 rounded-md">
                   <h3 className="font-semibold text-gray-700">En Service </h3>
                   <p className="text-gray-900 mt-1">
-                    {formatDate(extincteurDetails.HorsService)}
+                    {extincteurDetails.HorsService ? "Non" : "Oui"}
                   </p>
                 </div>
               </div>
@@ -381,13 +386,11 @@ export default function ExtincteurPage() {
                   Retour
                 </Button>
                 <Button
-                onClick={() => {handleValidateClick(idInstallationEquipement); setIsConfirmDialogOpen(true)}} // Utilisation de la fonction ici
-              className="bg-blue-500 hover:bg-blue-600 text-white"
-              
-                 
-                >
-                  Valider l'inspection
-                </Button>
+                    onClick={handleValidateClick} 
+                    className="bg-blue-500 hover:bg-blue-600 text-white"
+                  >
+                    Valider l'inspection
+                  </Button>
               </div>
             </>
           )}

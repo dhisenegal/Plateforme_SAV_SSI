@@ -2,10 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import { Table, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
-import { fetchDetails } from '@/lib/fonctionas'; // Assurez-vous que fetchDetails est importé
-import { getStatut, getPlanning, getType } from '@/actions/technicien/planning'; // Importation des fonctions existantes
-import { useRouter } from 'next/navigation'; // Utilisation de useRouter pour la redirection
-import { useSession } from 'next-auth/react'; // Importation de la session utilisateur
+import { fetchDetails } from '@/lib/fonctionas';
+import { getStatut, getPlanning } from '@/actions/technicien/planning';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 // Fonction utilitaire pour formater les dates au format 'DD/MM/YYYY'
 const formatDate = (date: Date | string) => {
@@ -19,51 +19,38 @@ const formatDate = (date: Date | string) => {
   return date;
 };
 
-export function RecentInterventions() { // Pas besoin de passer `plans` car les données seront récupérées ici
+export function RecentInterventions() {
   const [maintenances, setMaintenances] = useState<any[]>([]);
-  const router = useRouter();  // Initialisation du hook useRouter pour gérer la redirection
-  const { data: session } = useSession();  // Récupération de la session utilisateur
-  const technicienId = session?.user?.id;  // Récupération de l'ID du technicien
+  const router = useRouter();
+  const { data: session } = useSession();
+  const technicienId = session?.user?.id;
 
   useEffect(() => {
     const fetchMaintenances = async () => {
       try {
-        // Récupérer tous les plans de type "Maintenance" pour le technicien
-        const planning = await getPlanning(technicienId); // Récupère le planning complet (assurez-vous d'avoir l'ID du technicien ici)
+        const planning = await getPlanning(technicienId);
 
-        // Ajouter les détails associés à chaque plan
         const planningWithDetails = await Promise.all(
           planning.map(async (plan) => {
-            const type = await getType(plan);  // Récupérer le type (Maintenance ou Intervention)
-            
-            if (!plan.id || !type || type !== 'Maintenance') {
-              return null;  // Ne garder que les plans de type "Maintenance"
-            }
+            const type = 'maintenance'; // Nous savons que ce sont des maintenances
+            const details = await fetchDetails(plan.id, type);
+            const statut = await getStatut(plan.id, type);
 
-            // Appel à fetchDetails pour récupérer les détails supplémentaires
-            const details = await fetchDetails(plan.id, type.toLowerCase());
-            const statut = await getStatut(plan.id, type.toLowerCase()); // Récupérer le statut
-
-            // Ne garder que les maintenances avec le statut "EN_COURS" ou "PLANIFIE"
             if (statut === 'EN_COURS' || statut === 'PLANIFIE') {
               return {
                 ...plan,
                 client: details.clientName,
-                date: formatDate(details.datePlanifiee),  // Formater la date
+                date: formatDate(details.datePlanifiee),
               };
             }
 
-            return null; // Si le statut n'est pas "EN_COURS" ou "PLANIFIE", on ignore ce plan
+            return null;
           })
         );
 
-        // Filtrer les maintenances valides (non nulles)
         const validMaintenances = planningWithDetails.filter((plan) => plan !== null);
-
-        // Trier les maintenances par date croissante
         const sortedMaintenances = validMaintenances.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-        // Limiter à 10 prochaines maintenances
         setMaintenances(sortedMaintenances.slice(0, 10));
       } catch (error) {
         console.error("Erreur lors de la récupération des maintenances :", error);
@@ -71,20 +58,19 @@ export function RecentInterventions() { // Pas besoin de passer `plans` car les 
     };
 
     fetchMaintenances();
-  }, []);  // L'effet est exécuté une seule fois au montage du composant
+  }, [technicienId]);
 
   if (maintenances.length === 0) {
-    return <p></p>;
+    return <p>Aucune maintenance récente.</p>;
   }
 
   const handleRowClick = (id: number, type: string) => {
-    // Redirige vers la page de maintenance spécifique
     router.push(`/technicien/Planning/${id}?type=${type}`);
   };
 
   return (
     <div className="overflow-x-auto">
-      <Table className="min-w-full divide-y   divide-gray-200">
+      <Table className="min-w-full divide-y divide-gray-200">
         <TableHeader className="bg-gray-50">
           <TableRow>
             <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -100,7 +86,7 @@ export function RecentInterventions() { // Pas besoin de passer `plans` car les 
             <TableRow
               key={plan.id}
               className="cursor-pointer hover:bg-blue-100"
-              onClick={() => handleRowClick(plan.id, 'maintenance')}  // Utilisation de onClick pour gérer la redirection
+              onClick={() => handleRowClick(plan.id, 'maintenance')}
             >
               <TableCell className="px-6 py-4 whitespace-nowrap">
                 <p className="text-sm font-medium text-gray-900">{plan.date}</p>
