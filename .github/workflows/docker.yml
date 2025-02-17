@@ -9,6 +9,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
+      # Ajoute d'autres variables d'environnement si nécessaire
+
     steps:
       # 1. Cloner le repository
       - name: Checkout repository
