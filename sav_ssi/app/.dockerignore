@@ -18,9 +18,6 @@ npm-debug.log
 yarn-error.log
 pnpm-debug.log
 
-# Ignorer Dockerfile lui-même (facultatif mais parfois utile)
-Dockerfile
-.dockerignore
 
 # Ignorer les fichiers de documentation
 README.md
