@@ -40,12 +40,11 @@ const PlanningTabContent = () => {
           }
 
           // Appel de fetchDetails avec le type déterminé par getType
-          const { clientName, description, statut, urgent, technicienName, datePlanifiee, systeme } = await fetchDetails(plan.id, type);
+          const { clientName, statut, urgent, technicienName, datePlanifiee, systeme } = await fetchDetails(plan.id, type);
 
           return {
             ...plan,
             client: clientName,
-            description,
             statut,
             date: datePlanifiee,
             urgent,
@@ -85,8 +84,8 @@ const PlanningTabContent = () => {
           <TableRow>
             <TableHead>Date</TableHead>
             <TableHead>Client</TableHead>
-            <TableHead>Description</TableHead>
             <TableHead>Type</TableHead>
+            <TableHead>Systéme</TableHead>
             <TableHead>Statut</TableHead>
             <TableHead>Urgence</TableHead>
             <TableHead>Actions</TableHead>
@@ -101,8 +100,8 @@ const PlanningTabContent = () => {
             >
               <TableCell>{plan.date ? new Date(plan.date).toLocaleDateString() : 'Non défini'}</TableCell>
               <TableCell>{plan.client}</TableCell>
-              <TableCell>{plan.description}</TableCell>
               <TableCell>{plan.type}</TableCell>
+              <TableCell>{plan.systeme}</TableCell>
               <TableCell>{plan.statut || 'Non défini'}</TableCell>
               <TableCell>
                 {plan.urgent ? (

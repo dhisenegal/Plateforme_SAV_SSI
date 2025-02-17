@@ -10,15 +10,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Clone le code
       - name: Checkout repository
         uses: actions/checkout@v3
 
+      # 2. Connecte-toi à Docker Hub avec tes secrets
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
+      # 3. Construire l'image Docker avec le Dockerfile dans 'sav_ssi'
       - name: Build Docker Image
-        working-directory: sav_ssi  # On précise que Dockerfile est dans le dossier 'sav_ssi'
-        run: docker build -t monutilisateur/monprojet:latest .
+        working-directory: sav_ssi  # Assure-toi que Dockerfile est dans le dossier 'sav_ssi'
+        run: docker build -t mamadoujuniorsy/sav_ssi:latest .
 
+      # 4. Push l'image construite sur Docker Hub (repo privé)
       - name: Push Docker Image
-        run: docker push monutilisateur/monprojet:latest
+        run: docker push mamadoujuniorsy/sav_ssi:latest
