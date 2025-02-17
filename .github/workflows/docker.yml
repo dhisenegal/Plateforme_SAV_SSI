@@ -1,0 +1,24 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main  # Déclenche le pipeline à chaque push sur la branche main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
+
+      - name: Build Docker Image
+        working-directory: sav_ssi  # On précise que Dockerfile est dans le dossier 'sav_ssi'
+        run: docker build -t monutilisateur/monprojet:latest .
+
+      - name: Push Docker Image
+        run: docker push monutilisateur/monprojet:latest
