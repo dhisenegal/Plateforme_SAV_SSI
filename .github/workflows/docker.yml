@@ -10,9 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      NEXTAUTH_URL: ${{ secrets.NEXTAUTH_URL }}
+      AUTH_SECRET: ${{ secrets.AUTH_SECRET }}
       DATABASE_URL: ${{ secrets.DATABASE_URL }}
-      NEXTAUTH_SECRET: ${{ secrets.NEXTAUTH_SECRET }}
-      # Ajoute d'autres variables d'environnement si nécessaire
+      #SMTP_SERVER_USERNAME: ${{ secrets.SMTP_SERVER_USERNAME }}
+      #SMTP_SERVER_PASSWORD: ${{ secrets.SMTP_SERVER_PASSWORD }}
+      #SMTP_SERVER_HOST: ${{ secrets.SMTP_SERVER_HOST }}
+      #SMTP_SERVER_PORT: ${{ secrets.SMTP_SERVER_PORT }}
+      #SITE_MAIL_RECIEVER: ${{ secrets.SITE_MAIL_RECIEVER }}
 
     steps:
       # 1. Cloner le repository
