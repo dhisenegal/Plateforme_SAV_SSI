@@ -20,7 +20,7 @@ jobs:
 
       # 3. Construire l'image Docker avec le Dockerfile dans 'sav_ssi'
       - name: Build Docker Image
-        working-directory: /sav_ssi  # Assure-toi que Dockerfile est dans le dossier 'sav_ssi'
+        working-directory: sav_ssi  # Assure-toi que Dockerfile est dans le dossier 'sav_ssi'
         run: docker build -t mamadoujuniorsy/sav_ssi:latest .
 
       # 4. Push l'image construite sur Docker Hub (repo privé)
