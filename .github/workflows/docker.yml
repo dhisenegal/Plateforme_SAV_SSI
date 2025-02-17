@@ -20,7 +20,7 @@ jobs:
 
       # 3. Passer au répertoire 'sav_ssi' et construire l'image Docker
       - name: Build Docker Image
-        working-directory: sav_ssi/app  # Répertoire relatif où ton Dockerfile est situé
+        working-directory: sav_ssi  # Répertoire relatif où ton Dockerfile est situé
         run: |
           echo "Navigating to directory: $(pwd)"
           docker build -t mamadoujuniorsy/sav_ssi:latest .
