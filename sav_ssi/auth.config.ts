@@ -6,6 +6,7 @@ import { LoginSchema } from "./schemas"
 import { prisma } from "./prisma"
 
 export default {
+  trustHost: true,
   providers: [
     Credentials({
       async authorize(credentials) {
