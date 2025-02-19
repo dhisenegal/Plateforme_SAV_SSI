@@ -1,24 +1,7 @@
-# Ignorer les dépendances locales
 node_modules
-
-# Ignorer les fichiers générés par Next.js
-.next
-
-# Ignorer les fichiers sensibles et secrets
-.kamal/secrets*
-.env
-*.env.local
-*.env.development
-*.env.production
-
-# Ignorer Git et les fichiers de logs
-.git
-.gitignore
-npm-debug.log
-yarn-error.log
-pnpm-debug.log
-
-
-# Ignorer les fichiers de documentation
+Dockerfile
 README.md
-LICENSE
+.dockerignore
+.git
+.next
+.kamal/secrets*

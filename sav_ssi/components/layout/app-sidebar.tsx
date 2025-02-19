@@ -55,9 +55,6 @@ export default function AppSidebar() {
   const { data: session } = useSession();
   const pathname = usePathname();
 
-  // Log the session to debug
-  console.log('Session:', session);
-
   // Get the user's role from the session
   const userRole = session?.user?.role.nom; // Default to 'guest' if no role is found
   console.log("role user", userRole);

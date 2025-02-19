@@ -13,6 +13,16 @@ RUN npm install
 # Copy the rest of the application files to the container
 COPY . .
 
+# Définir les arguments de build pour les variables d'environnement
+ARG DATABASE_URL
+ARG AUTH_SECRET
+ARG NEXTAUTH_URL
+
+# Définir les variables d'environnement
+ENV DATABASE_URL=$DATABASE_URL
+ENV AUTH_SECRET=$AUTH_SECRET
+ENV NEXTAUTH_URL=$NEXTAUTH_URL
+
 # Run Prisma 
 RUN npx prisma generate
 

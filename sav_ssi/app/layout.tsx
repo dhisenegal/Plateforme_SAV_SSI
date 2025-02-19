@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "next-auth/react";
 import { auth } from "@/auth";
 
@@ -19,15 +18,7 @@ export default async function RootLayout({
     <SessionProvider session={session}>
        <html lang="en" suppressHydrationWarning>
             <body className="bg-gray-100">
-          <ThemeProvider
-                attribute="class"
-                defaultTheme="system"
-                enableSystem
-                disableTransitionOnChange
-              >
-                  
                   {children}
-              </ThemeProvider>
               </body>
         </html>
     </SessionProvider>

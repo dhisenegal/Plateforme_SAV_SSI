@@ -3,41 +3,26 @@ name: Build and Push Docker Image
 on:
   push:
     branches:
-      - main  # Déclenche le pipeline à chaque push sur la branche main
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Cloner le repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      # 2. Créer le fichier .env avec les variables d'environnement
-      - name: Create .env file
-        run: |
-          echo "NEXTAUTH_URL=${{ secrets.NEXTAUTH_URL }}" >> sav_ssi/.env
-          echo "AUTH_SECRET=${{ secrets.AUTH_SECRET }}" >> sav_ssi/.env
-          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> sav_ssi/.env
-          echo "SMTP_SERVER_USERNAME=${{ secrets.SMTP_SERVER_USERNAME }}" >> sav_ssi/.env
-          echo "SMTP_SERVER_PASSWORD=${{ secrets.SMTP_SERVER_PASSWORD }}" >> sav_ssi/.env
-          echo "SMTP_SERVER_HOST=${{ secrets.SMTP_SERVER_HOST }}" >> sav_ssi/.env
-          echo "SMTP_SERVER_PORT=${{ secrets.SMTP_SERVER_PORT }}" >> sav_ssi/.env
-          echo "SITE_MAIL_RECIEVER=${{ secrets.SITE_MAIL_RECIEVER }}" >> sav_ssi/.env
-
-      # 3. Vérifier que le fichier .env a été créé (Debugging)
-      - name: Debug .env file
-        run: cat sav_ssi/.env
-
-      # 4. Connecter Docker Hub
       - name: Log in to Docker Hub
         run: echo "${{ secrets.DOCKER_HUB_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_HUB_USERNAME }}" --password-stdin
 
-      # 5. Construire l'image Docker
       - name: Build Docker Image
-        run: docker build -t mamadoujuniorsy/sav_ssi:latest ./sav_ssi
+        run: |
+          docker build \
+            --build-arg DATABASE_URL="${{ secrets.DATABASE_URL }}" \
+            --build-arg AUTH_SECRET="${{ secrets.AUTH_SECRET }}" \
+            --build-arg NEXTAUTH_URL="${{ secrets.NEXTAUTH_URL }}" \
+            -t mamadoujuniorsy/sav_ssi:latest ./sav_ssi
 
-      # 6. Push l'image construite sur Docker Hub
       - name: Push Docker Image
         run: docker push mamadoujuniorsy/sav_ssi:latest

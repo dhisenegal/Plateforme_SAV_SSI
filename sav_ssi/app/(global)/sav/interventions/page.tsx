@@ -121,6 +121,17 @@ const InterventionsList = () => {
 
   const handlePlanningSubmit = useCallback(async (e) => {
     e.preventDefault();
+    
+    // Validation de la date
+    const selectedDate = new Date(planningData.datePlanifiee);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Réinitialiser l'heure pour la comparaison
+  
+    if (selectedDate < today) {
+      toast.error("La date de planification ne peut pas être antérieure à aujourd'hui");
+      return;
+    }
+  
     try {
       await updateIntervention(selectedIntervention.id, {
         datePlanifiee: new Date(planningData.datePlanifiee),
@@ -155,7 +166,14 @@ const InterventionsList = () => {
         </div>
       );
     }
-
+    const getCurrentDate = () => {
+  const today = new Date();
+  // Formatage correct pour le fuseau horaire local
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, '0');
+  const day = String(today.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
   return (
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
@@ -295,16 +313,21 @@ const InterventionsList = () => {
           </DialogHeader>
           <form onSubmit={handlePlanningSubmit} className="space-y-4">
             <div className="space-y-4">
-              <Input
+            <Input
                 type="date"
+                min={getCurrentDate()}
                 value={planningData.datePlanifiee}
-                onChange={(e) => setPlanningData(prev => ({
-                  ...prev,
-                  datePlanifiee: e.target.value
-                }))}
+                onChange={(e) => {
+                  const selected = e.target.value;
+                  // Validation instantanée
+                  if (new Date(selected) < new Date(getCurrentDate())) {
+                    toast.error("Date invalide");
+                    return;
+                  }
+                  setPlanningData(prev => ({ ...prev, datePlanifiee: selected }));
+                }}
                 required
               />
-
               <Select 
                 value={planningData.idTechnicien}
                 onValueChange={(value) => setPlanningData(prev => ({

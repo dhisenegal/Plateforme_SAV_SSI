@@ -73,22 +73,35 @@ const MaintenancesPage = () => {
 
   // Fonction de validation avant soumission
   const validateForm = () => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Réinitialise l'heure à minuit
+    const selectedDate = new Date(formData.datePlanifiee);
+    selectedDate.setHours(0, 0, 0, 0);
+  
     const errors = {
       idClient: !formData.idClient,
       idSite: !formData.idSite,
       idInstallation: !formData.idInstallation,
-      datePlanifiee: !formData.datePlanifiee,
+      datePlanifiee: !formData.datePlanifiee || selectedDate < today,
       typeMaintenance: !formData.typeMaintenance,
       idTechnicien: !formData.idTechnicien,
       idContact: !formData.idContact
     };
-
+  
     setFormErrors(errors);
-
-    // Vérifier si tous les champs sont corrects
+  
+    if (selectedDate < today) {
+      toast.error("La date de maintenance ne peut pas être dans le passé");
+    }
+  
     return !Object.values(errors).some(error => error);
   };
 
+  const getCurrentDate = () => {
+    const today = new Date();
+    return today.toISOString().split('T')[0];
+  };
+  
 // Dans le handleEdit :
 const handleEdit = async (maintenance) => {
   if (!techniciens || techniciens.length === 0) {
@@ -486,17 +499,18 @@ const handleModificationSubmit = async (formData) => {
                 <div>
                   <Label className="block mb-2 text-gray-700 font-semibold">Date prévue *</Label>
                   <Input
-                    type="date"
-                    value={formData.datePlanifiee}
-                    onChange={(e) => {
-                      setFormData(prev => ({ ...prev, datePlanifiee: e.target.value }));
-                      setFormErrors(prev => ({ ...prev, datePlanifiee: false }));
-                    }}
-                    className={`
-                      ${formErrors.datePlanifiee ? 'border-red-500 text-red-500' : 'border-gray-300'}
-                    `}
-                  />
-                  {formErrors.datePlanifiee && (
+                      type="date"
+                      min={getCurrentDate()}
+                      value={formData.datePlanifiee}
+                      onChange={(e) => {
+                        setFormData(prev => ({ ...prev, datePlanifiee: e.target.value }));
+                        setFormErrors(prev => ({ ...prev, datePlanifiee: false }));
+                      }}
+                      className={`
+                        ${formErrors.datePlanifiee ? 'border-red-500 text-red-500' : 'border-gray-300'}
+                      `}
+                    />
+                   {formErrors.datePlanifiee && (
                     <p className="text-red-500 text-sm mt-1">Ce champ est requis</p>
                   )}
                 </div>

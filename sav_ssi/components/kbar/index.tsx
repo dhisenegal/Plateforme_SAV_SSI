@@ -1,4 +1,5 @@
 'use client';
+
 import { navItemsByRole } from '@/constants/data';
 import {
   KBarAnimator,
@@ -10,7 +11,6 @@ import {
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 import RenderResults from './render-result';
-import useThemeSwitching from './use-theme-switching';
 
 export default function KBar({ children }: { children: React.ReactNode }) {
   const router = useRouter();
@@ -65,7 +65,6 @@ export default function KBar({ children }: { children: React.ReactNode }) {
 }
 
 const KBarComponent = ({ children }: { children: React.ReactNode }) => {
-  useThemeSwitching();
 
   return (
     <>
