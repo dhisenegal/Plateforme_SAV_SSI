@@ -86,7 +86,6 @@ const PlanningTabContent = () => {
             <TableHead>Client</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Systéme</TableHead>
-            <TableHead>Statut</TableHead>
             <TableHead>Urgence</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
@@ -102,7 +101,6 @@ const PlanningTabContent = () => {
               <TableCell>{plan.client}</TableCell>
               <TableCell>{plan.type}</TableCell>
               <TableCell>{plan.systeme}</TableCell>
-              <TableCell>{plan.statut || 'Non défini'}</TableCell>
               <TableCell>
                 {plan.urgent ? (
                   <div className="flex items-center text-red-600">

@@ -6,6 +6,8 @@ import { getExtincteursForSystem, getInstallationIdFromMaintenance, getSiteByIns
 import { Document, Page, Text, View, StyleSheet, PDFDownloadLink, Image } from '@react-pdf/renderer';
 import { Button } from "@/components/ui/button";
 import { useSession } from 'next-auth/react'; // Assuming you use next-auth for session management
+import { getMaintenancesById } from '@/actions/sav/maintenance';
+import { formatDateTime } from '@/lib/fonction';
 
 interface MaintenanceAction {
   id: number;
@@ -172,7 +174,19 @@ const styles = StyleSheet.create({
   },
 });
 
-const ExtincteursRecapPDF = ({ extincteurs, siteName, maintenanceDate, technicianName }: { extincteurs: Extinguisher[], siteName: string, maintenanceDate: string, technicianName: string }) => {
+const ExtincteursRecapPDF = ({ 
+  extincteurs, 
+  siteName, 
+  technicianName,
+  dateHeureDebut,
+  dateHeureFin 
+}: { 
+  extincteurs: Extinguisher[], 
+  siteName: string, 
+  technicianName: string,
+  dateHeureDebut?: string,
+  dateHeureFin?: string
+}) => {  
   const formatDate = (dateString: string) => {
     if (!dateString) return '-';
     return new Date(dateString).toLocaleDateString('fr-FR', {
@@ -200,7 +214,8 @@ const ExtincteursRecapPDF = ({ extincteurs, siteName, maintenanceDate, technicia
 
           </View>
           <View style={styles.infoRight}>
-            <Text style={styles.infoText}>Date de Maintenance: {formatDate(maintenanceDate)}</Text>
+          <Text style={styles.infoText}>Date de début: {formatDateTime(dateHeureDebut || '')}</Text>
+          <Text style={styles.infoText}>Date de fin: {formatDateTime(dateHeureFin || '')}</Text>
           </View>
         </View>
 
@@ -262,6 +277,8 @@ export default function ExtincteursRecapPDFPage() {
   const [extincteurs, setExtincteurs] = useState<Extinguisher[]>([]);
   const [siteName, setSiteName] = useState<string>('');
   const [maintenanceDate, setMaintenanceDate] = useState<string>('');
+  const [dateHeureDebut, setDateHeureDebut] = useState<string>('');
+  const [dateHeureFin, setDateHeureFin] = useState<string>('');
   const [technicianName, setTechnicianName] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
@@ -272,6 +289,15 @@ export default function ExtincteursRecapPDFPage() {
         const installationId = await getInstallationIdFromMaintenance(id);
         const response = await getExtincteursForSystem(installationId);
         const siteResponse = await getSiteByInstallation(installationId);
+        
+        // Récupérer les dates de début et de fin de la maintenance
+        // Vous devrez créer une fonction qui récupère ces informations
+        const maintenanceInfo = await getMaintenancesById(id);
+        console.log("maintenance info :", maintenanceInfo); // Fonction à créer
+        if (maintenanceInfo) {
+          setDateHeureDebut(maintenanceInfo.dateMaintenance || '');
+          setDateHeureFin(maintenanceInfo.dateFinMaint || '');
+        }
 
         if (response.success) {
           setExtincteurs(response.data);
@@ -284,9 +310,7 @@ export default function ExtincteursRecapPDFPage() {
 
         if (session && session.user && session.user.prenom && session.user.nom) {
           setTechnicianName(`${session.user.prenom} ${session.user.nom}`);
-        }
-          
-         else {
+        } else {
           setTechnicianName('');
         }
       } catch (error) {
@@ -301,6 +325,7 @@ export default function ExtincteursRecapPDFPage() {
     }
   }, [id, session]);
 
+
   if (loading) {
     return <div>Chargement...</div>;
   }
@@ -308,7 +333,10 @@ export default function ExtincteursRecapPDFPage() {
   return (
     <div className="flex justify-center items-center min-h-screen">
       <PDFDownloadLink
-        document={<ExtincteursRecapPDF extincteurs={extincteurs} siteName={siteName} maintenanceDate={maintenanceDate} technicianName={technicianName} />}
+        document={<ExtincteursRecapPDF extincteurs={extincteurs} siteName={siteName} 
+        technicianName={technicianName} 
+        dateHeureDebut={dateHeureDebut}
+        dateHeureFin={dateHeureFin}/>}
         fileName="recap_extincteurs.pdf"
       >
         {({ loading }) => (
