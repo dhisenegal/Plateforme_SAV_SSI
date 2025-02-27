@@ -10,7 +10,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import { getType, getPlanning } from '@/actions/technicien/planning';
 import { fetchDetails } from '@/lib/fonctionas'; // Assurez-vous que fetchDetails est importé
 
-const PlanningTabContent = () => {
+const RapportPage = () => {
   const { data: session } = useSession();
   const technicienId = session?.user?.id;
   const router = useRouter();
@@ -140,4 +140,4 @@ const PlanningTabContent = () => {
   );
 };
 
-export default PlanningTabContent;
+export default RapportPage;

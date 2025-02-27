@@ -16,6 +16,8 @@ import {
   AlertCircle,
   MessageSquare 
 } from "lucide-react";
+import MaintenancePage from "@/components/MaintenancePage";
+import ExtincteurRecap from "@/components/ExtincteurRecap";
 
 const MaintenanceDetails = () => {
   const params = useParams();
@@ -103,7 +105,7 @@ const MaintenanceDetails = () => {
       <Tabs defaultValue="details" className="space-y-6">
         <TabsList>
           <TabsTrigger value="details">Détails</TabsTrigger>
-          <TabsTrigger value="actions">Actions</TabsTrigger>
+          <TabsTrigger value="rapports">Rapports</TabsTrigger>
           <TabsTrigger value="commentaires">Commentaires</TabsTrigger>
         </TabsList>
 
@@ -157,39 +159,12 @@ const MaintenanceDetails = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="actions">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CheckSquare className="h-5 w-5" />
-                Liste des Actions
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {maintenance.Actions?.length > 0 ? (
-                  maintenance.Actions.map((action) => (
-                    <div key={action.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-2">
-                        {action.statut ? 
-                          <CheckSquare className="h-5 w-5 text-green-500" /> :
-                          <AlertCircle className="h-5 w-5 text-yellow-500" />
-                        }
-                        <span>{action.Action?.libeleAction || 'Action non spécifiée'}</span>
-                      </div>
-                      <div className="text-sm text-gray-500">
-                        {action.observation || "Aucune observation"}
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <div className="text-center p-4 text-gray-500">
-                    Aucune action disponible
-                  </div>
-                )}
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="rapports">
+          {maintenance.Installation?.Systeme?.nom === "MOYENS DE SECOURS EXTINCTEURS" ? (
+            <ExtincteurRecap />
+          ) : (
+            <MaintenancePage />
+          )}
         </TabsContent>
 
         <TabsContent value="commentaires">

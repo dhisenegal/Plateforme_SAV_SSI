@@ -271,7 +271,7 @@ const MaintenancePDF = ({ data, actions }) => (
               </View>
             </View>
             <View style={[styles.tableCell, styles.cellObs]}>
-              <Text>{action.observation || 'ras'}</Text>
+              <Text>{action.observation || '-'}</Text>
             </View>
           </View>
         ))}

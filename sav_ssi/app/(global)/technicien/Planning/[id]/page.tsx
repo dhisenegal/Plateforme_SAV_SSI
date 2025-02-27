@@ -334,7 +334,18 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
 
     // Cas extincteurs
     if (details.systeme === 'MOYENS DE SECOURS EXTINCTEURS') {
-      return <ExtincteursPageContent id={parseInt(idParam as string)} />;
+      const dateHeureDebut = form.watch('dateHeureDebut');
+      const dateHeureFin = form.watch('dateHeureFin');
+      return (
+        <ExtincteursPageContent 
+          id={parseInt(idParam as string)} 
+          dateHeureDebut={dateHeureDebut}
+          dateHeureFin={dateHeureFin}
+          onDateTimeChange={(field, value) => {
+            form.setValue(field, value);
+          }}
+        />
+      );
     }
 
     return (
@@ -618,13 +629,6 @@ const DetailsPage: React.FC<DetailsPageProps> = ({ error }) => {
                 </Button>
               )}
 
-              <Button
-                type="submit"
-                disabled={isSaving || isSuspended}
-                className="bg-blue-500 hover:bg-blue-600"
-              >
-                {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
-              </Button>
 
               <Button
                 type="button"

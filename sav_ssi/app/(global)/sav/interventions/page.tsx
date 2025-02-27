@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import {useSearchParams} from "next/navigation";
 import { fr } from "date-fns/locale";
-import { FaPlus, FaEdit, FaTrash, FaPause, FaPlay, FaCalendarAlt, FaSpinner, FaComment } from "react-icons/fa";
+import { FaPlus, FaEdit, FaTrash, FaPause, FaPlay, FaCalendarAlt, FaSpinner, FaComment, FaDownload } from "react-icons/fa";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
@@ -17,6 +17,7 @@ import { getInterventions, updateIntervention, deleteIntervention } from "@/acti
 import CreateInterventionModal from "@/components/sav/CreateInterventionModal";
 import CommentModal from "@/components/sav/CommentModal";
 import { useSession } from "next-auth/react";
+import Link from "next/link";
 
 const InterventionsList = () => {
   const [techniciens, setTechniciens] = useState([]);
@@ -225,6 +226,7 @@ const InterventionsList = () => {
             <TableHead>N°</TableHead>
             <TableHead>Client</TableHead>
             <TableHead>Date Planifiée</TableHead>
+            <TableHead>Date effectuée</TableHead>
             <TableHead>Contact</TableHead>
             <TableHead>Technicien</TableHead>
             <TableHead>Statut</TableHead>
@@ -241,6 +243,10 @@ const InterventionsList = () => {
               <TableCell>
                 {intervention.datePlanifiee && 
                   format(new Date(intervention.datePlanifiee), "dd/MM/yyyy", { locale: fr })}
+              </TableCell>
+              <TableCell>
+              {intervention.datePlanifiee && 
+                format(new Date(intervention.dateIntervention), "dd/MM/yyyy", { locale: fr }) || '-'}
               </TableCell>
               <TableCell>
                 {intervention.prenomContact || "-"}<br/>
@@ -261,28 +267,47 @@ const InterventionsList = () => {
                   setCommentModalOpen(true);
                 }}
               />
-              <FaCalendarAlt 
-                className="cursor-pointer text-blue-500"
-                onClick={() => {
-                  setSelectedIntervention(intervention);
-                  setPlanningModalOpen(true);
-                }}
-              />
+              <FaCalendarAlt
+                  className={`cursor-pointer text-blue-500 ${
+                    intervention.statut === "TERMINE" ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                  onClick={() => {
+                    if (intervention.statut !== "TERMINE") {
+                      setSelectedIntervention(intervention);
+                      setPlanningModalOpen(true);
+                    }
+                  }}
+                />
+
               {intervention.statut !== "SUSPENDU" ? (
-                <FaPause
-                  className="cursor-pointer text-yellow-500"
-                  onClick={() => handleStatusUpdate(intervention, "SUSPENDU")}
-                />
-              ) : (
-                <FaPlay
-                  className="cursor-pointer text-green-500"
-                  onClick={() => handleStatusUpdate(intervention, "EN_COURS")}
-                />
-              )}
+                  <FaPause
+                    className={`cursor-pointer text-yellow-500 ${
+                      intervention.statut === "TERMINE" ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    onClick={() =>
+                      intervention.statut !== "TERMINE" && handleStatusUpdate(intervention, "SUSPENDU")
+                    }
+                  />
+                ) : (
+                  <FaPlay
+                    className={`cursor-pointer text-green-500 ${
+                      intervention.statut === "TERMINE" ? "opacity-50 cursor-not-allowed" : ""
+                    }`}
+                    onClick={() =>
+                      intervention.statut !== "TERMINE" && handleStatusUpdate(intervention, "EN_COURS")
+                    }
+                  />
+                )}
               <FaTrash
                 className="cursor-pointer text-red-500"
                 onClick={() => handleDelete(intervention.id)}
               />
+              <Link href={`/sav/interventions/${intervention.id}`}>
+                <FaDownload 
+                  className="cursor-pointer text-blue-500" 
+                  title="Cliquez pour télécharger le rapport"
+                />
+              </Link>
             </div>
           </TableCell>
             </TableRow>

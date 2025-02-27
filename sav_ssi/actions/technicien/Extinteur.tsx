@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {  useRouter } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { getExtincteursForSystem, getInstallationIdFromMaintenance } from '@/actions/technicien/planning';
 import { FaEye } from 'react-icons/fa';
 import { 
@@ -15,9 +15,14 @@ import {
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from "@/components/ui/badge";
+import { FormControl, FormItem, FormLabel } from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
 
 interface ExtinguisherProps {
   id: number; // ID de la maintenance
+  dateHeureDebut?: string; // Valeur passée depuis le composant parent
+  dateHeureFin?: string; // Valeur passée depuis le composant parent
+  onDateTimeChange?: (field: string, value: string) => void; // Callback pour mettre à jour les valeurs
 }
 
 interface Extinguisher {
@@ -76,7 +81,12 @@ const StatusBadge = ({ status }: { status: string }) => {
   );
 };
 
-const ExtincteursPageContent: React.FC<ExtinguisherProps> = ({ id }) => {
+const ExtincteursPageContent: React.FC<ExtinguisherProps> = ({ 
+  id, 
+  dateHeureDebut = '', 
+  dateHeureFin = '',
+  onDateTimeChange 
+}) => {
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -139,6 +149,12 @@ const ExtincteursPageContent: React.FC<ExtinguisherProps> = ({ id }) => {
       &maintenanceId=${id}&idInstallationEquipement=${extincteur.idInstallationEquipement}`);
   };
 
+  const handleInputChange = (field: string, value: string) => {
+    if (onDateTimeChange) {
+      onDateTimeChange(field, value);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -162,8 +178,30 @@ const ExtincteursPageContent: React.FC<ExtinguisherProps> = ({ id }) => {
           <span>MOYENS DE SECOURS EXTINCTEURS ({installationId})</span>
         </CardTitle>
         <div className="text-sm text-gray-500">
-          <p>Utilisateur: {userInfo.currentUser}</p>
-          <p>Date d'inspection: {userInfo.currentDate}</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <FormItem>
+              <FormLabel>Date et Heure début</FormLabel>
+              <FormControl>
+                <Input
+                  type="datetime-local"
+                  value={dateHeureDebut}
+                  onChange={(e) => handleInputChange('dateHeureDebut', e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
+              </FormControl>
+            </FormItem>
+            <FormItem>
+              <FormLabel>Date et Heure fin</FormLabel>
+              <FormControl>
+                <Input
+                  type="datetime-local"
+                  value={dateHeureFin}
+                  onChange={(e) => handleInputChange('dateHeureFin', e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                />
+              </FormControl>
+            </FormItem>
+          </div>
         </div>
       </CardHeader>
       <CardContent>

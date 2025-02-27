@@ -5,9 +5,10 @@ import { Table, TableHeader, TableBody, TableRow, TableCell } from '@/components
 import { getNextMaintenances } from '@/actions/technicien/planning';
 import { useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { FaSpinner } from 'react-icons/fa';
 
-// Fonction utilitaire pour formater les dates au format 'DD/MM/YYYY'
-const formatDate = (date: Date | string) => {
+const formatDate = (date) => {
+  if (!date) return '';
   const d = new Date(date);
   return d.toLocaleDateString('fr-FR', {
     day: '2-digit',
@@ -17,67 +18,72 @@ const formatDate = (date: Date | string) => {
 };
 
 export function RecentInterventions() {
-  // État pour stocker les données de maintenance
-  const [maintenances, setMaintenances] = useState<any[]>([]);
+  const [maintenances, setMaintenances] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const router = useRouter();
   const { data: session } = useSession();
   const technicienId = session?.user?.id;
 
   useEffect(() => {
     const fetchMaintenances = async () => {
+      if (!technicienId) return;
+
       try {
-        // Récupère uniquement les 3 prochaines opérations de maintenance
+        setLoading(true);
         const nextMaintenances = await getNextMaintenances(technicienId);
-        // Formate les dates avant de les stocker dans l'état
         const formattedMaintenances = nextMaintenances.map(maintenance => ({
           ...maintenance,
           date: formatDate(maintenance.date)
         }));
         setMaintenances(formattedMaintenances);
+        setError(null);
       } catch (error) {
         console.error("Erreur lors de la récupération des maintenances:", error);
+        setError("Impossible de charger les maintenances");
+      } finally {
+        setLoading(false);
       }
     };
 
-    if (technicienId) {
-      fetchMaintenances();
-    }
+    fetchMaintenances();
   }, [technicienId]);
 
-  if (maintenances.length === 0) {
-    return <p>Aucune maintenance à venir.</p>;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center p-4">
+        <FaSpinner className="animate-spin mr-2" />
+        <span>Chargement des maintenances...</span>
+      </div>
+    );
   }
 
-  const handleRowClick = (id: number) => {
-    router.push(`/technicien/Planning/${id}?type=maintenance`);
-  };
+  if (error) {
+    return <p className="text-red-500 p-4">{error}</p>;
+  }
+
+  if (!maintenances.length) {
+    return <p className="text-gray-500 p-4">Aucune maintenance à venir.</p>;
+  }
 
   return (
     <div className="overflow-x-auto">
-      <Table className="min-w-full divide-y divide-gray-200">
-        <TableHeader className="bg-gray-50">
+      <Table>
+        <TableHeader>
           <TableRow>
-            <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Date
-            </TableCell>
-            <TableCell className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Client
-            </TableCell>
+            <TableCell className="font-medium">Date</TableCell>
+            <TableCell className="font-medium">Client</TableCell>
           </TableRow>
         </TableHeader>
-        <TableBody className="bg-white divide-y divide-gray-200">
+        <TableBody>
           {maintenances.map((plan) => (
             <TableRow
               key={plan.id}
               className="cursor-pointer hover:bg-blue-100"
-              onClick={() => handleRowClick(plan.id)}
+              onClick={() => router.push(`/technicien/Planning/${plan.id}?type=maintenance`)}
             >
-              <TableCell className="px-6 py-4 whitespace-nowrap">
-                <p className="text-sm font-medium text-gray-900">{plan.date}</p>
-              </TableCell>
-              <TableCell className="px-6 py-4 whitespace-nowrap">
-                <p className="text-sm font-medium text-gray-900">{plan.client}</p>
-              </TableCell>
+              <TableCell>{plan.date}</TableCell>
+              <TableCell>{plan.client}</TableCell>
             </TableRow>
           ))}
         </TableBody>

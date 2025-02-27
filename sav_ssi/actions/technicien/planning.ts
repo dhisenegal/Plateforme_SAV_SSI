@@ -1,7 +1,7 @@
 'use server';
 
 import prisma from "@/lib/prisma";
-
+import { revalidatePath } from "next/cache";
 export async function getMaintenanceActionsForExtincteurs(maintenanceId: number) {
   try {
     if (!maintenanceId) {
@@ -199,6 +199,7 @@ export async function getExtincteurDetails(installationEquipementId: number,
     };
   }
 }
+
 export async function updateMaintenanceActionExtincteur(
   actions: MaintenanceActionExtincteurUpdate[]
 ) {
@@ -642,19 +643,6 @@ export const getSiteByInstallation = async (installationId: number) => {
   }
   
   
-  // Récupérer la prochaine maintenance
-export async function getNextMaintenance() {
-    return await prisma.maintenance.findFirst({
-      include: {
-        Installation: {
-          select: {
-            Client: { select: { nom: true } },
-          },
-        },
-      },
-      orderBy: { dateMaintenance: "asc" },
-    });
-  }
   
   // Récupérer toutes les interventions
   export async function getAllInterventionsByTechnician(idTechnicien) {
@@ -687,90 +675,122 @@ export async function getNextMaintenance() {
   }
   
   // Fonction pour récupérer toutes les interventions et maintenances triées par date avec pagination
-export const getPlanning = async (
-  technicienId: number,
-  page: number = 1,
-  pageSize: number = 10
-) => {
-  try {
-    const skip = (page - 1) * pageSize;
-    const take = pageSize;
-
-    const [interventions, maintenances] = await prisma.$transaction([
-      prisma.intervention.findMany({
+  export const getPlanning = async (
+    technicienId: number,
+    page: number = 1,
+    pageSize: number = 10
+  ) => {
+    try {
+      const skip = (page - 1) * pageSize;
+      const take = pageSize;
+      const today = new Date();
+      
+      // Mettre à jour les statuts des interventions dépassées
+      await prisma.intervention.updateMany({
         where: {
           idTechnicien: technicienId,
+          statut: 'PLANIFIE',
+          datePlanifiee: {
+            lt: today
+          }
         },
-        select: {
-          id: true,
-          typePanneDeclare: true,
-          datePlanifiee: true,
-          statut: true,
-          urgent: true,
-          Client: {
-            select: {
-              nom: true,
-            },
-          },
-          Systeme: {
-            select: {
-              nom: true,
-            },
-          },
-        },
-        orderBy: {
-          datePlanifiee: "asc",
-        },
-        skip,
-        take,
-      }),
-      prisma.maintenance.findMany({
+        data: {
+          statut: 'EN_COURS',
+          // Optionnellement, vous pourriez aussi définir 'horsDelai' à true
+          horsDelai: true
+        }
+      });
+      
+      // Mettre à jour les statuts des maintenances dépassées
+      await prisma.maintenance.updateMany({
         where: {
           idTechnicien: technicienId,
+          statut: 'PLANIFIE',
+          datePlanifiee: {
+            lt: today
+          }
         },
-        select: {
-          id: true,
-          description: true,
-          datePlanifiee: true,
-          statut: true,
-          Installation: {
-            select: {
-              Client: {
-                select: {
-                  nom: true,
-                },
+        data: {
+          statut: 'EN_COURS'
+        }
+      });
+  
+      // Récupérer les interventions avec les statuts mis à jour
+      const [interventions, maintenances] = await prisma.$transaction([
+        prisma.intervention.findMany({
+          where: {
+            idTechnicien: technicienId,
+          },
+          select: {
+            id: true,
+            typePanneDeclare: true,
+            datePlanifiee: true,
+            statut: true,
+            urgent: true,
+            Client: {
+              select: {
+                nom: true,
               },
-              Systeme: {
-                select: {
-                  nom: true,
+            },
+            Systeme: {
+              select: {
+                nom: true,
+              },
+            },
+          },
+          orderBy: {
+            datePlanifiee: "asc",
+          },
+          skip,
+          take,
+        }),
+        prisma.maintenance.findMany({
+          where: {
+            idTechnicien: technicienId,
+          },
+          select: {
+            id: true,
+            description: true,
+            datePlanifiee: true,
+            statut: true,
+            Installation: {
+              select: {
+                Client: {
+                  select: {
+                    nom: true,
+                  },
+                },
+                Systeme: {
+                  select: {
+                    nom: true,
+                  },
                 },
               },
             },
           },
-        },
-        orderBy: {
-          datePlanifiee: "asc",
-        },
-        skip,
-        take,
-      }),
-    ]);
-
-    // Fusionner interventions et maintenances, puis trier par date
-    const combinedPlanning = [...interventions, ...maintenances].sort(
-      (a, b) => {
-        const dateA = new Date(a.datePlanifiee);
-        const dateB = new Date(b.datePlanifiee);
-        return dateA - dateB;
-      }
-    );
-
-    return combinedPlanning;
-  } catch (error) {
-    console.error("Erreur lors de la récupération des données de planning :", error);
-    throw error;
-  }
-};
+          orderBy: {
+            datePlanifiee: "asc",
+          },
+          skip,
+          take,
+        }),
+      ]);
+  
+      // Fusionner interventions et maintenances, puis trier par date
+      const combinedPlanning = [...interventions, ...maintenances].sort(
+        (a, b) => {
+          const dateA = a.datePlanifiee ? new Date(a.datePlanifiee) : new Date(0);
+          const dateB = b.datePlanifiee ? new Date(b.datePlanifiee) : new Date(0);
+          return dateA.getTime() - dateB.getTime();
+        }
+      );
+  
+      return combinedPlanning;
+    } catch (error) {
+      console.error("Erreur lors de la récupération des données de planning :", error);
+      throw error;
+    }
+  };
 
 // Fonction pour récupérer les détails d'une intervention ou d'une maintenance
 export async function fetchDetails(id: number, type: string) {
@@ -1153,14 +1173,18 @@ export const getInterventionsBySystem = async () => {
   }
 };
 
-
 // Function to get the next 3 maintenance operations for a technician
-export const getNextMaintenances = async (technicienId: number) => {
-  try {
-    // Get current date
-    const currentDate = new Date();
+export const getNextMaintenances = async (technicienId) => {
+  if (!technicienId) {
+    console.error("ID du technicien non fourni");
+    return [];
+  }
 
-    // Query only maintenances that are planned or in progress
+  try {
+    const currentDate = new Date();
+    // Assurez-vous que currentDate est au début de la journée
+    currentDate.setHours(0, 0, 0, 0);
+
     const maintenances = await prisma.maintenance.findMany({
       where: {
         idTechnicien: technicienId,
@@ -1171,11 +1195,9 @@ export const getNextMaintenances = async (technicienId: number) => {
           in: ['PLANIFIE', 'EN_COURS']
         }
       },
-      select: {
-        id: true,
-        datePlanifiee: true,
+      include: {
         Installation: {
-          select: {
+          include: {
             Client: {
               select: {
                 nom: true,
@@ -1187,17 +1209,55 @@ export const getNextMaintenances = async (technicienId: number) => {
       orderBy: {
         datePlanifiee: 'asc'
       },
-      take: 3 // Limit to next 3 maintenances
+      take: 3
     });
 
-    // Format the data for frontend use
     return maintenances.map(maintenance => ({
       id: maintenance.id,
       date: maintenance.datePlanifiee,
       client: maintenance.Installation.Client.nom
     }));
   } catch (error) {
-    console.error("Error fetching next maintenances:", error);
+    console.error("Erreur lors de la récupération des maintenances:", error);
     throw error;
   }
 };
+
+export async function updateExtincteurStatus(idInstallationEquipement: number, newStatus: string) {
+  try {
+    // Vérification des valeurs possibles pour le statut
+    if (!['OK', 'A_REPARER', 'A_CHANGER'].includes(newStatus)) {
+      return { 
+        success: false, 
+        message: 'Statut invalide. Les valeurs possibles sont: OK, A_REPARER, A_CHANGER' 
+      };
+    }
+
+    // Mise à jour du statut dans la base de données
+    const updatedEquipement = await prisma.installationEquipement.update({
+      where: { 
+        id: idInstallationEquipement 
+      },
+      data: { 
+        statut: newStatus 
+      },
+    });
+
+    // Revalidation du cache pour garantir que les données affichées sont à jour
+    revalidatePath(`/technicien/Extincteur/${idInstallationEquipement}`);
+
+    return { 
+      success: true, 
+      message: 'Statut mis à jour avec succès', 
+      data: updatedEquipement 
+    };
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour du statut:', error);
+    return { 
+      success: false, 
+      message: error instanceof Error ? error.message : 'Une erreur est survenue lors de la mise à jour du statut' 
+    };
+  } finally {
+    await prisma.$disconnect();
+  }
+}

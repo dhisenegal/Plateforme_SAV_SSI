@@ -15,6 +15,10 @@ import { getExtincteurDetails, updateMaintenanceActionExtincteur } from '@/actio
 import { Badge } from "@/components/ui/badge";
 import { Table, TableHeader, TableBody, TableRow, TableCell, TableHead } from '@/components/ui/table';
 import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
+// Ajoutez une fonction pour mettre à jour le statut dans vos actions
+import { updateExtincteurStatus } from '@/actions/technicien/planning';
 
 interface ExtincteurDetails {
   id: number;
@@ -56,8 +60,21 @@ interface ExtincteurDetails {
   }>;
 }
 
-const StatusBadge = ({ status }: { status: string }) => {
-  const getStatusStyle = () => {
+// Composant de sélection de statut qui remplace StatusBadge
+const StatutSelecteur = ({ 
+  status, 
+  idInstallationEquipement, 
+  onStatusChange 
+}: { 
+  status: string, 
+  idInstallationEquipement: number, 
+  onStatusChange: (newStatus: string) => void 
+}) => {
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fonction pour obtenir le style en fonction du statut
+  const getStatusStyle = (status: string) => {
     switch (status) {
       case 'OK':
         return 'bg-green-100 text-green-800 border-green-200';
@@ -70,23 +87,53 @@ const StatusBadge = ({ status }: { status: string }) => {
     }
   };
 
-  const getStatusText = () => {
-    switch (status) {
-      case 'OK':
-        return 'OK';
-      case 'A_REPARER':
-        return 'À réparer';
-      case 'A_CHANGER':
-        return 'À changer';
-      default:
-        return status;
+  const handleChange = async (newStatus: string) => {
+    setIsUpdating(true);
+    setError(null);
+    try {
+      // Appel de la fonction server action pour mettre à jour le statut
+      const result = await updateExtincteurStatus(idInstallationEquipement, newStatus);
+      
+      if (!result.success) {
+        throw new Error(result.message || "Échec de la mise à jour du statut");
+      }
+      
+      // Notifier le composant parent du changement
+      onStatusChange(newStatus);
+    } catch (err) {
+      console.error("Erreur lors de la mise à jour du statut:", err);
+      setError(err instanceof Error ? err.message : "Une erreur est survenue");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   return (
-    <Badge variant="outline" className={`${getStatusStyle()} px-2 py-1`}>
-      {getStatusText()}
-    </Badge>
+    <div className="space-y-2">
+      <Select defaultValue={status} onValueChange={handleChange} disabled={isUpdating}>
+        <SelectTrigger className={`${getStatusStyle(status)} w-full`}>
+          <SelectValue placeholder="Sélectionner un statut" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="OK" className="bg-green-50 text-green-800">OK</SelectItem>
+          <SelectItem value="A_REPARER" className="bg-red-50 text-red-800">À réparer</SelectItem>
+          <SelectItem value="A_CHANGER" className="bg-yellow-50 text-yellow-800">À changer</SelectItem>
+        </SelectContent>
+      </Select>
+      
+      {isUpdating && (
+        <div className="flex items-center justify-center">
+          <div className="w-4 h-4 border-2 border-blue-500 rounded-full animate-spin border-t-transparent"></div>
+          <span className="ml-2 text-sm text-gray-600">Mise à jour...</span>
+        </div>
+      )}
+      
+      {error && (
+        <div className="text-sm text-red-600">
+          {error}
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -159,6 +206,19 @@ export default function ExtincteurPage() {
     fetchDetails();
   }, [idInstallationExtincteur, idMaintenance, idInstallationEquipement]);
   
+  // Fonction pour gérer le changement de statut d'un équipement
+  const handleEquipmentStatusChange = (newStatus: string) => {
+    if (extincteurDetails) {
+      // Mettre à jour l'état local pour refléter le nouveau statut
+      setExtincteurDetails({
+        ...extincteurDetails,
+        InstallationEquipement: {
+          ...extincteurDetails.InstallationEquipement,
+          statut: newStatus
+        }
+      });
+    }
+  };
 
   const handleStatusChange = (actionId: number, status: string) => {
     setSelectedStatus(prev => ({ ...prev, [actionId]: status }));
@@ -179,7 +239,6 @@ export default function ExtincteurPage() {
   const handleValidate = async () => {
     try {
       setIsSaving(true);
-  
       if (!extincteurDetails?.maintenanceActions) {
         throw new Error("Aucune action de maintenance trouvée");
       }
@@ -266,7 +325,11 @@ export default function ExtincteurPage() {
 
                 <div className="bg-gray-50 p-4 rounded-md">
                   <h3 className="font-semibold text-gray-700">Statut</h3>
-                  <StatusBadge status={extincteurDetails.InstallationEquipement.statut} />
+                  <StatutSelecteur 
+                    status={extincteurDetails.InstallationEquipement.statut} 
+                    idInstallationEquipement={extincteurDetails.InstallationEquipement.id}
+                    onStatusChange={handleEquipmentStatusChange}
+                  />
                 </div>
 
                 <div className="bg-gray-50 p-4 rounded-md">
@@ -313,7 +376,7 @@ export default function ExtincteurPage() {
                 <div className="bg-gray-50 p-4 rounded-md">
                   <h3 className="font-semibold text-gray-700">En Service </h3>
                   <p className="text-gray-900 mt-1">
-                    {extincteurDetails.HorsService ? "Non" : "Oui"}
+                    {extincteurDetails.InstallationEquipement.HorsService ? "Non" : "Oui"}
                   </p>
                 </div>
               </div>

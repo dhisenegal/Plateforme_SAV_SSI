@@ -359,17 +359,23 @@ const handleModificationSubmit = async (formData) => {
               </TableCell>
               <TableCell>{`${maintenance.Technicien.prenom} ${maintenance.Technicien.nom}`}</TableCell>
               <TableCell className="flex space-x-2">
-                <Button
+              <Button
                   variant="outline"
-                  className={maintenance.statut === 'SUSPENDU' ? 'text-red-500' : 'text-green-500'}
+                  className={`${
+                    maintenance.statut === 'SUSPENDU' ? 'text-red-500' : 'text-green-500'
+                  } ${maintenance.statut === 'TERMINE' ? 'opacity-50 cursor-not-allowed' : ''}`}
                   onClick={() => handlePause(maintenance.id, maintenance.statut)}
+                  disabled={maintenance.statut === 'TERMINE'}
                 >
                   <FaPause />
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="text-blue-500" 
+                  className={`text-blue-500 ${
+                    maintenance.statut === 'TERMINE' ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
                   onClick={() => handleEdit(maintenance)}
+                  disabled={maintenance.statut === 'TERMINE'}
                 >
                   <FaEdit />
                 </Button>

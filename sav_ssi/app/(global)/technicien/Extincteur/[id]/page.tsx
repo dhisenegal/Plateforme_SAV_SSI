@@ -71,7 +71,7 @@ const CrossIcon = () => (
   </Svg>
 );
 
-const ExtincteurPDF = ({ extincteurDetails, selectedStatus, observations }: any) => {
+const ExtincteurPDF = ({ extincteurDetails, selectedStatus, observations, dateInspection }: any) => {
   const styles = StyleSheet.create({
     page: {
       padding: 30,
@@ -88,6 +88,12 @@ const ExtincteurPDF = ({ extincteurDetails, selectedStatus, observations }: any)
       borderRadius: 5,
       paddingRight: 20,
       height: 100,
+    },
+    inspectionDate: {
+      marginTop: 20,
+      marginBottom: 10,
+      fontSize: 12,
+      fontStyle: 'italic',
     },
     logoContainer: {
       marginRight: 10,
@@ -244,6 +250,18 @@ const ExtincteurPDF = ({ extincteurDetails, selectedStatus, observations }: any)
               <Text style={styles.label}>Numéro:</Text>
               <Text style={styles.value}>{extincteurDetails?.InstallationEquipement.Numero}</Text>
             </View>
+            <View style={styles.infoRow}>
+          <Text style={styles.label}>Date d'inspection :</Text>
+          <Text style={styles.value}>
+            {new Date(dateInspection).toLocaleDateString('fr-FR', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}
+          </Text>
+        </View>
             <View style={styles.infoRow}>
               <Text style={styles.label}>Emplacement:</Text>
               <Text style={styles.value}>{extincteurDetails?.InstallationEquipement.Emplacement}</Text>
@@ -440,7 +458,7 @@ export default function ExtincteurPage() {
         idActionMaintenanceExtincteur: action.idActionMaintenanceExtincteur,
         idInstallationExtincteur: action.idInstallationExtincteur,
         statut: selectedStatus[action.id] === 'valide',  // Vérifie si l'état est "validé"
-        observation: observations[action.id] || ''  // Récupère l'observation correspondante
+        observation: observations[action.id] || '',  // Récupère l'observation correspondante
       }));
   
       // Appeler la fonction de mise à jour pour enregistrer les actions de maintenance dans la base de données
@@ -460,7 +478,6 @@ export default function ExtincteurPage() {
     }
   };
   
-
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -493,7 +510,8 @@ export default function ExtincteurPage() {
             </div>
             <div>
                 <PDFDownloadLink
-                    document={<ExtincteurPDF extincteurDetails={extincteurDetails} selectedStatus={selectedStatus} observations={observations} />}
+                    document={<ExtincteurPDF extincteurDetails={extincteurDetails} selectedStatus={selectedStatus}
+                     observations={observations}  />}
                     fileName="extincteur_details.pdf"
                       >
                   {({ loading }: { loading: boolean }) => (
@@ -638,9 +656,7 @@ export default function ExtincteurPage() {
                     ))}
                   </TableBody>
                 </Table>
-              </div>
-
-              
+              </div>             
             </>
           )}
         </CardContent>
