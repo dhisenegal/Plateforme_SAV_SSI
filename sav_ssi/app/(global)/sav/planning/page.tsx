@@ -90,17 +90,37 @@ export default function PlanningPage() {
    */
   const getEventStyle = (event: any) => {
     const colors = {
-      PLANIFIE: "bg-blue-500",    // Bleu pour Planifié
-      SUSPENDU: "bg-red-500",    // Rouge pour Suspendu
-      TERMINE: "bg-green-500",   // Vert pour Terminé
-      EN_COURS: "bg-yellow-500", // Jaune pour En cours
-      NON_PLANIFIE: "bg-gray-500", 
+      PLANIFIE: "#3b82f6",    // Bleu pour Planifié
+      SUSPENDU: "#ef4444",     // Rouge pour Suspendu
+      TERMINE: "#22c55e",      // Vert pour Terminé
+      EN_COURS: "#eab308",     // Jaune pour En cours
+      NON_PLANIFIE: "#6b7280", // Gris pour Non planifié
     };
-
+  
     const status = event.resource.statut;
+    const backgroundColor = colors[status] || "#6b7280"; // Gris par défaut
+  
     return {
-      className: `${colors[status] || "bg-gray-500"} text-white rounded-md p-1`,
+      style: {
+        backgroundColor,
+        color: "white", // Texte en blanc pour un meilleur contraste
+        borderRadius: "4px", // Coins arrondis
+        padding: "2px", // Espacement interne
+        border: "none", // Supprimer la bordure par défaut
+      },
     };
+  };
+
+  const getBadgeClass = (status: string) => {
+    const colors = {
+      PLANIFIE: "bg-blue-500",    // Bleu pour Planifié
+      SUSPENDU: "bg-red-500",     // Rouge pour Suspendu
+      TERMINE: "bg-green-500",    // Vert pour Terminé
+      EN_COURS: "bg-yellow-500",  // Jaune pour En cours
+      NON_PLANIFIE: "bg-gray-500", // Gris pour Non planifié
+    };
+  
+    return `${colors[status] || "bg-gray-500"} text-white rounded-md p-1`;
   };
 
   /**
@@ -118,22 +138,22 @@ export default function PlanningPage() {
 
         {/* Légende des badges par statut */}
         <div className="flex gap-2">
-          {Object.entries({
-            PLANIFIE: "Planifié",
-            EN_COURS: "En cours",
-            SUSPENDU: "Suspendu",
-            TERMINE: "Terminé",
-            NON_PLANIFIE: "Non planifié",
-          }).map(([status, label]) => (
-            <Badge
-              key={status}
-              variant="outline"
-              className={getEventStyle({ resource: { statut: status } }).className}
-            >
-              {label}
-            </Badge>
-          ))}
-        </div>
+  {Object.entries({
+    PLANIFIE: "Planifié",
+    EN_COURS: "En cours",
+    SUSPENDU: "Suspendu",
+    TERMINE: "Terminé",
+    NON_PLANIFIE: "Non planifié",
+  }).map(([status, label]) => (
+    <Badge
+      key={status}
+      variant="outline"
+      className={getBadgeClass(status)} // Utilisez getBadgeClass ici
+    >
+      {label}
+    </Badge>
+  ))}
+</div>
       </div>
 
       <Calendar

@@ -39,7 +39,7 @@ import {
   LogOut
 } from 'lucide-react';
 
-import { useSession } from 'next-auth/react';
+import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import * as React from 'react';
@@ -61,6 +61,10 @@ export default function AppSidebar() {
 
   // Get the navigation items for the user's role
   const navItems = navItemsByRole[userRole] || [];
+
+  const handleSignOut = () => {
+      signOut({ callbackUrl: '/auth/login' });
+    };
 
   return (
     <Sidebar collapsible="icon" className=''>
@@ -192,17 +196,10 @@ export default function AppSidebar() {
                 <DropdownMenuSeparator />
 
                 <DropdownMenuGroup>
-                  <DropdownMenuItem>
-                    <BadgeCheck />
-                    Compte
-                  </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <Bell />
-                    Notifications
-                  </DropdownMenuItem>
+                  
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut />
                   Déconnexion
                 </DropdownMenuItem>
