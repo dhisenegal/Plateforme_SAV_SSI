@@ -1,44 +1,70 @@
-'use client';
+"use client";
 
-import { TrendingUp } from 'lucide-react';
-import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
-
+import { TrendingUp } from "lucide-react";
+import { Area, AreaChart, CartesianGrid, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import {
   Card,
   CardContent,
   CardDescription,
   CardFooter,
   CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+  CardTitle,
+} from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent
-} from '@/components/ui/chart';
-
-const chartData = [
-  { month: 'January', delai: 186, horsdelai: 80 },
-  { month: 'February', delai: 305, horsdelai: 200 },
-  { month: 'March', delai: 237, horsdelai: 120 },
-  { month: 'April', delai: 73, horsdelai: 190 },
-  { month: 'May', delai: 209, horsdelai: 130 },
-  { month: 'June', delai: 214, horsdelai: 140 }
-];
+  ChartTooltipContent,
+} from "@/components/ui/chart";
+import { useEffect, useState } from "react";
+import { getInterventionStats } from "@/actions/sav/analytic"; // Importez la fonction
 
 const chartConfig = {
   delai: {
-    label: 'Sur délai',
-    color: 'green' // Couleur verte pour les interventions sur délai
+    label: "Sur délai",
+    color: "green", // Couleur verte pour les interventions sur délai
   },
   horsdelai: {
-    label: 'Hors délai',
-    color: 'red' // Couleur rouge pour les interventions hors délai
-  }
+    label: "Hors délai",
+    color: "red", // Couleur rouge pour les interventions hors délai
+  },
 } satisfies ChartConfig;
 
 export function AreaGraph() {
+  const [data, setData] = useState<{ month: string; delai: number; horsdelai: number }[]>([]);
+  const [overduePercentage, setOverduePercentage] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const stats = await getInterventionStats();
+
+        // Formater les données pour le graphe
+        const formattedData = [
+          {
+            month: new Date().toLocaleString("default", { month: "long" }),
+            delai: stats.onTime,
+            horsdelai: stats.overdue,
+          },
+        ];
+
+        setData(formattedData);
+        setOverduePercentage(stats.overduePercentage); // Mettre à jour le pourcentage
+      } catch (error) {
+        console.error("Erreur lors de la récupération des données:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  if (loading) {
+    return <div>Chargement...</div>;
+  }
+
   return (
     <Card>
       <CardHeader>
@@ -54,12 +80,12 @@ export function AreaGraph() {
         >
           <ResponsiveContainer width="100%" height={310}>
             <AreaChart
-              data={chartData}
+              data={data}
               margin={{
                 top: 10,
                 right: 30,
                 left: 0,
-                bottom: 0
+                bottom: 0,
               }}
             >
               <CartesianGrid strokeDasharray="3 3" />
@@ -96,10 +122,10 @@ export function AreaGraph() {
         <div className="flex w-full items-start gap-2 text-sm">
           <div className="grid gap-2">
             <div className="flex items-center gap-2 font-medium leading-none">
-              9% d'interventions hors délai <TrendingUp className="h-4 w-4" />
+              {overduePercentage}% d'interventions hors délai <TrendingUp className="h-4 w-4" />
             </div>
             <div className="flex items-center gap-2 leading-none text-muted-foreground">
-              Janvier 2025 - Juin 2025
+              {new Date().toLocaleString("default", { month: "long" })} {new Date().getFullYear()}
             </div>
           </div>
         </div>

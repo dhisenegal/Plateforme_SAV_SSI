@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/prisma";
-import { endOfMonth, startOfMonth, subMonths } from "date-fns";
+import { endOfMonth, startOfMonth, subMonths, format } from "date-fns";
 
 export async function getRecentInterventions() {
   try {
@@ -431,4 +431,166 @@ export async function getExpiringContractsCount() {
       count: currentCount,
       percentageChange: Number(percentageChange.toFixed(1))
   };
+}
+// pour le area graph
+export async function getInterventionStats() {
+  try {
+    const now = new Date();
+    const startOfCurrentMonth = startOfMonth(now);
+    const endOfCurrentMonth = endOfMonth(now);
+
+    // Récupérer toutes les interventions terminées pour le mois en cours
+    const interventions = await prisma.intervention.findMany({
+      where: {
+        statut: "TERMINE",
+        dateIntervention: {
+          not: null,
+        },
+        dateDeclaration: {
+          gte: startOfCurrentMonth,
+          lte: endOfCurrentMonth,
+        },
+      },
+      select: {
+        dateDeclaration: true,
+        dateIntervention: true,
+      },
+    });
+
+    // Calculer le nombre d'interventions sur délai et hors délai
+    let onTime = 0;
+    let overdue = 0;
+
+    interventions.forEach((intervention) => {
+      const declarationDate = new Date(intervention.dateDeclaration);
+      const interventionDate = new Date(intervention.dateIntervention!);
+
+      // Calculer la différence en heures
+      const delayInHours = Math.abs(
+        (interventionDate.getTime() - declarationDate.getTime()) / (1000 * 60 * 60)
+      );
+
+      // Vérifier si l'intervention est hors délai (plus de 48 heures)
+      if (delayInHours > 48) {
+        overdue++;
+      } else {
+        onTime++;
+      }
+    });
+
+    // Calculer le pourcentage d'interventions hors délai
+    const totalInterventions = onTime + overdue;
+    const overduePercentage = totalInterventions > 0
+      ? (overdue / totalInterventions) * 100
+      : 0;
+
+    return {
+      onTime,
+      overdue,
+      overduePercentage: Number(overduePercentage.toFixed(1)), // Arrondir à 1 décimale
+    };
+  } catch (error) {
+    console.error("Erreur lors de la récupération des statistiques des interventions:", error);
+    throw new Error("Failed to fetch intervention stats");
+  }
+}
+
+// Fonction pour générer une couleur aléatoire en hexadécimal
+const getRandomColor = () => {
+  const letters = "0123456789ABCDEF";
+  let color = "#";
+  for (let i = 0; i < 6; i++) {
+    color += letters[Math.floor(Math.random() * 16)];
+  }
+  return color;
+};
+
+export async function getInterventionsBySystem() {
+  try {
+    const now = new Date();
+    const startOfCurrentMonth = startOfMonth(now);
+    const endOfCurrentMonth = endOfMonth(now);
+    const startOfLastMonth = startOfMonth(subMonths(now, 1));
+    const endOfLastMonth = endOfMonth(subMonths(now, 1));
+
+    // Récupérer toutes les interventions terminées pour les 6 derniers mois
+    const interventions = await prisma.intervention.findMany({
+      where: {
+        statut: "TERMINE",
+        dateIntervention: {
+          not: null,
+        },
+        dateDeclaration: {
+          gte: subMonths(startOfCurrentMonth, 6), // 6 derniers mois
+          lte: endOfCurrentMonth,
+        },
+      },
+      include: {
+        Systeme: {
+          select: {
+            nom: true,
+          },
+        },
+      },
+    });
+
+    // Regrouper les interventions par système
+    const systemCounts: Record<string, number> = {};
+
+    interventions.forEach((intervention) => {
+      const systemName = intervention.Systeme?.nom || "Autres";
+      systemCounts[systemName] = (systemCounts[systemName] || 0) + 1;
+    });
+
+    // Formater les données pour le graphe
+    const chartData = Object.entries(systemCounts).map(([system, count]) => ({
+      system,
+      interventions: count,
+      fill: getRandomColor(), // Attribuer une couleur aléatoire
+    }));
+
+    // Calculer le nombre total d'interventions pour le mois actuel et le mois précédent
+    const currentMonthInterventions = await prisma.intervention.count({
+      where: {
+        statut: "TERMINE",
+        dateIntervention: {
+          not: null,
+        },
+        dateDeclaration: {
+          gte: startOfCurrentMonth,
+          lte: endOfCurrentMonth,
+        },
+      },
+    });
+
+    const lastMonthInterventions = await prisma.intervention.count({
+      where: {
+        statut: "TERMINE",
+        dateIntervention: {
+          not: null,
+        },
+        dateDeclaration: {
+          gte: startOfLastMonth,
+          lte: endOfLastMonth,
+        },
+      },
+    });
+
+    // Calculer le pourcentage d'augmentation
+    const percentageChange = lastMonthInterventions > 0
+      ? ((currentMonthInterventions - lastMonthInterventions) / lastMonthInterventions) * 100
+      : 0;
+
+    return {
+      chartData,
+      period: {
+        start: format(subMonths(startOfCurrentMonth, 6), "MMMM yyyy"), // Début de la période (6 mois avant)
+        end: format(endOfCurrentMonth, "MMMM yyyy"), // Fin de la période (mois actuel)
+      },
+      percentageChange: Number(percentageChange.toFixed(1)), // Pourcentage d'augmentation
+    };
+  } catch (error) {
+    console.error("Erreur lors de la récupération des interventions par système:", error);
+    throw new Error("Failed to fetch interventions by system");
+  }
 }

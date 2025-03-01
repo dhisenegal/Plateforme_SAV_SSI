@@ -72,23 +72,7 @@ export function RecentInterventions() {
               </TableRow>
             ))
           )}
-          {interventions.map((intervention) => (
-            <TableRow key={intervention.id}>
-              <TableCell className="px-6 py-4 whitespace-nowrap">
-                <p className="text-sm font-medium text-gray-900">
-                  {intervention.Technicien.nom} {intervention.Technicien.prenom}
-                </p>
-              </TableCell>
-              <TableCell className="px-6 py-4 whitespace-nowrap">
-                <p className="text-sm text-gray-900">{intervention.Client.nom}</p>
-              </TableCell>
-              <TableCell className="px-6 py-4 whitespace-nowrap">
-                <p className="text-sm text-gray-900">
-                  {new Date(intervention.dateIntervention).toLocaleDateString()}
-                </p>
-              </TableCell>
-            </TableRow>
-          ))}
+          
         </TableBody>
       </Table>
     </div>
