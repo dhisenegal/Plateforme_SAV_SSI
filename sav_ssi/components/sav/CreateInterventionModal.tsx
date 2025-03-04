@@ -15,6 +15,12 @@ import { getAllTechniciens, getTechnicienById } from "@/actions/sav/technicien";
 import { createIntervention } from "@/actions/sav/intervention";
 import { sendUrgentInterventionNotification } from "@/lib/send-email";
 import { toast } from "react-toastify";
+// Import nécessaires pour les selects améliorés
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface FormData {
   typePanneDeclare: string;
@@ -57,6 +63,16 @@ const CreateInterventionModal = ({ onCreate }) => {
   const [systemes, setSystemes] = useState([]);
   const [techniciens, setTechniciens] = useState([]);
   const [isOpen, setIsOpen] = useState(false);
+  
+  // États pour les selects améliorés avec recherche
+  const [clientComboOpen, setClientComboOpen] = useState(false);
+  const [siteComboOpen, setSiteComboOpen] = useState(false);
+  const [systemeComboOpen, setSystemeComboOpen] = useState(false);
+  const [technicienComboOpen, setTechnicienComboOpen] = useState(false);
+  const [searchClient, setSearchClient] = useState("");
+  const [searchSite, setSearchSite] = useState("");
+  const [searchSysteme, setSearchSysteme] = useState("");
+  const [searchTechnicien, setSearchTechnicien] = useState("");
 
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -133,7 +149,13 @@ const CreateInterventionModal = ({ onCreate }) => {
       idTechnicien: "",
       statut: "NON_PLANIFIE",
     });
+    // Réinitialiser les états de recherche
+    setSearchClient("");
+    setSearchSite("");
+    setSearchSysteme("");
+    setSearchTechnicien("");
   };
+  
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -209,210 +231,374 @@ const CreateInterventionModal = ({ onCreate }) => {
     }
   };
 
+  // Filtrer les données selon les termes de recherche
+  const filteredClients = clients.filter(client => 
+    client.nom.toLowerCase().includes(searchClient.toLowerCase())
+  );
+  
+  const filteredSites = sites.filter(site => 
+    site.nom.toLowerCase().includes(searchSite.toLowerCase())
+  );
+  
+  const filteredSystemes = systemes.filter(systeme => 
+    systeme.nom.toLowerCase().includes(searchSysteme.toLowerCase())
+  );
+  
+  const filteredTechniciens = techniciens.filter(tech => 
+    `${tech.nom} ${tech.prenom}`.toLowerCase().includes(searchTechnicien.toLowerCase())
+  );
+
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-blue-500 text-white flex items-center">
-          <FaPlus className="w-5 h-5 mr-2" />
-          Nouvelle intervention
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Créer une nouvelle intervention</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="client">Client</Label>
-              <Select 
-                value={formData.idClient} 
-                onValueChange={(value) => handleSelectChange("idClient", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map((client) => (
-                    <SelectItem key={client.id} value={client.id.toString()}>
-                      {client.nom}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+    <DialogTrigger asChild>
+      <Button className="bg-blue-500 text-white flex items-center">
+        <FaPlus className="w-5 h-5 mr-2" />
+        Nouvelle intervention
+      </Button>
+    </DialogTrigger>
+    <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogHeader>
+        <DialogTitle>Créer une nouvelle intervention</DialogTitle>
+      </DialogHeader>
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-4">
+          {/* Sélecteur de client amélioré avec recherche */}
+          <div className="space-y-2">
+            <Label htmlFor="client">Client</Label>
+            <Popover open={clientComboOpen} onOpenChange={setClientComboOpen}>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={clientComboOpen}
+                  className="w-full justify-between"
+                >
+                  {formData.idClient
+                    ? clients.find(client => client.id.toString() === formData.idClient)?.nom
+                    : "Sélectionner un client"}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput
+                    placeholder="Rechercher un client..."
+                    value={searchClient}
+                    onValueChange={setSearchClient}
+                  />
+                  <CommandEmpty>Aucun client trouvé.</CommandEmpty>
+                  <CommandGroup>
+                    <ScrollArea className="h-64">
+                      {filteredClients.map((client) => (
+                        <CommandItem
+                          key={client.id}
+                          value={client.nom}
+                          onSelect={() => {
+                            handleSelectChange("idClient", client.id.toString());
+                            setClientComboOpen(false);
+                            setSearchClient("");
+                            // Réinitialiser le site et système quand le client change
+                            handleSelectChange("idSite", "");
+                            handleSelectChange("idSysteme", "");
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.idClient === client.id.toString() ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {client.nom}
+                        </CommandItem>
+                      ))}
+                    </ScrollArea>
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="site">Site</Label>
-              <Select 
-                value={formData.idSite} 
-                onValueChange={(value) => handleSelectChange("idSite", value)}
-                disabled={!formData.idClient}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un site" />
-                </SelectTrigger>
-                <SelectContent>
-                  {sites.map((site) => (
-                    <SelectItem key={site.id} value={site.id.toString()}>
-                      {site.nom}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Sélecteur de site amélioré avec recherche */}
+          <div className="space-y-2">
+            <Label htmlFor="site">Site</Label>
+            <Popover 
+              open={siteComboOpen} 
+              onOpenChange={(open) => formData.idClient ? setSiteComboOpen(open) : null}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={siteComboOpen}
+                  className="w-full justify-between"
+                  disabled={!formData.idClient}
+                >
+                  {formData.idSite
+                    ? sites.find(site => site.id.toString() === formData.idSite)?.nom
+                    : "Sélectionner un site"}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput
+                    placeholder="Rechercher un site..."
+                    value={searchSite}
+                    onValueChange={setSearchSite}
+                  />
+                  <CommandEmpty>Aucun site trouvé.</CommandEmpty>
+                  <CommandGroup>
+                    <ScrollArea className="h-64">
+                      {filteredSites.map((site) => (
+                        <CommandItem
+                          key={site.id}
+                          value={site.nom}
+                          onSelect={() => {
+                            handleSelectChange("idSite", site.id.toString());
+                            setSiteComboOpen(false);
+                            setSearchSite("");
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.idSite === site.id.toString() ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {site.nom}
+                        </CommandItem>
+                      ))}
+                    </ScrollArea>
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="systeme">Système</Label>
-              <Select 
-                value={formData.idSysteme} 
-                onValueChange={(value) => handleSelectChange("idSysteme", value)}
-                disabled={!formData.idSite}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un système" />
-                </SelectTrigger>
-                <SelectContent>
-                  {systemes.map((systeme) => (
-                    <SelectItem key={systeme.id} value={systeme.id.toString()}>
-                      {systeme.nom}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          {/* Sélecteur de système amélioré avec recherche */}
+          <div className="space-y-2">
+            <Label htmlFor="systeme">Système</Label>
+            <Popover 
+              open={systemeComboOpen} 
+              onOpenChange={(open) => formData.idSite ? setSystemeComboOpen(open) : null}
+            >
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  role="combobox"
+                  aria-expanded={systemeComboOpen}
+                  className="w-full justify-between"
+                  disabled={!formData.idSite}
+                >
+                  {formData.idSysteme
+                    ? systemes.find(sys => sys.id.toString() === formData.idSysteme)?.nom
+                    : "Sélectionner un système"}
+                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-full p-0" align="start">
+                <Command>
+                  <CommandInput
+                    placeholder="Rechercher un système..."
+                    value={searchSysteme}
+                    onValueChange={setSearchSysteme}
+                  />
+                  <CommandEmpty>Aucun système trouvé.</CommandEmpty>
+                  <CommandGroup>
+                    <ScrollArea className="h-64">
+                      {filteredSystemes.map((systeme) => (
+                        <CommandItem
+                          key={systeme.id}
+                          value={systeme.nom}
+                          onSelect={() => {
+                            handleSelectChange("idSysteme", systeme.id.toString());
+                            setSystemeComboOpen(false);
+                            setSearchSysteme("");
+                          }}
+                        >
+                          <Check
+                            className={cn(
+                              "mr-2 h-4 w-4",
+                              formData.idSysteme === systeme.id.toString() ? "opacity-100" : "opacity-0"
+                            )}
+                          />
+                          {systeme.nom}
+                        </CommandItem>
+                      ))}
+                    </ScrollArea>
+                  </CommandGroup>
+                </Command>
+              </PopoverContent>
+            </Popover>
+          </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="typePanneDeclare">Type de panne</Label>
+            <Input
+              id="typePanneDeclare"
+              name="typePanneDeclare"
+              value={formData.typePanneDeclare}
+              onChange={handleChange}
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="typePanneDeclare">Type de panne</Label>
+              <Label htmlFor="prenomContact">Nom du contact</Label>
               <Input
-                id="typePanneDeclare"
-                name="typePanneDeclare"
-                value={formData.typePanneDeclare}
+                id="prenomContact"
+                name="prenomContact"
+                value={formData.prenomContact}
                 onChange={handleChange}
-                required
               />
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="prenomContact">Nom du contact</Label>
-                <Input
-                  id="prenomContact"
-                  name="prenomContact"
-                  value={formData.prenomContact}
-                  onChange={handleChange}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="telephoneContact">Téléphone</Label>
-                <Input
-                  id="telephoneContact"
-                  name="telephoneContact"
-                  value={formData.telephoneContact}
-                  onChange={handleChange}
-                />
-              </div>
-            </div>
-
             <div className="space-y-2">
-              <Label htmlFor="adresse">Adresse</Label>
+              <Label htmlFor="telephoneContact">Téléphone</Label>
               <Input
-                id="adresse"
-                name="adresse"
-                value={formData.adresse}
+                id="telephoneContact"
+                name="telephoneContact"
+                value={formData.telephoneContact}
                 onChange={handleChange}
               />
             </div>
+          </div>
 
-            <div className="flex space-x-6">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="sousGarantie"
-                  checked={formData.sousGarantie}
-                  onCheckedChange={(checked) => 
-                    setFormData(prev => ({...prev, sousGarantie: checked as boolean}))
-                  }
-                />
-                <Label htmlFor="sousGarantie">Sous garantie</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="urgent"
-                  checked={formData.urgent}
-                  onCheckedChange={(checked) => 
-                    setFormData(prev => ({...prev, urgent: checked as boolean}))
-                  }
-                />
-                <Label htmlFor="urgent">Urgent</Label>
-              </div>
+          <div className="space-y-2">
+            <Label htmlFor="adresse">Adresse</Label>
+            <Input
+              id="adresse"
+              name="adresse"
+              value={formData.adresse}
+              onChange={handleChange}
+            />
+          </div>
+
+          <div className="flex space-x-6">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="sousGarantie"
+                checked={formData.sousGarantie}
+                onCheckedChange={(checked) => 
+                  setFormData(prev => ({...prev, sousGarantie: checked as boolean}))
+                }
+              />
+              <Label htmlFor="sousGarantie">Sous garantie</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="urgent"
+                checked={formData.urgent}
+                onCheckedChange={(checked) => 
+                  setFormData(prev => ({...prev, urgent: checked as boolean}))
+                }
+              />
+              <Label htmlFor="urgent">Urgent</Label>
+            </div>
+          </div>
+
+          <div className="border p-4 rounded-lg space-y-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="planifierMaintenant"
+                checked={planificationData.planifierMaintenant}
+                onCheckedChange={(checked) => 
+                  setPlanificationData(prev => ({...prev, planifierMaintenant: checked as boolean}))
+                }
+              />
+              <Label htmlFor="planifierMaintenant">Planifier </Label>
             </div>
 
-            <div className="border p-4 rounded-lg space-y-4">
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="planifierMaintenant"
-                  checked={planificationData.planifierMaintenant}
-                  onCheckedChange={(checked) => 
-                    setPlanificationData(prev => ({...prev, planifierMaintenant: checked as boolean}))
-                  }
-                />
-                <Label htmlFor="planifierMaintenant">Planifier maintenant</Label>
-              </div>
-
-              {planificationData.planifierMaintenant && (
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="datePlanifiee">Date planifiée</Label>
-                    <Input
-                      id="datePlanifiee"
-                      type="date"
-                      value={planificationData.datePlanifiee}
-                      onChange={(e) => handlePlanificationChange({
-                        name: "datePlanifiee",
-                        value: e.target.value
-                      })}
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="technicien">Technicien</Label>
-                    <Select 
-                      value={planificationData.idTechnicien}
-                      onValueChange={(value) => handlePlanificationChange({
-                        name: "idTechnicien",
-                        value
-                      })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Sélectionner un technicien" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {techniciens.map((tech) => (
-                          <SelectItem key={tech.id} value={tech.id.toString()}>
-                            {`${tech.nom} ${tech.prenom}`}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+            {planificationData.planifierMaintenant && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="datePlanifiee">Date planifiée</Label>
+                  <Input
+                    id="datePlanifiee"
+                    type="date"
+                    value={planificationData.datePlanifiee}
+                    onChange={(e) => handlePlanificationChange({
+                      name: "datePlanifiee",
+                      value: e.target.value
+                    })}
+                    required
+                  />
                 </div>
-              )}
-            </div>
-          </div>
 
-          <div className="flex justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
-              Annuler
-            </Button>
-            <Button type="submit" className="bg-blue-500 text-white">
-              Créer
-            </Button>
+                {/* Sélecteur de technicien amélioré avec recherche */}
+                <div className="space-y-2">
+                  <Label htmlFor="technicien">Technicien</Label>
+                  <Popover open={technicienComboOpen} onOpenChange={setTechnicienComboOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={technicienComboOpen}
+                        className="w-full justify-between"
+                      >
+                        {planificationData.idTechnicien
+                          ? techniciens.find(tech => tech.id.toString() === planificationData.idTechnicien)
+                            ? `${techniciens.find(tech => tech.id.toString() === planificationData.idTechnicien).nom} ${techniciens.find(tech => tech.id.toString() === planificationData.idTechnicien).prenom}`
+                            : "Sélectionner un technicien"
+                          : "Sélectionner un technicien"}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput
+                          placeholder="Rechercher un technicien..."
+                          value={searchTechnicien}
+                          onValueChange={setSearchTechnicien}
+                        />
+                        <CommandEmpty>Aucun technicien trouvé.</CommandEmpty>
+                        <CommandGroup>
+                          <ScrollArea className="h-64">
+                            {filteredTechniciens.map((tech) => (
+                              <CommandItem
+                                key={tech.id}
+                                value={`${tech.nom} ${tech.prenom}`}
+                                onSelect={() => {
+                                  handlePlanificationChange({
+                                    name: "idTechnicien",
+                                    value: tech.id.toString()
+                                  });
+                                  setTechnicienComboOpen(false);
+                                  setSearchTechnicien("");
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    planificationData.idTechnicien === tech.id.toString() ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {tech.nom} {tech.prenom}
+                              </CommandItem>
+                            ))}
+                          </ScrollArea>
+                        </CommandGroup>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+            )}
           </div>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
+        </div>
+
+        <div className="flex justify-end space-x-2">
+          <Button type="button" variant="outline" onClick={() => setIsOpen(false)}>
+            Annuler
+          </Button>
+          <Button type="submit" className="bg-blue-500 text-white">
+            Créer
+          </Button>
+        </div>
+      </form>
+    </DialogContent>
+  </Dialog>
+);
 };
 
 export default CreateInterventionModal;
